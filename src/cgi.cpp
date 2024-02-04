@@ -1,4 +1,4 @@
-#include "cgi.hpp"
+#include "../include/Cgi.hpp"
 
 // bool	Cgi::CgiHandler() {
 // char*	strdup(std::string src) {

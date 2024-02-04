@@ -43,7 +43,8 @@ int	main(void)
 
 	std::cout << GREEN << "success, connected to server" << RESET << std::endl;
 
-	std::string	str = "Hello, I am from client...";
+	std::string	str;
+	getline(std::cin, str);
 
 	// Sent data to server
 	send(client_fd, str.c_str(), str.length(), 0);
