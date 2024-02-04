@@ -12,7 +12,6 @@ std::string	getStatusText(short int statusCode) {
 	}
 }
 
-#define CRLF "\r\n"
 
 #include <sstream>
 

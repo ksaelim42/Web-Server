@@ -1,7 +1,10 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include "webserv.hpp"
+#include "Webserv.hpp"
+
+#define HEADBUFSIZE 1000
+#define BODYBUFSIZE 1000000
 
 #define HTML_FILE "./content/static/index.html"
 #define IMAGE_FILE "./content/static/images/Cat03.jpg"
@@ -20,27 +23,28 @@ Accept-Ranges: bytes\r\n\r\n\
 class Server
 {
 	private:
-		int	acceptConnection(int);
-		bool	initMineTypeDefault(void);
+		size_t	clientHeaderBufferSize;
+		size_t	clientMaxBodySize;
+		// int		acceptConnection(int);
 	public:
 		std::map<std::string, std::string>	mimeType;
 		Server(void);
 		~Server() {}
 
-		int	initServer();
-		int	runServer(int);
-		class	ServerException : public std::exception {
-			private:
-				std::string const	_name = "Server : ";
-				std::string	_ErrMsg;
-			public:
-				ServerException(std::string ErrMsg) {
-					_ErrMsg = RED + _name + ErrMsg + RESET;
-				}
-				const char*	what() const throw() {
-					return _ErrMsg.c_str();
-				}
-		};
+		// int	initServer();
+		// int	runServer(int);
+		// class	ServerException : public std::exception {
+		// 	private:
+		// 		std::string const	_name = "Server : ";
+		// 		std::string	_ErrMsg;
+		// 	public:
+		// 		ServerException(std::string ErrMsg) {
+		// 			_ErrMsg = RED + _name + ErrMsg + RESET;
+		// 		}
+		// 		const char*	what() const throw() {
+		// 			return _ErrMsg.c_str();
+		// 		}
+		// };
 };
 
 #endif
