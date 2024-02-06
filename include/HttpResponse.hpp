@@ -12,6 +12,7 @@ class HttpResponse
 		request_t	_request;
 
 		short int	_statusCode;
+		std::string	_header;
 		std::string	_body;
 		std::string	_contentType;
 		std::string	_contentLength;
@@ -24,6 +25,8 @@ class HttpResponse
 		std::string	getContentType(std::string &, std::map<std::string, std::string> &);
 		std::string	getContentLength(void);
 		std::string	getDate(void);
+		std::string	getStatusLine(short int &);
+		std::string	getStatusText(short int &);
 	public:
 		HttpResponse(Server &, request_t &);
 		~HttpResponse() {}

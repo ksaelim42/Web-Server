@@ -1,11 +1,12 @@
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
-# define RED	"\e[0;31m"
-# define GREEN	"\e[0;32m"
-# define RESET	"\e[0m"
-# define PORT	8080
-# define CRLF	"\r\n"
+# define HTTPVERS	"HTTP/1.1"
+# define RED		"\e[0;31m"
+# define GREEN		"\e[0;32m"
+# define RESET		"\e[0m"
+# define PORT		8080
+# define CRLF		"\r\n"
 
 #include <unistd.h>
 #include <iostream>
@@ -15,6 +16,7 @@
 #include <fstream>
 #include <exception>
 #include <map>
+#include <ctime>
 
 // for test
 struct request_t {

@@ -1,26 +1,17 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-
-std::string	itoa(size_t num) {
-	std::stringstream	ss;
-	ss << num;
-	return ss.str();
-}
+#include <ctime>
+#include <string.h>
 
 int	main(void)
 {
-	// getContentType("cat.jpg");
-	std::string	num = itoa(-234324234324341);
-	std::cout << num << std::endl;
+	std::time_t	currentTime;
+	struct tm	*gmTime;
+	char		buffer[30];
 
-	// std::string	str = "
-	// Hello";
-	// std::vector<char *>	str;
-	// str = "Hello World";
-	// std::string	str = "Hello";
-	// std::cout << str.length() << std::endl;
-	// std::cout << (int)str[5] << std::endl;
-	// std::cout << str << std::endl;
-	// std::cout << str << std::endl;
+	std::time(&currentTime);	// get current time.
+	gmTime = gmtime(&currentTime);
+	// Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
+	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %T %Z", gmTime);
 }
