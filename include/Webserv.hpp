@@ -20,12 +20,13 @@
 
 // for test
 struct request_t {
+	std::string	method;
 	std::string	path;
+	std::string	version;
 };
 
 #include "Utils.hpp"
 #include "Server.hpp"
 #include "Cgi.hpp"
-// #include "HttpResponse.hpp"
 
 #endif

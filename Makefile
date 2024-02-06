@@ -7,7 +7,7 @@ RM		= rm -f
 CFLAGS	= #-Wall -Wextra -Werror -std=c++98
 
 ### Source Files ###
-SRCS	= src/main.cpp src/Server.cpp src/Utils.cpp src/HttpResponse.cpp
+SRCS	= src/main.cpp src/Server.cpp src/Utils.cpp src/HttpResponse.cpp src/Socket.cpp
 
 ### Object Files ###
 OBJS	= $(SRCS:.cpp=.o)

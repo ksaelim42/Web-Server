@@ -1,27 +1,20 @@
-#include "../include/Webserv.hpp"
-#include "../include/HttpResponse.hpp"
-
-void	genRequest(request_t & request) {
-	// request.path = "./content/static/index.html";
-	// request.path = "./content/static/style.css";
-	// request.path = "./content/static/Cat.jpg";
-	request.path = "./content/static/index.html";
-}
+// #include "../include/Webserv.hpp"
+// #include "../include/HttpResponse.hpp"
+#include "../include/Socket.hpp"
 
 int	main(int argc, char**argv)
 {
 	// std::cout << "Hello" << std::endl;
 	try {
-		int	serverSock;
-		Server	server;
-		request_t	request;
+		Socket		socket;
+		Server		server;
 
-		// serverSock = server.initServer();
-		// server.runServer(serverSock);
-		genRequest(request);
-		HttpResponse	response(server, request);
-		response.createResponse();
-		response.prtResponse();
+		socket.initServer(server);
+		socket.runServer(server);
+		socket.downServer(server);
+		// HttpResponse	response(server, request);
+		// response.createResponse();
+		// response.prtResponse();
 	}
 	catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;

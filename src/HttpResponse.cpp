@@ -87,7 +87,7 @@ bool	HttpResponse::readFile(std::string & fileName, std::string & buffer) {
 	buffer.resize(length);
 	inFile.read(&buffer[0], length);	// Read all data in inFile to Buffer
 	inFile.close();						// Close inFile
-	_statusCode = 500;
+	_statusCode = 200;
 	return (true);
 }
 
