@@ -5,11 +5,12 @@ void	genRequest(request_t & request) {
 	// request.path = "./content/static/index.html";
 	// request.path = "./content/static/style.css";
 	// request.path = "./content/static/Cat.jpg";
-	request.path = "./content/static/nothing";
+	request.path = "./content/static/index.html";
 }
 
 int	main(int argc, char**argv)
 {
+	// std::cout << "Hello" << std::endl;
 	try {
 		int	serverSock;
 		Server	server;

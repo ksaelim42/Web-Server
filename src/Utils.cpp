@@ -1,5 +1,11 @@
 #include "../include/Utils.hpp"
 
+std::string	itoa(size_t num) {
+	std::stringstream	ss;
+	ss << num;
+	return ss.str();
+}
+
 std::map<std::string, std::string>	initMineTypeDefault(void) {
 	std::map<std::string, std::string>	mimeType;
 

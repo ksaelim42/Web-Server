@@ -1,20 +1,19 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
 
-std::string	getContentType(std::string & path, std::map<std::string, std::string> & mimeType) {
-	std::string	contentType = "Content-Type: ";
-	size_t	index = path.find_last_of(".");
-	if (index != std::string::npos) {
-		std::string	ext = path.substr(index + 1);
-		if (mimeType.count(ext))
-			return contentType + mimeType[ext] + "\r\n";
-	}
-	return contentType + mimeType["default"] + "\r\n";
+std::string	itoa(size_t num) {
+	std::stringstream	ss;
+	ss << num;
+	return ss.str();
 }
 
 int	main(void)
 {
-	getContentType("cat.jpg");
+	// getContentType("cat.jpg");
+	std::string	num = itoa(-234324234324341);
+	std::cout << num << std::endl;
+
 	// std::string	str = "
 	// Hello";
 	// std::vector<char *>	str;

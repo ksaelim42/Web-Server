@@ -9,6 +9,7 @@
 
 #include <unistd.h>
 #include <iostream>
+#include <sstream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fstream>

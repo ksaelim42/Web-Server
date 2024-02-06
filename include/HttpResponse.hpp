@@ -7,9 +7,12 @@
 class HttpResponse
 {
 	private:
+		// input
 		Server		_server;
 		request_t	_request;
 
+		short int	_statusCode;
+		std::string	_body;
 		std::string	_contentType;
 		std::string	_contentLength;
 		std::string	_connection;
@@ -17,7 +20,10 @@ class HttpResponse
 		std::string	_location;
 		std::string	_date;
 
+		bool		readFile(std::string &, std::string &);
 		std::string	getContentType(std::string &, std::map<std::string, std::string> &);
+		std::string	getContentLength(void);
+		std::string	getDate(void);
 	public:
 		HttpResponse(Server &, request_t &);
 		~HttpResponse() {}
