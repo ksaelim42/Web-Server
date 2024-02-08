@@ -1,3 +1,5 @@
-*.o
 *.vscode
+objs
+*.o
+*.out
 webserv

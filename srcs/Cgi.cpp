@@ -1,5 +1,24 @@
-#include "../include/Cgi.hpp"
+#include "Webserv.hpp"
 
+Cgi::Cgi() {
+	_env["AUTH_TYPE"] = "test";
+	_env["CONTENT_LENGTH"] = "test";
+	_env["CONTENT_TYPE"] = "test";
+	_env["GATEWAY_INTERFACE"] = "test";
+	_env["PATH_INFO"] = "test";
+	_env["PATH_TRANSLATED"] = "test";
+	_env["QUERY_STRING"] = "test";
+	_env["REMOTE_ADDR"] = "test";
+	_env["REMOTE_HOST"] = "test";
+	_env["REMOTE_IDENT"] = "test";
+	_env["REMOTE_USER"] = "test";
+	_env["REQUEST_METHOD"] = "test";
+	_env["SCRIPT_NAME"] = "test";
+	_env["SERVER_NAME"] = "test";
+	_env["SERVER_PORT"] = "test";
+	_env["SERVER_PROTOCOL"] = "test";
+	_env["SERVER_SOFTWARE"] = "test";
+}
 // bool	Cgi::CgiHandler() {
 // char*	strdup(std::string src) {
 // 	if (!str)
@@ -9,21 +28,6 @@
 // }
 
 // }
-
-char*	strdup(std::string src) {
-	char*	dest = new char[src.length() + 1];
-	for (size_t i = 0; i <= src.length(); i++)
-		dest[i] = src[i];
-	return (dest);
-}
-
-char**	Cgi::createArgs(std::string path) {
-	char**	args = new char*[2];
-
-	args[0] = strdup(path);
-	args[1] = NULL;
-	return (args);
-}
 
 int	Cgi::handlerCgi(std::string path) {
 
@@ -54,7 +58,11 @@ int	Cgi::handlerCgi(std::string path) {
 		close(mypipe.fd[0]);
 		close(mypipe.fd[1]);
 
-		char	**args = createArgs(path);
+		std::vector<std::string>	tmpArgs;
+		tmpArgs[0] = path;
+		char	**args = aopdup(tmpArgs);
+
+
 
 		execve(args[0], args, NULL);
 		exit(1);

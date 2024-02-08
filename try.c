@@ -1,5 +1,6 @@
 // #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 // #include <fcntl.h>
 // # define	a 20
 // # define	b 020
@@ -58,3 +59,22 @@
 // }
 
 // strtod : pEnd is pointer to the after of the last number value
+#define SIZE 200
+int	main(void) {
+	char	*myarray[SIZE];
+	size_t	a = 1024 * 1024 * 1024;
+	a *= 8;
+	for (int j = 0; j < SIZE; j++) {
+		for (int i = 0; i < SIZE; i++) {
+			myarray[i] = malloc(a);
+			myarray[i][0] = 'A' + i;
+		}
+		usleep(50000);
+	}
+//	for (int i = 0; i < SIZE; i++) {
+//		printf("%c: %p\n", myarray[i][0], &myarray[i][0]);
+//		usleep(100000);
+//	}
+	printf("Success allocate memory\n");
+	sleep(5);
+}

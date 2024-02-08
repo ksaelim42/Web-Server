@@ -1,28 +1,38 @@
 ### Executablem###
 NAME	= webserv
 
+### Directory ###
+DIR_INCS	= includes
+DIR_SRCS	= srcs
+DIR_OBJS	= objs
+
 ### Compilation ###
 CC		= c++
 RM		= rm -f
-CFLAGS	= #-Wall -Wextra -Werror -std=c++98
+CFLAGS	= -Wall -Wextra -Werror -std=c++98
+IFLAGS	= -I$(DIR_INCS)
 
 ### Source Files ###
-SRCS	= src/main.cpp src/Server.cpp src/Utils.cpp src/HttpResponse.cpp src/Socket.cpp
+HEADERS	= $(wildcard $(DIR_INCS)/*.hpp)
+
+SRCS	= $(wildcard $(DIR_SRCS)/*.cpp)
 
 ### Object Files ###
-OBJS	= $(SRCS:.cpp=.o)
+OBJS	= $(subst $(DIR_SRCS), $(DIR_OBJS), $(SRCS:.cpp=.o))
 
 ### Compilation Rule ###
-%.o:%.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+$(DIR_OBJS)/%.o:$(DIR_SRCS)/%.cpp $(DIR_INCS)/%.hpp $(DIR_INCS)/Webserv.hpp
+	@mkdir -p $(DIR_OBJS)
+	$(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
 
-all: $(NAME)
+all: $(HEADERS) $(NAME) 
 
 $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 clean:
 	$(RM) $(OBJS)
+	$(RM) -r $(DIR_OBJS)
 
 fclean: clean
 	$(RM) $(NAME)

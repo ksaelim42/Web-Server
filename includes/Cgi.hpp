@@ -1,11 +1,11 @@
 #ifndef CGI_HPP
 # define CGI_HPP
 
-#include <iostream>
-#include <string>
-#include <unistd.h>
-#include <string.h>
-#include <cstdlib>
+// #include <iostream>
+// #include <string>
+// #include <string.h>
+// #include <cstdlib>
+#include "Webserv.hpp"
 
 struct t_pipe
 {
@@ -20,10 +20,11 @@ class Cgi
 {
 private:
 	// char**	_args; // store CGI script path to execute
+	std::map<std::string, std::string>	_env;
 public:
-	// Cgi(/* args */);
+	Cgi(void);
 	// ~Cgi();
-	char**	createArgs(std::string path);
+	// char**	createArgs(std::string path);
 	int		handlerCgi(std::string);
 };
 

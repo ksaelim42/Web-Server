@@ -1,4 +1,4 @@
-#include "../include/Server.hpp"
+#include "Server.hpp"
 
 Server::Server(void) {
 	// if didn't specify Types context Server will use default Types
@@ -45,7 +45,7 @@ Server::Server(void) {
 // 		throw ServerException("Accept fail");
 // 	else {
 // 		std::cout << GREEN << "connection accepted from " << RESET << std::endl;
-// 		std::cout << "client fd: " << client_fd \
+// 		std::cout << "client fd: " << client_fd 
 // 		<< ", client IP address: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
 // 	}
 // 	return client_fd;

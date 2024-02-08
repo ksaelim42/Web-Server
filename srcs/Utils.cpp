@@ -1,9 +1,38 @@
-#include "../include/Utils.hpp"
+#include "Utils.hpp"
 
 std::string	itoa(size_t num) {
 	std::stringstream	ss;
 	ss << num;
 	return ss.str();
+}
+
+char*	strdup(std::string src) {
+	char*	dest = new char[src.length() + 1];
+	size_t	i = 0;
+	for (; i < src.length(); i++)
+		dest[i] = src[i];
+	dest[i] = '\0';
+	return (dest);
+}
+
+char**	aopdup(std::map<std::string, std::string> set) {
+	char**	aop = new char*[set.size() + 1];
+	std::map<std::string, std::string>::const_iterator	it = set.begin();
+	size_t	i = 0;
+	for (;it != set.end(); i++, it++) {
+		aop[i] = strdup(it->first + "=" + it->second);
+	}
+	aop[i] = NULL;
+	return aop;
+}
+
+char**	aopdup(std::vector<std::string> set) {
+	char**	aop = new char*[set.size() + 1];
+	size_t	i = 0;
+	for (;i < set.size(); i++)
+		aop[i] = strdup(set[i]);
+	aop[i] = NULL;
+	return aop;
 }
 
 std::map<std::string, std::string>	initMineTypeDefault(void) {

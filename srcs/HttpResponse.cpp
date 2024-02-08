@@ -1,4 +1,4 @@
-#include "../include/HttpResponse.hpp"
+#include "HttpResponse.hpp"
 
 HttpResponse::HttpResponse(Server & server, request_t & request)
  : _server(server), _request(request) {}

@@ -1,4 +1,4 @@
-#include "../include/Socket.hpp"
+#include "Socket.hpp"
 
 int	Socket::acceptConnection(int & serverSock) {
 	int					client_fd;
@@ -40,7 +40,7 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 bool	Socket::initServer(Server & server) {
 	int					status;
 	int					server_fd;
-	unsigned short int	netPort;
+	// unsigned short int	netPort;
 	int					enable;
 	struct sockaddr_in	server_address;
 

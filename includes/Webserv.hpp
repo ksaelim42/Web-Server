@@ -9,14 +9,17 @@
 # define CRLF		"\r\n"
 
 #include <unistd.h>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fstream>
 #include <exception>
+#include <vector>
 #include <map>
 #include <ctime>
+#include <new>
 
 // for test
 struct request_t {
