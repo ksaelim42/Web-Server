@@ -1,4 +1,5 @@
 *.vscode
+dirTest
 objs
 *.o
 *.out

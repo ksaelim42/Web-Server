@@ -1,8 +1,0 @@
-File Descriptor Acquisition: The open system call is used to open a file and obtain a file descriptor.
-This file descriptor is an integer that identifies the open file.
-Data Input/Output: To read data from or write data to the file, you use separate system calls like read and write.
-These operations interact directly with the file descriptor, without the use of an internal buffer managed by the C library.
-Unbuffered I/O: The I/O operations with open, read, and write
-are considered unbuffered because they don't involve an intermediary buffer controlled
-by the C library. Each read or write system call directly interacts with the file,
-and there is no automatic buffering or batching of data.
