@@ -1,10 +1,10 @@
-#include "Webserv.hpp"
+#include "CgiHandler.hpp"
 
-Cgi::Cgi() {
-	_env["AUTH_TYPE"] = "test";
-	_env["CONTENT_LENGTH"] = "test";
-	_env["CONTENT_TYPE"] = "test";
-	_env["GATEWAY_INTERFACE"] = "test";
+CgiHandler::CgiHandler() {
+	_env["AUTH_TYPE"] = "";
+	_env["CONTENT_LENGTH"] = "";
+	_env["CONTENT_TYPE"] = "test"; // get from request
+	_env["GATEWAY_INTERFACE"] = CGIVERS;	// version of CGI
 	_env["PATH_INFO"] = "test";
 	_env["PATH_TRANSLATED"] = "test";
 	_env["QUERY_STRING"] = "test";
@@ -12,14 +12,15 @@ Cgi::Cgi() {
 	_env["REMOTE_HOST"] = "test";
 	_env["REMOTE_IDENT"] = "test";
 	_env["REMOTE_USER"] = "test";
-	_env["REQUEST_METHOD"] = "test";
+	_env["REQUEST_METHOD"] = "test";		// HTTP version that get from request (Server must check that support)
 	_env["SCRIPT_NAME"] = "test";
 	_env["SERVER_NAME"] = "test";
 	_env["SERVER_PORT"] = "test";
 	_env["SERVER_PROTOCOL"] = "test";
 	_env["SERVER_SOFTWARE"] = "test";
 }
-// bool	Cgi::CgiHandler() {
+
+// bool	CgiHandler::CgiHandlerHandler() {
 // char*	strdup(std::string src) {
 // 	if (!str)
 // 		return nullptr;
@@ -29,7 +30,7 @@ Cgi::Cgi() {
 
 // }
 
-int	Cgi::handlerCgi(std::string path) {
+int	CgiHandler::execCgiScript(std::string path) {
 
 	t_pipe	mypipe;
 	std::cout << "Start handler CGI" << std::endl;

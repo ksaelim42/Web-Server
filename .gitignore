@@ -4,3 +4,4 @@ objs
 *.o
 *.out
 webserv
+test.cpp

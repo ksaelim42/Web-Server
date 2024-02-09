@@ -2,6 +2,7 @@
 # define WEBSERV_HPP
 
 # define HTTPVERS	"HTTP/1.1"
+# define CGIVERS	"CGI/1.1"
 # define RED		"\e[0;31m"
 # define GREEN		"\e[0;32m"
 # define RESET		"\e[0m"
@@ -30,6 +31,6 @@ struct request_t {
 
 #include "Utils.hpp"
 #include "Server.hpp"
-#include "Cgi.hpp"
+#include "CgiHandler.hpp"
 
 #endif

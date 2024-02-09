@@ -1,18 +1,34 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse(Server & server, request_t & request)
- : _server(server), _request(request) {}
+HttpResponse::HttpResponse(Server & server, request_t & request) : _server(server), _request(request) {
+	_allowMethod.push_back("GET");
+	_allowMethod.push_back("POST");
+	_allowMethod.push_back("HEAD");
+}
 
 std::string	HttpResponse::createResponse(void) {
-	readFile(_request.path, _body);
-	_contentLength = getContentLength();
-	_contentType = getContentType(_request.path, _server.mimeType);
-	_date = getDate();
-	_header = getStatusLine(_statusCode);
+	// _checkRequest();
+	_readFile(_request.path, _body);
+	_contentLength = _getContentLength();
+	_contentType = _getContentType(_request.path, _server.mimeType);
+	_date = _getDate();
+	_header = _getStatusLine(_statusCode);
 	_header += _contentLength;
 	_header += _contentType;
 	_header += _date;
 	return _header + CRLF + _body;
+}
+
+bool	HttpResponse::_checkRequest(void) {
+	if (!_checkMethod("GET")) { // TODO : get from request
+		_statusCode = 405;
+		return false;
+	}
+	if (!_checkVersion("HTTP/1.1")) { // TODO get from request
+		_statusCode = 505;
+		return false;
+	}
+	return true;
 }
 
 void	HttpResponse::prtResponse(void) {
@@ -23,20 +39,42 @@ void	HttpResponse::prtResponse(void) {
 	std::cout << _body;
 }
 
-std::string	HttpResponse::getStatusLine(short int & statusCode) {
+// ************************************************************************** //
+// -------------------------- Check Header Fields --------------------------- //
+// ************************************************************************** //
+
+bool	HttpResponse::_checkMethod(std::string method) {
+	for (size_t i = 0; i < _allowMethod.size(); i++) {
+		if (method.compare(_allowMethod[i]) == 0)
+			return true;
+	}
+	return false;
+}
+
+bool	HttpResponse::_checkVersion(std::string version) {
+	if (version.compare(HTTPVERS) == 0)
+		return true;
+	return false;
+}
+
+// ************************************************************************** //
+// ------------------------- Response Header Fields ------------------------- //
+// ************************************************************************** //
+
+std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 	std::string	httpVer = HTTPVERS;
 	std::string	httpStatCode = itoa(statusCode);
-	std::string httpStatText = getStatusText(statusCode);
+	std::string httpStatText = _getStatusText(statusCode);
 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
 }
 
-std::string	HttpResponse::getContentLength(void) {
+std::string	HttpResponse::_getContentLength(void) {
 	std::string	contentLength = "Content-Length: ";
 	size_t	length = _body.length();
 	return contentLength + itoa(length) + CRLF;
 }
 
-std::string	HttpResponse::getContentType(std::string & path, std::map<std::string, std::string> & mimeType) {
+std::string	HttpResponse::_getContentType(std::string & path, std::map<std::string, std::string> & mimeType) {
 	std::string	contentType = "Content-Type: ";
 	size_t	index = path.find_last_of(".");
 	if (index != std::string::npos) {
@@ -47,7 +85,7 @@ std::string	HttpResponse::getContentType(std::string & path, std::map<std::strin
 	return contentType + mimeType["default"] + CRLF;
 }
 
-std::string	HttpResponse::getDate(void) {
+std::string	HttpResponse::_getDate(void) {
 	std::string	date = "Date: ";
 	std::time_t	currentTime;
 	struct tm	*gmTime;
@@ -61,7 +99,11 @@ std::string	HttpResponse::getDate(void) {
 	return date + buffer + CRLF;
 }
 
-bool	HttpResponse::readFile(std::string & fileName, std::string & buffer) {
+// ************************************************************************** //
+// ----------------------------- Body Messages ------------------------------ //
+// ************************************************************************** //
+
+bool	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
 	std::ifstream	inFile;
 	int				length;
 
@@ -91,7 +133,7 @@ bool	HttpResponse::readFile(std::string & fileName, std::string & buffer) {
 	return (true);
 }
 
-std::string	HttpResponse::getStatusText(short int & statusCode) {
+std::string	HttpResponse::_getStatusText(short int & statusCode) {
 	switch (statusCode)
 	{
 	case 200:
@@ -100,6 +142,10 @@ std::string	HttpResponse::getStatusText(short int & statusCode) {
 		return "Forbidden";
 	case 404:
 		return "Not Found";
+	case 405:
+		return "Method Not Allowed";
+	case 505:
+		return "HTTP Version Not Supported";
 	default:
 		return "Undefined";
 	}

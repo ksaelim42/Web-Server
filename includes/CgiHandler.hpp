@@ -1,5 +1,5 @@
-#ifndef CGI_HPP
-# define CGI_HPP
+#ifndef CGIHANDLER_HPP
+# define CGIHANDLER_HPP
 
 // #include <iostream>
 // #include <string>
@@ -16,16 +16,16 @@ struct t_pipe
 	int		pipeout;
 };
 
-class Cgi
+class CgiHandler
 {
 private:
 	// char**	_args; // store CGI script path to execute
 	std::map<std::string, std::string>	_env;
 public:
-	Cgi(void);
-	// ~Cgi();
+	CgiHandler(void);
+	// ~Cgi(void);
 	// char**	createArgs(std::string path);
-	int		handlerCgi(std::string);
+	int		execCgiScript(std::string);
 };
 
 
