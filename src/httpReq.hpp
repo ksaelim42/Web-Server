@@ -6,9 +6,12 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:04 by prachman          #+#    #+#             */
-/*   Updated: 2024/02/11 12:11:53 by prachman         ###   ########.fr       */
+/*   Updated: 2024/02/12 14:36:53 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#ifndef HTTP_REQUEST
+#define HTTP_REQUEST
 
 #include <iostream>
 #include <string.h>
@@ -43,6 +46,8 @@ struct httpReq
 	std::string	fetch_dest;
 	std::string	referer;
 	std::string	encoding;
-	std::string language;
+	std::string	language;
 
 };
+
+#endif
