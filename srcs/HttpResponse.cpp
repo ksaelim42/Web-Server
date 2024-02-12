@@ -8,9 +8,17 @@ HttpResponse::HttpResponse(Server & server, request_t & request) : _server(serve
 
 std::string	HttpResponse::createResponse(void) {
 	// _checkRequest();
-	_readFile(_request.path, _body);
+	// TODO : match location in configfile
+	if (_isCgi(_request.path)) {
+		CgiHandler	cgi;
+
+		_body = cgi.execCgiScript(_server, _request, _statusCode);
+	}
+	else {
+		_readFile(_request.path, _body);
+		_contentType = _getContentType(_request.path, _server.mimeType);
+	}
 	_contentLength = _getContentLength();
-	_contentType = _getContentType(_request.path, _server.mimeType);
 	_date = _getDate();
 	_header = _getStatusLine(_statusCode);
 	_header += _contentLength;
@@ -52,7 +60,7 @@ bool	HttpResponse::_checkMethod(std::string method) {
 }
 
 bool	HttpResponse::_checkVersion(std::string version) {
-	if (version.compare(HTTPVERS) == 0)
+	if (version.compare(HTTP_VERS) == 0)
 		return true;
 	return false;
 }
@@ -62,7 +70,7 @@ bool	HttpResponse::_checkVersion(std::string version) {
 // ************************************************************************** //
 
 std::string	HttpResponse::_getStatusLine(short int & statusCode) {
-	std::string	httpVer = HTTPVERS;
+	std::string	httpVer = HTTP_VERS;
 	std::string	httpStatCode = itoa(statusCode);
 	std::string httpStatText = _getStatusText(statusCode);
 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
@@ -131,6 +139,16 @@ bool	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
 	inFile.close();						// Close inFile
 	_statusCode = 200;
 	return (true);
+}
+
+bool	HttpResponse::_isCgi(std::string & path) {
+	size_t	index = path.find_last_of(".");
+	if (index != std::string::npos) {
+		std::string	ext = path.substr(index + 1);
+		if (ext == "sh")
+			return true;
+	}
+	return false;
 }
 
 std::string	HttpResponse::_getStatusText(short int & statusCode) {

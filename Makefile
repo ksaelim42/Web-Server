@@ -9,7 +9,7 @@ DIR_OBJS	= objs
 ### Compilation ###
 CC		= c++
 RM		= rm -f
-CFLAGS	= -Wall -Wextra -Werror -std=c++98
+CFLAGS	= #-Wall -Wextra -Werror -std=c++98
 IFLAGS	= -I$(DIR_INCS)
 
 ### Source Files ###

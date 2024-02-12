@@ -15,7 +15,7 @@ char*	strdup(std::string src) {
 	return (dest);
 }
 
-char**	aopdup(std::map<std::string, std::string> set) {
+char**	aopEnv(std::map<std::string, std::string> set) {
 	char**	aop = new char*[set.size() + 1];
 	std::map<std::string, std::string>::const_iterator	it = set.begin();
 	size_t	i = 0;
@@ -26,7 +26,7 @@ char**	aopdup(std::map<std::string, std::string> set) {
 	return aop;
 }
 
-char**	aopdup(std::vector<std::string> set) {
+char**	aopArgs(std::vector<std::string> set) {
 	char**	aop = new char*[set.size() + 1];
 	size_t	i = 0;
 	for (;i < set.size(); i++)
@@ -65,6 +65,7 @@ std::map<std::string, std::string>	initMineTypeDefault(void) {
 	mimeType["svgz"] = "image/svg+xml";
 	mimeType["webp"] = "image/webp";
 
+	// application it is a top-level media type (not Text or Multimedia)
 	mimeType["js"] = "application/javascript";
 	mimeType["atom"] = "application/atom+xml";
 	mimeType["rss"] = "application/rss+xml";

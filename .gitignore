@@ -5,3 +5,5 @@ objs
 *.out
 webserv
 test.cpp
+test.html
+try.c

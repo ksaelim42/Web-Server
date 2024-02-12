@@ -87,6 +87,7 @@ request_t	genRequest(std::string str) {
 	request.method = strCutTo(str, " ");
 	request.path = root + strCutTo(str, " ");
 	request.version = strCutTo(str, "\r\n");
+	request.body = "";
 	return request;
 }
 

@@ -1,13 +1,14 @@
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
 
-# define HTTPVERS	"HTTP/1.1"
-# define CGIVERS	"CGI/1.1"
-# define RED		"\e[0;31m"
-# define GREEN		"\e[0;32m"
-# define RESET		"\e[0m"
-# define PORT		8080
-# define CRLF		"\r\n"
+# define HTTP_VERS		"HTTP/1.1"
+# define PROGRAM_NAME	"mpm/1.0"
+# define CGI_VERS		"CGI/1.0"
+# define RED			"\e[0;31m"
+# define GREEN			"\e[0;32m"
+# define RESET			"\e[0m"
+# define PORT			8080
+# define CRLF			"\r\n"
 
 #include <unistd.h>
 #include <cstdlib>
@@ -27,6 +28,7 @@ struct request_t {
 	std::string	method;
 	std::string	path;
 	std::string	version;
+	std::string	body;
 };
 
 #include "Utils.hpp"

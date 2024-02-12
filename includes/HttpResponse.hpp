@@ -21,9 +21,10 @@ class HttpResponse
 		std::string	_location;
 		std::string	_date;
 
+		bool		_isCgi(std::string &);
 		bool		_checkRequest(void);
-		bool		_checkMethod(std::string method);
-		bool		_checkVersion(std::string version);
+		bool		_checkMethod(std::string);
+		bool		_checkVersion(std::string);
 		// header field
 		std::string	_getContentType(std::string &, std::map<std::string, std::string> &);
 		std::string	_getContentLength(void);

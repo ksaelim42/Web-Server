@@ -9,7 +9,7 @@
 std::string	itoa(size_t num);
 std::map<std::string, std::string>	initMineTypeDefault(void);
 char*	strdup(std::string);
-char**	aopdup(std::vector<std::string>);
-char**	aopdup(std::map<std::string, std::string>);
+char**	aopArgs(std::vector<std::string>);
+char**	aopEnv(std::map<std::string, std::string>);
 
 #endif
