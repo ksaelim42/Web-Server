@@ -67,7 +67,7 @@ bool	Socket::initServer(Server & server) {
 		throw SocketException("Listen socket fail");
 	std::cout << GREEN << "Success to create server" << RESET << std::endl;
 	std::cout << "Domain name : localhost" << ", port : " << PORT << std::endl;
-	server.fd = server_fd;
+	server.sockFd = server_fd;
 	return true;
 }
 
@@ -102,13 +102,13 @@ bool	Socket::runServer(Server & server) {
 	std::string	reqMsg;
 
 	while (1) {
-		client_fd = acceptConnection(server.fd);
+		client_fd = acceptConnection(server.sockFd);
 		if (receiveRequest(client_fd, reqMsg)) {
 			_request = genRequest(reqMsg);
 			prtRequest(_request);
 
-			HttpResponse	response(server, _request);
-			_resMsg = response.createResponse();
+			HttpResponse	response;
+			_resMsg = response.createResponse(server, _request);
 			sendResponse(client_fd, _resMsg);
 			// http_reponse(client_fd, IMAGE_FILE);
 		}
@@ -120,7 +120,7 @@ bool	Socket::runServer(Server & server) {
 }
 
 bool	Socket::downServer(Server & server) {
-	close(server.fd);
+	close(server.sockFd);
 	std::cout << "close server" << std::endl;
 	return true;
 }

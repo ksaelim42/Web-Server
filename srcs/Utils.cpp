@@ -1,9 +1,16 @@
 #include "Utils.hpp"
 
-std::string	itoa(size_t num) {
+std::string	numToStr(size_t num) {
 	std::stringstream	ss;
 	ss << num;
 	return ss.str();
+}
+
+size_t	strToNum(std::string str) {
+	size_t				num;
+	std::stringstream	ss(str);
+	ss >> num;
+	return num;
 }
 
 char*	strdup(std::string src) {

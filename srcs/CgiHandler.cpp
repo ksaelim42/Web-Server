@@ -79,7 +79,7 @@ std::string	CgiHandler::execCgiScript(Server & server, request_t & request, shor
 		close(_pipeOutFd[1]);
 
 		// Server Section
-		sleep(2); // Why
+		// sleep(2); // Why
 		write(_pipeInFd[1], request.body.c_str(), request.body.size());
 		close(_pipeInFd[1]);
 		char	buffer[5000];
@@ -109,8 +109,9 @@ bool	CgiHandler::_prepareScript(void) {
 }
 
 bool	CgiHandler::_createCgiRequest(Server & server, request_t & request) {
+
 	_path = request.path;
-	// add env
+	// meta-variable
 	// _env["CONTENT_LENGTH"] = "";
 	// _env["CONTENT_TYPE"] = "test";
 	// _env["PATH_INFO"] = "test";
@@ -125,10 +126,19 @@ bool	CgiHandler::_createCgiRequest(Server & server, request_t & request) {
 	// _env["SERVER_NAME"] = ;
 	// _env["SERVER_PORT"] = "test";
 	// _env["SERVER_PROTOCOL"] = "";
+	// HTTP protocal env
+	// _httpEnv()
+	// _env["SERVER_PROTOCOL"] = "";
 
 	// check path cgi is true
 	// check permission
 	// (void)request;
 	return true;
 }
+
+// void	CgiHandler::_httpEnv(std::map<std::string, std::string> req) {
+// 	std::map<std::string, std::string>::const_iterator	it;
+// 	for (it = req.begin();it != set.end(); it++)
+// 		_env[it->first] = it->second; 
+// }
 

@@ -12,7 +12,7 @@ class HttpResponse
 		Server		_server;
 		request_t	_request;
 
-		short int	_statusCode;
+		short int	_status;
 		std::string	_header;
 		std::string	_body;
 		std::string	_contentType;
@@ -26,7 +26,8 @@ class HttpResponse
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
 		// header field
-		std::string	_getContentType(std::string &, std::map<std::string, std::string> &);
+		bool		_createHeader(void);
+		std::string	_getContentType(std::string &);
 		std::string	_getContentLength(void);
 		std::string	_getDate(void);
 		std::string	_getStatusLine(short int &);
@@ -34,10 +35,10 @@ class HttpResponse
 		// body messages
 		bool		_readFile(std::string &, std::string &);
 	public:
-		HttpResponse(Server &, request_t &);
+		HttpResponse();
 		~HttpResponse() {}
 
-		std::string	createResponse(void);
+		std::string	createResponse(Server &, request_t &);
 		void		prtResponse(void);
 };
 

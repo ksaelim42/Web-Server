@@ -3,154 +3,101 @@
 Server::Server(void) {
 	// if didn't specify Types context Server will use default Types
 	if (1) { //:TODO fix to check config file
-		mimeType = initMineTypeDefault();
+		_mimeType = initMineTypeDefault();
 	}
-	if (1) // : TODO check on config file
-		clientHeaderBufferSize = HEADBUFSIZE;
-	if (1) // : TODO check on config file
-		clientMaxBodySize = BODYBUFSIZE;
+	_name = "";
+	_ipAddr = "0.0.0.0";
+	_port = 80;
+	_clientHeaderBufferSize = HEADBUFSIZE;
+	_clientMaxBodySize = BODYBUFSIZE;
 }
 
-// bool	readFile(std::string name, std::string &str)
-// {
-// 	std::ifstream	inFile;
-// 	char*			buffer;
-// 	int				length;
+// ************************************************************************** //
+// --------------------------------- Setter --------------------------------- //
+// ************************************************************************** //
 
-// 	inFile.open(name.c_str());		// Convert string to char* by c_str() function
-// 	if (!inFile.is_open())
-// 	{
-// 		std::cerr << name << " :Can not open." << std::endl;
-// 		return (false);
-// 	}
-// 	inFile.seekg(0, inFile.end);	// Set position to end of the stream
-// 	length = inFile.tellg();		// Get current position
-// 	inFile.seekg(0, inFile.beg);	// Set position back to begining of the stream
-// 	buffer = new char [length];		// Allocate Size of Buffer as size of inFile
-// 	inFile.read(buffer, length);	// Read all data in inFile to Buffer
-// 	str = buffer;					// Copy string from Buffer to str
-// 	delete [] buffer;				// Free Buffer
-// 	inFile.close();					// Close inFile
-// 	return (true);
-// }
+void	Server::setName(const std::string & name) {
+	_name = name;
+}
 
-// int	Server::acceptConnection(int serverSock) {
-// 	int					client_fd;
-// 	struct sockaddr_in	clientAddr;
-// 	socklen_t			clientAddrLen = sizeof(clientAddr);
+void	Server::setIPaddr(const std::string & ipAddr) {
 
-// 	// Accept connection
-// 	client_fd	= accept(serverSock, (struct sockaddr *)&clientAddr, &clientAddrLen);
-// 	if (client_fd < 0)
-// 		throw ServerException("Accept fail");
-// 	else {
-// 		std::cout << GREEN << "connection accepted from " << RESET << std::endl;
-// 		std::cout << "client fd: " << client_fd 
-// 		<< ", client IP address: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
-// 	}
-// 	return client_fd;
-// }
+	_ipAddr = ipAddr;
+}
 
-// void	handle_client(int client_fd) {
-// 	char	buffer[4098];
+void	Server::setPort(const std::string & port) {
+	// TODO : between 0 - 65535
+	_port = strToNum(port);
+}
 
-// 	// Receive data from client
-// 	ssize_t	bytes_received =  recv(client_fd, buffer, 4098 - 1, 0);
-// 	if (bytes_received < 0) {
-// 		std::cerr << "Error receiving data" << std::endl;
-// 		close(client_fd);
-// 		exit(1);
-// 	} else if (bytes_received == 0) {
-// 		std::cerr << "Client disconnected" << std::endl;
-// 		close(client_fd);
-// 		exit(1);
-// 	}
-// 	std::cout << "Data receive: " << std::endl;
-// 	std::cout << "-----------------------------------------" << std::endl;
-// 	std::cout << buffer << std::endl;
-// 	std::cout << "-----------------------------------------" << std::endl;
-// 	return ;
-// }
+void	Server::setRoot(const std::string & root) {
+	_root = root;
+}
 
-// void	http_reponse(int client_fd, const char *path) {
+void	Server::setIndex(const std::string & index) {
+	_index.push_back(index);
+}
+
+void	Server::setCliHeadSize(const std::string & size) {
+	_clientHeaderBufferSize = strToNum(size);
+}
+
+void	Server::setCliBodySize(const std::string & size) {
+	_clientMaxBodySize = strToNum(size);
+}
+
+void	Server::setLocation(const Location & location) {
+	_location.push_back(location);
+}
+
+void	Server::setMimeType(const std::string & key, const std::string & value) {
+	// if there are have key, They will be over write
+	// TODO : may be log to client
+	_mimeType[key] = value;
+}
+
+// ************************************************************************** //
+// --------------------------------- Getter --------------------------------- //
+// ************************************************************************** //
+
+std::string	Server::getName(void) const {return _name;}
+
+std::string	Server::getIPaddr(void) const {return _ipAddr;}
+
+uint16_t	Server::getPort(void) const {return _port;}
+
+std::string	Server::getRoot(void) const {return _root;}
+
+std::vector<std::string>	Server::getIndex(void) const {return _index;}
+
+size_t	Server::getCliHeadSize(void) const {return _clientHeaderBufferSize;}
+
+size_t	Server::getCliBodySize(void) const {return _clientMaxBodySize;}
+
+std::vector<Location>	Server::getLocation(void) const {return _location;}
+
+std::string	Server::getMimeType(const std::string & extension) const {
+	std::map<std::string, std::string>::const_iterator	it;
+	it = _mimeType.find(extension);
+	if (it != _mimeType.end())
+		return it->second;
+	it = _mimeType.find("default");
+	return it->second;
+}
+
+// struct sockaddr	Server::getSockAddr(void) const {
 // 	int	status;
+// 	struct sockaddr	sockAddr;
+// 	struct addrinfo	hints, *result;
 
-// 	std::string	statusLine = "HTTP/1.1 200 OK\r\n";
-// 	// std::string	headers = "Content-Type: text/html\r\n\r\n";
-// 	// std::string	headers = "Accept-Ranges: bytes\r\nContent-Length: 72660\r\nContent-Type: text/plain\r\n\r\n";
-// 	std::string	headers = IMAGE_HEADER;
-// 	std::string	body;
-
-// 	if (readFile(path, body) == 0) {
-// 		close(client_fd);
-// 		exit(1);
+// 	memset(&hints, 0, sizeof(struct addrinfo));
+// 	hints.ai_family = AF_UNSPEC;		// Allow IPv4 or IPv6
+// 	hints.ai_socktype = SOCK_STREAM;	// Stream socket = TCP
+// 	status = getaddrinfo(_ipAddr.c_str(), _name.c_str(), &hints, &result); // TODO : not sure name is right
+// 	if (status != 0) {
+// 		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+// 		// return false;
 // 	}
-// 	else 
-// 		std::cout << "Read file success" << std::endl;
-// 	std::string	content = statusLine + headers + body;
-// 	status = send(client_fd, content.c_str(), content.length(), 0);
-// 	if (status < 0) {
-// 		std::cerr << "Error to response data" << std::endl;
-// 		close(client_fd);
-// 		exit(1);
-// 	}
-// 	std::cout << "Sent data success" << std::endl;
-// 	return ;
-// }
-
-// int	Server::initServer() {
-// 	int					status;
-// 	int					server_fd;
-// 	unsigned short int	netPort;
-// 	int					enable;
-// 	struct sockaddr_in	server_address;
-
-// 	// Creating socket file descriptor
-// 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
-// 	if (server_fd < 0)
-// 		throw ServerException("Create socket fail");
-
-// 	// To manipulate option for socket and check address is used
-// 	enable = 1;
-// 	status = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
-// 	if (status < 0)
-// 		throw ServerException("Setup socket fail");
-
-// 	// Set address and port
-// 	server_address.sin_family = AF_INET; // set for IPv4
-// 	server_address.sin_port = htons(PORT); // convert host byte order to network byte order
-// 	server_address.sin_addr.s_addr = INADDR_ANY; // Bind to all available network interfaces
-
-// 	// Bind the socket to the specified address and port
-// 	status = bind(server_fd, (struct sockaddr*)&server_address, sizeof(server_address));
-// 	if (status < 0)
-// 		throw ServerException("Bind socket fail");
-
-// 	// Prepare socket for incoming connection
-// 	status = listen(server_fd, 10);
-// 	if (status < 0)
-// 		throw ServerException("Listen socket fail");
-
-// 	std::cout << GREEN << "Success to create server" << RESET << std::endl;
-// 	std::cout << "Domain name : localhost" << ", port : " << PORT << std::endl;
-// 	return server_fd;
-// }
-
-// int	Server::runServer(int serverSock) {
-// 	int	client_fd;
-
-// 	while (1) {
-// 		client_fd = acceptConnection(serverSock);
-
-// 		handle_client(client_fd);
-// 		// http_reponse(client_fd, HTML_FILE);
-// 		http_reponse(client_fd, IMAGE_FILE);
-// 		// usleep(500000);
-// 		// http_reponse(client_fd, IMAGE_FILE);
-// 		close(client_fd);
-// 	}
-// 	sleep(3);
-// 	close(serverSock);
-// 	std::cout << "close server" << std::endl;
-// 	return 1;
+// 	sockAddr = result->ai_addr;
+// 	return sockAddr;
 // }

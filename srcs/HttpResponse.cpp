@@ -1,39 +1,47 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse(Server & server, request_t & request) : _server(server), _request(request) {
+HttpResponse::HttpResponse(void) {
 	_allowMethod.push_back("GET");
 	_allowMethod.push_back("POST");
 	_allowMethod.push_back("HEAD");
 }
 
-std::string	HttpResponse::createResponse(void) {
+std::string	HttpResponse::createResponse(Server & server, request_t & req) {
+	_server = server;
+	_request = req;
 	// _checkRequest();
 	// TODO : match location in configfile
 	if (_isCgi(_request.path)) {
 		CgiHandler	cgi;
 
-		_body = cgi.execCgiScript(_server, _request, _statusCode);
+		_body = cgi.execCgiScript(_server, _request, _status);
 	}
 	else {
+		_request.path += "/index.html";
 		_readFile(_request.path, _body);
-		_contentType = _getContentType(_request.path, _server.mimeType);
 	}
+	_createHeader();
+	return _header + CRLF + _body;
+}
+
+bool	HttpResponse::_createHeader(void) {
+	_contentType = _getContentType(_request.path);
 	_contentLength = _getContentLength();
 	_date = _getDate();
-	_header = _getStatusLine(_statusCode);
+	_header = _getStatusLine(_status);
 	_header += _contentLength;
 	_header += _contentType;
 	_header += _date;
-	return _header + CRLF + _body;
+	return true;
 }
 
 bool	HttpResponse::_checkRequest(void) {
 	if (!_checkMethod("GET")) { // TODO : get from request
-		_statusCode = 405;
+		_status = 405;
 		return false;
 	}
 	if (!_checkVersion("HTTP/1.1")) { // TODO get from request
-		_statusCode = 505;
+		_status = 505;
 		return false;
 	}
 	return true;
@@ -71,7 +79,7 @@ bool	HttpResponse::_checkVersion(std::string version) {
 
 std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 	std::string	httpVer = HTTP_VERS;
-	std::string	httpStatCode = itoa(statusCode);
+	std::string	httpStatCode = numToStr(statusCode);
 	std::string httpStatText = _getStatusText(statusCode);
 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
 }
@@ -79,18 +87,17 @@ std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 std::string	HttpResponse::_getContentLength(void) {
 	std::string	contentLength = "Content-Length: ";
 	size_t	length = _body.length();
-	return contentLength + itoa(length) + CRLF;
+	return contentLength + numToStr(length) + CRLF;
 }
 
-std::string	HttpResponse::_getContentType(std::string & path, std::map<std::string, std::string> & mimeType) {
+std::string	HttpResponse::_getContentType(std::string & path) {
 	std::string	contentType = "Content-Type: ";
 	size_t	index = path.find_last_of(".");
 	if (index != std::string::npos) {
 		std::string	ext = path.substr(index + 1);
-		if (mimeType.count(ext))
-			return contentType + mimeType[ext] + CRLF;
+		return contentType + _server.getMimeType(ext) + CRLF;
 	}
-	return contentType + mimeType["default"] + CRLF;
+	return contentType + _server.getMimeType("default") + CRLF;
 }
 
 std::string	HttpResponse::_getDate(void) {
@@ -118,17 +125,17 @@ bool	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
 	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
 	if (!inFile.is_open()) {
 		if (errno == ENOENT) {	// 2 No such file or directory : 404
-			_statusCode = 404;
+			_status = 404;
 			return false;
 		}
 		if (errno == EACCES) { // 13 Permission denied : 403
-			_statusCode = 403;
+			_status = 403;
 			return false;
 		}
 		// EMFILE, ENFILE : Too many open file, File table overflow
 		// Server Error, May reach the limit of file descriptors : 500
 		// std::cerr << "Internal Server Error" << std::endl;
-		_statusCode = 500;
+		_status = 500;
 		return (false);
 	} // : TODO Check it is a file not a dir if dir are there autoindex
 	inFile.seekg(0, inFile.end);		// Set position to end of the stream
@@ -137,7 +144,7 @@ bool	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
 	buffer.resize(length);
 	inFile.read(&buffer[0], length);	// Read all data in inFile to Buffer
 	inFile.close();						// Close inFile
-	_statusCode = 200;
+	_status = 200;
 	return (true);
 }
 
