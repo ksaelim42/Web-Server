@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/02/15 09:34:18 by prachman         ###   ########.fr       */
+/*   Updated: 2024/02/15 12:23:40 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,19 +49,19 @@ httpReq	storeReq(std::string rawReq)
 	//referer == provides the URL of the page that referred the client to the current requests 
 	//language == specifies the preferred languages for the response
 	//!!  >>>>>> those that are not defined are the headers that I am not sure we need <<<<<
-	reqData.headers["host"] = vecReq[0];
-	reqData.headers["connection"] = vecReq[1];
-	reqData.headers["sec_ua"] = vecReq[2];
-	reqData.headers["mobile"] = vecReq[3];
-	reqData.headers["ua"] = vecReq[4];
-	reqData.headers["ua_platform"] = vecReq[5];
-	reqData.headers["accept"] = vecReq[6];
-	reqData.headers["fetch_site"] = vecReq[7];
-	reqData.headers["fetch_mode"] = vecReq[8];
-	reqData.headers["fetch_dest"] = vecReq[9];
-	reqData.headers["referer"] = vecReq[10];
-	reqData.headers["encoding"] = vecReq[11];
-	reqData.headers["language"] = vecReq[12];
+	reqData.headers["Host"] = vecReq[0];
+	reqData.headers["Connection"] = vecReq[1];
+	reqData.headers["sec-ch-ua"] = vecReq[2];
+	reqData.headers["sec-ch-mobile"] = vecReq[3];
+	reqData.headers["User-Agent"] = vecReq[4];
+	reqData.headers["sec-ch-ua-platform"] = vecReq[5];
+	reqData.headers["Accept"] = vecReq[6];
+	reqData.headers["Sec-Fetch-Site"] = vecReq[7];
+	reqData.headers["Sec-Fetch-Mode"] = vecReq[8];
+	reqData.headers["Sec-Fetch-Dest"] = vecReq[9];
+	reqData.headers["Referer"] = vecReq[10];
+	reqData.headers["Accept-Encoding"] = vecReq[11];
+	reqData.headers["Accept-Language"] = vecReq[12];
 	
 	return reqData;
 }
