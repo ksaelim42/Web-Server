@@ -1,6 +1,16 @@
-// #include "../include/Webserv.hpp"
-// #include "../include/HttpResponse.hpp"
 #include "Socket.hpp"
+
+bool	matchLocation(std::vector<Server> servers, std::string path) {
+	return true;
+}
+
+Server	createServer(void) {
+	Server	serv;
+	serv.setName("testwebserv1");
+	serv.setPort("8000");
+	serv.setRoot("html/static");
+	return serv;
+}
 
 int	main(int argc, char**argv)
 {
@@ -9,15 +19,13 @@ int	main(int argc, char**argv)
 	(void)argv;
 	try {
 		Socket		socket;
-		Server		server;
+		std::vector<Server>		servs;
 
-		// for (int i = 0; i < 1000; i++) {
-		// 	int* myarray= new int[10000000000];
-		// 	usleep(5000);
-		// }
-		socket.initServer(server);
-		socket.runServer(server);
-		socket.downServer(server);
+		servs.push_back(createServer());
+		servs[0].prtServer();
+		socket.initServer(servs);
+		socket.runServer(servs);
+		socket.downServer(servs);
 		// HttpResponse	response(server, request);
 		// response.createResponse();
 		// response.prtResponse();

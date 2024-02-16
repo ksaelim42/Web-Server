@@ -1,11 +1,35 @@
 #ifndef CGIHANDLER_HPP
 # define CGIHANDLER_HPP
 
+# define CGI_VERS		"CGI/1.0"
+# define PROGRAM_NAME	"MPM/1.0"
+
 // #include <iostream>
 // #include <string>
 // #include <string.h>
 // #include <cstdlib>
-#include "Webserv.hpp"
+#include <fstream>
+#include <unistd.h>
+
+#include "httpReq.hpp"
+#include "Utils.hpp"
+#include "Server.hpp"
+
+struct parsedReq {
+	std::string							cliIPaddr;
+	std::string							method;
+	std::string							uri;
+	std::string							version;
+	std::map<std::string, std::string>	headers;
+	std::string							contentLength;
+	std::string							contentType;
+	std::string							path;
+	std::string							pathInfo;
+	std::string							queryStr;
+	std::string							body;
+	Server								serv;
+};
+
 
 struct t_pipe
 {
@@ -25,7 +49,7 @@ class CgiHandler
 		std::string	_path; // Tmp
 
 		// char**	_args; // store CGI script path to execute
-		bool	_createCgiRequest(Server &, request_t &);
+		bool	_createCgiRequest(parsedReq &);
 		bool	_createPipe(void);
 		bool	_prepareScript(void);
 		std::map<std::string, std::string>	_env;
@@ -33,7 +57,7 @@ class CgiHandler
 		CgiHandler(void);
 		// ~Cgi(void);
 		// char**	createArgs(std::string path);
-		std::string	execCgiScript(Server &, request_t &, short int &);
+		std::string	execCgiScript(parsedReq &, short int &);
 };
 
 

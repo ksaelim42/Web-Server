@@ -1,5 +1,15 @@
 #include "Utils.hpp"
 
+std::string	toProtoEnv(std::string var) {
+	std::string	key = "HTTP_";
+	for (int i = 0; i < var.length(); i++) {
+		if (var[i] == '-')
+			var[i] = '_';
+		var[i] = std::toupper(var[i]);
+	}
+	return key + var;
+}
+
 std::string	numToStr(size_t num) {
 	std::stringstream	ss;
 	ss << num;
@@ -156,4 +166,11 @@ std::map<std::string, std::string>	initMineTypeDefault(void) {
 	mimeType["wmv"] = "video/x-ms-wmv";
 	mimeType["avi"] = "video/x-msvideo";
 	return mimeType;
+}
+
+void	prtMap(std::map<std::string, std::string> set) {
+	std::map<std::string, std::string>::const_iterator	it;
+	size_t	i = 0;
+	for (it = set.begin(); it != set.end(); it++)
+		std::cout << it->first << ": " << it->second << std::endl;
 }

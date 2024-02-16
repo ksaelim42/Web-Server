@@ -1,31 +1,52 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse(void) {
-	_allowMethod.push_back("GET");
-	_allowMethod.push_back("POST");
-	_allowMethod.push_back("HEAD");
+// std::string	HttpResponse::_encodeURL(std::string uri) {
+// 	for (int i = 0; i < uri.length(); i++) {
+// 		if (uri[i] == '%') {
+// 			if (!std::isdigit(uri[i]))
+// 				throw HttpResponse::ReqException();
+// 			else
+// 		}
+// 	}
+// }
+
+HttpResponse::HttpResponse(Server & serv, httpReq & req) {
+	// _allowMethod.push_back("GET");
+	// _allowMethod.push_back("POST");
+	// _allowMethod.push_back("HEAD");
+	_req.serv = serv;
+	_req.cliIPaddr = "";		// Can't find way
+	_req.method = req.method;
+	_req.uri = req.srcPath;
+	_req.version = req.version;
+	_req.headers = req.headers;
+	_req.contentLength = _findContent(_req.headers, "Content-Length");
+	_req.contentType = _findContent(_req.headers, "Content-Type");
+	std::string	uriEncode = _req.uri; // TODO : have to encode uri first
+	_req.path = "";
+	_req.pathInfo = "";
+	_req.queryStr = "";
+	_req.body = req.body;
 }
 
-std::string	HttpResponse::createResponse(Server & server, request_t & req) {
-	_server = server;
-	_request = req;
+std::string	HttpResponse::createResponse(void) {
 	// _checkRequest();
 	// TODO : match location in configfile
-	if (_isCgi(_request.path)) {
+	if (_isCgi(_req.path)) {
 		CgiHandler	cgi;
 
-		_body = cgi.execCgiScript(_server, _request, _status);
+		_body = cgi.execCgiScript(_req, _status);
 	}
 	else {
-		_request.path += "/index.html";
-		_readFile(_request.path, _body);
+		// _request.srcPath += "/index.html";
+		_readFile(_req.path, _body);
 	}
 	_createHeader();
 	return _header + CRLF + _body;
 }
 
 bool	HttpResponse::_createHeader(void) {
-	_contentType = _getContentType(_request.path);
+	_contentType = _getContentType(_req.path);
 	_contentLength = _getContentLength();
 	_date = _getDate();
 	_header = _getStatusLine(_status);
@@ -95,9 +116,9 @@ std::string	HttpResponse::_getContentType(std::string & path) {
 	size_t	index = path.find_last_of(".");
 	if (index != std::string::npos) {
 		std::string	ext = path.substr(index + 1);
-		return contentType + _server.getMimeType(ext) + CRLF;
+		return contentType + _req.serv.getMimeType(ext) + CRLF;
 	}
-	return contentType + _server.getMimeType("default") + CRLF;
+	return contentType + _req.serv.getMimeType("default") + CRLF;
 }
 
 std::string	HttpResponse::_getDate(void) {
@@ -174,4 +195,20 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 	default:
 		return "Undefined";
 	}
+}
+
+// ************************************************************************** //
+// ---------------------------- Parsing Request ----------------------------- //
+// ************************************************************************** //
+
+std::string	HttpResponse::_findContent(std::map<std::string, std::string> & map, std::string const & content) {
+	std::map<std::string, std::string>::const_iterator	it;
+	std::string	value = "";
+
+	it = map.find(content);
+	if (it != map.end()) {
+		value = it->second;
+		map.erase(it);
+	}
+	return value;
 }

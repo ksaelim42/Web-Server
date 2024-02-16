@@ -7,7 +7,7 @@
 # define RED	"\e[0;31m"
 # define GREEN	"\e[0;32m"
 # define RESET	"\e[0m"
-# define PORT	8080
+# define PORT	8001
 
 #define HTML_FILE "./content/index.html"
 #define IMAGE_FILE "./content/image.png"

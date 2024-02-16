@@ -2,8 +2,7 @@
 dirTest
 objs
 *.o
-*.out
+a.out
 webserv
-test.cpp
-test.html
+test*
 try.c

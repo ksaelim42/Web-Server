@@ -1,8 +1,14 @@
 #ifndef SOCKET_HPP
 # define SOCKET_HPP
 
-#include "Webserv.hpp"
+#include "Utils.hpp"
+#include "Server.hpp"
+#include "httpReq.hpp"
 #include "HttpResponse.hpp"
+#include <new>
+#include <exception>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #define HTML_FILE "./content/static/index.html"
 #define IMAGE_FILE "./content/static/images/Cat03.jpg"
@@ -24,17 +30,23 @@ class Socket
 		// size_t	clientHeaderBufferSize;
 		// size_t	clientMaxBodySize;
 		// int		acceptConnection(int);
+		struct addrinfo	*_sockAddr;
 		std::string	_name;
-		request_t	_request;
+		// request_t	_request;
+		httpReq		_request;
 		std::string	_resMsg;
+		// int		_matchLocation(httpReq & req, std::vector<Server> & servs);
+		// int		_matchServer(httpReq &, std::vector<Server> &);
+		// int		_matchPath(httpReq & req, Server & serv);
+		bool	_setSockAddr(Server & serv);
 	public:
 		std::map<std::string, std::string>	mimeType;
 		Socket(void) {}
-		~Socket() {}
+		~Socket();
 
-		bool	initServer(Server &);
-		bool	runServer(Server &);
-		bool	downServer(Server &);
+		bool	initServer(std::vector<Server> &);
+		bool	runServer(std::vector<Server> &);
+		bool	downServer(std::vector<Server> &);
 		int		acceptConnection(int & serverSock);
 		bool	receiveRequest(int &, std::string &);
 		void	sendResponse(int &, std::string &);

@@ -1,5 +1,9 @@
 #include "Socket.hpp"
 
+Socket::~Socket() {
+	// freeaddrinfo(_sockAddr);
+}
+
 int	Socket::acceptConnection(int & serverSock) {
 	int					client_fd;
 	struct sockaddr_in	clientAddr;
@@ -30,44 +34,40 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 		return false;
 	}
 	request = buffer;
-	std::cout << "Receive Data" << std::endl;
-	// std::cout << "-----------------------------------------" << std::endl;
-	// std::cout << buffer << std::endl;
-	// std::cout << "-----------------------------------------" << std::endl;
+	std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl;
+	std::cout << "-----------------------------------------" << std::endl;
+	std::cout << buffer << std::endl;
+	std::cout << "-----------------------------------------" << std::endl;
 	return true;
 }
 
-bool	Socket::initServer(Server & server) {
-	int					status;
-	int					server_fd;
-	// unsigned short int	netPort;
-	int					enable;
-	struct sockaddr_in	server_address;
+bool	Socket::initServer(std::vector<Server> & servs) {
+	int	enable = 1;
 
-	// Creating socket file descriptor
-	server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_fd < 0)
-		throw SocketException("Create socket fail");
-	// To manipulate option for socket and check address is used
-	enable = 1;
-	status = setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
-	if (status < 0)
-		throw SocketException("Setup socket fail");
-	// Set address and port
-	server_address.sin_family = AF_INET; // set for IPv4
-	server_address.sin_port = htons(PORT); // convert host byte order to network byte order
-	server_address.sin_addr.s_addr = INADDR_ANY; // Bind to all available network interfaces
-	// Bind the socket to the specified address and port
-	status = bind(server_fd, (struct sockaddr*)&server_address, sizeof(server_address));
-	if (status < 0)
-		throw SocketException("Bind socket fail");
-	// Prepare socket for incoming connection
-	status = listen(server_fd, 10);
-	if (status < 0)
-		throw SocketException("Listen socket fail");
-	std::cout << GREEN << "Success to create server" << RESET << std::endl;
-	std::cout << "Domain name : localhost" << ", port : " << PORT << std::endl;
-	server.sockFd = server_fd;
+	for (int i = 0; i < servs.size(); i++) {
+		// Creating socket file descriptor
+		if (_setSockAddr(servs[i]) == 0)
+			throw SocketException("Setup socket fail");
+		servs[i].sockFd = socket(_sockAddr->ai_family, _sockAddr->ai_socktype, _sockAddr->ai_protocol); // TODO : fix domain later
+		if (servs[i].sockFd < 0)
+			throw SocketException("Create socket fail");
+		// To manipulate option for socket and check address is used
+		if (setsockopt(servs[i].sockFd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+			throw SocketException("Setup socket fail");
+		// Bind the socket to the specified address and port
+		if (bind(servs[i].sockFd, _sockAddr->ai_addr, _sockAddr->ai_addrlen) < 0)
+			throw SocketException("Bind socket fail");
+		// Prepare socket for incoming connection
+		if (listen(servs[i].sockFd, 10) < 0) // TODO : edit max client request
+			throw SocketException("Listen socket fail");
+		std::cout << GREEN << "Success to create server" << RESET << std::endl;
+		if (!servs[i].getName().empty())
+			std::cout << "Domain name: "<< PURPLE << servs[i].getName() << RESET;
+		else
+			std::cout << "Domain name: "<< PURPLE << "localhost" << RESET;
+		std::cout << ", port: "<< PURPLE << servs[i].getPort() << RESET << std::endl;
+		// freeaddrinfo(_sockAddr);
+	}
 	return true;
 }
 
@@ -79,49 +79,61 @@ std::string	strCutTo(std::string & str, std::string delimiter) {
 	return word;
 }
 
-request_t	genRequest(std::string str) {
-	request_t	request;
-	std::string	root = "content/static";
+// request_t	genRequest(std::string str) {
+// 	request_t	request;
+// 	// std::string	root = "content/static";
 
-	// request.path = "./content/static/index.html";
-	request.method = strCutTo(str, " ");
-	request.path = root + strCutTo(str, " ");
-	request.version = strCutTo(str, "\r\n");
-	request.body = "";
-	return request;
-}
+// 	// request.path = "./content/static/index.html";
+// 	request.method = strCutTo(str, " ");
+// 	request.path = strCutTo(str, " ");
+// 	request.version = strCutTo(str, "\r\n");
+// 	request.body = "";
+// 	return request;
+// }
 
-void	prtRequest(request_t request) {
+void	prtRequest(httpReq request) {
+	std::cout <<  "--- HTTP Request ---" << std::endl;
 	std::cout << "method: " << request.method << std::endl;
-	std::cout << "path: " << request.path << std::endl;
+	std::cout << "path: " << request.srcPath << std::endl;
 	std::cout << "version: " << request.version << std::endl;
+	prtMap(request.headers);
+	std::cout <<  "--------------------" << std::endl;
 }
 
-bool	Socket::runServer(Server & server) {
+bool	Socket::runServer(std::vector<Server> & servs) {
 	int			client_fd;
 	std::string	reqMsg;
 
+	Server	server = servs[0]; // TODO improve for multi server later
 	while (1) {
 		client_fd = acceptConnection(server.sockFd);
 		if (receiveRequest(client_fd, reqMsg)) {
-			_request = genRequest(reqMsg);
+			// _request = genRequest(reqMsg);
+			_request = storeReq(reqMsg);
 			prtRequest(_request);
-
-			HttpResponse	response;
-			_resMsg = response.createResponse(server, _request);
-			sendResponse(client_fd, _resMsg);
+			// int i = _matchServer(_request, servs);
+			// matchLocation();
+			try {
+				HttpResponse	response(server, _request);
+				_resMsg = response.createResponse();
+				sendResponse(client_fd, _resMsg);
+			}
+			catch (std::exception &e) {
+				std::cerr << e.what() << std::endl;
+			}
 			// http_reponse(client_fd, IMAGE_FILE);
 		}
 		close(client_fd);
 		std::cout << "..." << std::endl;
-		sleep(4);
+		sleep(2);
 	}
 	return true;
 }
 
-bool	Socket::downServer(Server & server) {
-	close(server.sockFd);
-	std::cout << "close server" << std::endl;
+bool	Socket::downServer(std::vector<Server> & servs) {
+	for (int i = 0; i < servs.size(); i++)
+		close(servs[i].sockFd);
+	std::cout << "Server are closed" << std::endl;
 	return true;
 }
 
@@ -136,3 +148,62 @@ void	Socket::sendResponse(int & client_fd, std::string & resMsg) {
 	std::cout << "Sent data success" << std::endl;
 	return ;
 }
+
+bool	Socket::_setSockAddr(Server & serv) {
+	int	status;
+	struct addrinfo	hints;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;		// Allow IPv4 or IPv6
+	hints.ai_socktype = SOCK_STREAM;	// Stream socket = TCP
+	hints.ai_addr = NULL;
+	hints.ai_canonname = NULL;
+	hints.ai_next = NULL;
+	status = getaddrinfo(serv.getIPaddr().c_str(), serv.getPort().c_str(), &hints, &_sockAddr);
+	if (status != 0) {
+		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+		return false;
+	}
+	return true;
+}
+
+// int	Socket::_matchLocation(httpReq & req, std::vector<Server> & servs) {
+// 	int	i;
+
+// 	i = _mathServer(req, servs);
+// }
+
+// return -1, if not match any Servers
+// return 0 - Server.size()-1, if match Server
+// int	Socket::_matchServer(httpReq & req, std::vector<Server> & servs) {
+// 	std::string	tmp = req.headers["Host"];
+// 	std::string	reqIPaddr = strCutTo(tmp, ":");
+// 	if (reqIPaddr == "localhost")
+// 		reqIPaddr = "127.0.0.1";
+// 	std::string	reqPort = tmp;
+// 	// std::cout << "*******************************" << std::endl;
+// 	// std::cout << "reqHost: " << reqIPaddr << std::endl;
+// 	// std::cout << "reqPort: " << reqPort << std::endl;
+// 	for (int i = 0; i < servs.size(); i++) {
+// 		if (reqIPaddr == servs[i].getIPaddr()) {
+// 			if (reqPort == servs[i].getPort())
+// 				return i;
+// 		}
+// 	}
+// 	return -1;
+// }
+
+// // return -1, if not match any location
+// // return 0 - location.size()-1 , if match location
+// int	Server::_matchPath(httpReq & req, Server & serv) {
+// 	std::string	path;
+
+// 	std::vector<Location>	loc = serv.getLocation();
+// 	for (int i = 0; i < loc.size(); i++) {
+// 		req.path.find(loc.path);
+// 		if (loc.path.find(req.path) == 0) {
+// 			return i;
+// 		}
+// 	}
+// 	return -1;
+// }
