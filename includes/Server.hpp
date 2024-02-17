@@ -20,7 +20,7 @@ struct Location
 	std::string					path;	// path
 	std::string					root;
 	std::vector<std::string>	index;
-	return_t					retur;
+	// return_t					retur;
 };
 
 class Server
@@ -44,11 +44,12 @@ class Server
 		void	setIPaddr(std::string ipAddr);
 		void	setPort(std::string port);
 		void	setRoot(std::string root);
-		void	setIndex(std::string index);
+		void	setIndex(std::vector<std::string> index);
 		void	setCliHeadSize(std::string size);
 		void	setCliBodySize(std::string size);
 		void	setLocation(Location location);
 		void	setMimeType(std::string key, std::string value);
+		void	clearLocation(void);
 		void	prtServer(void);
 
 		std::string							getName(void) const;

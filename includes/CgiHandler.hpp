@@ -10,6 +10,7 @@
 // #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "httpReq.hpp"
 #include "Utils.hpp"
@@ -26,6 +27,7 @@ struct parsedReq {
 	std::string							path;
 	std::string							pathInfo;
 	std::string							queryStr;
+	std::string							fragment;
 	std::string							body;
 	Server								serv;
 };

@@ -27,12 +27,8 @@ Accept-Ranges: bytes\r\n\r\n\
 class Socket
 {
 	private:
-		// size_t	clientHeaderBufferSize;
-		// size_t	clientMaxBodySize;
-		// int		acceptConnection(int);
 		struct addrinfo	*_sockAddr;
 		std::string	_name;
-		// request_t	_request;
 		httpReq		_request;
 		std::string	_resMsg;
 		// int		_matchLocation(httpReq & req, std::vector<Server> & servs);

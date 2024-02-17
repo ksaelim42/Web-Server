@@ -29,7 +29,7 @@ class HttpResponse
 		std::string	_location;
 		std::string	_date;
 
-		std::string	_encodeURL(std::string uri);
+		// std::string	_encodeURL(std::string uri);
 		bool		_isCgi(std::string &);
 		bool		_checkRequest(void);
 		bool		_checkMethod(std::string);
@@ -45,11 +45,15 @@ class HttpResponse
 		bool		_readFile(std::string &, std::string &);
 		// parsing request
 		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
+		bool		_splitPath(std::string url);
+		bool		_matchLocation(std::vector<Location>);
+		bool		_findFile(void);
 	public:
 		HttpResponse(Server &, httpReq &);
 		~HttpResponse() {}
 
 		std::string	createResponse(void);
+		void		prtParsedReq(void);
 		void		prtResponse(void);
 
 		class	ReqException : public std::exception {

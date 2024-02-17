@@ -50,9 +50,9 @@ void	handle_client(int client_fd) {
 		exit(1);
 	}
 	std::cout << "Data receive: " << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << buffer << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
+	// std::cout << "-----------------------------------------" << std::endl;
+	// std::cout << buffer << std::endl;
+	// std::cout << "-----------------------------------------" << std::endl;
 	return ;
 }
 

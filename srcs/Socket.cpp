@@ -110,22 +110,20 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 		if (receiveRequest(client_fd, reqMsg)) {
 			// _request = genRequest(reqMsg);
 			_request = storeReq(reqMsg);
-			prtRequest(_request);
-			// int i = _matchServer(_request, servs);
-			// matchLocation();
+			// prtRequest(_request);
 			try {
 				HttpResponse	response(server, _request);
+				response.prtParsedReq();
 				_resMsg = response.createResponse();
 				sendResponse(client_fd, _resMsg);
 			}
 			catch (std::exception &e) {
 				std::cerr << e.what() << std::endl;
 			}
-			// http_reponse(client_fd, IMAGE_FILE);
 		}
 		close(client_fd);
 		std::cout << "..." << std::endl;
-		sleep(2);
+		// sleep(2);
 	}
 	return true;
 }
@@ -166,12 +164,6 @@ bool	Socket::_setSockAddr(Server & serv) {
 	}
 	return true;
 }
-
-// int	Socket::_matchLocation(httpReq & req, std::vector<Server> & servs) {
-// 	int	i;
-
-// 	i = _mathServer(req, servs);
-// }
 
 // return -1, if not match any Servers
 // return 0 - Server.size()-1, if match Server

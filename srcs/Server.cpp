@@ -26,7 +26,15 @@ void	Server::prtServer(void) {
 	std::cout << RESET << std::endl;
 	std::cout << "CliHeadSize : " << PURPLE << _cliHeadSize << RESET << std::endl;
 	std::cout << "CliBodySize : " << PURPLE << _cliBodySize << RESET << std::endl;
-	// TODO : Location
+	for (int i = 0; i < _location.size(); i++) {
+		std::cout << "*** Location[" << i << "] ***" << std::endl;
+		std::cout << "path        : " << PURPLE << _location[i].path << RESET << std::endl;
+		std::cout << "Root        : " << PURPLE << _location[i].root << RESET << std::endl;
+		std::cout << "index       : ";
+		for (int j = 0; j < _location[i].index.size(); j++)
+			std::cout << PURPLE << _location[i].index[j] << ", ";
+		std::cout << RESET << std::endl;
+	}
 	// TODO : MimeType
 }
 
@@ -53,8 +61,8 @@ void	Server::setRoot(std::string root) {
 	_root = root;
 }
 
-void	Server::setIndex(std::string index) {
-	_index.push_back(index);
+void	Server::setIndex(std::vector<std::string> index) {
+	_index = index;
 }
 
 void	Server::setCliHeadSize(std::string size) {
@@ -120,4 +128,8 @@ struct sockaddr	Server::getSockAddr(void) const {
 	sockAddr = *(result->ai_addr);
 	freeaddrinfo(result);
 	return sockAddr;
+}
+
+void	Server::clearLocation(void) {
+	_location.clear();
 }

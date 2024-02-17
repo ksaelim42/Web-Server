@@ -10,6 +10,26 @@
 // 	}
 // }
 
+bool	HttpResponse::_matchLocation(std::vector<Location> loc) {
+	Location	matchLoc;
+	
+	matchLoc.path = "";
+	for (int i = 0; i < loc.size(); i++) {
+		if (_req.path.find(loc[i].path) == 0 && loc[i].path.size() > matchLoc.path.size())
+			matchLoc = loc[i];
+	}
+	// if Match location use Location
+	if (matchLoc.path.size()) {
+		if (!matchLoc.root.empty())
+			_req.serv.setRoot(matchLoc.root);
+		if (!matchLoc.index.empty())
+			_req.serv.setIndex(matchLoc.index);
+		return true;
+	}
+	else
+		return false;
+}
+
 HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	// _allowMethod.push_back("GET");
 	// _allowMethod.push_back("POST");
@@ -22,23 +42,23 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	_req.headers = req.headers;
 	_req.contentLength = _findContent(_req.headers, "Content-Length");
 	_req.contentType = _findContent(_req.headers, "Content-Type");
-	std::string	uriEncode = _req.uri; // TODO : have to encode uri first
-	_req.path = "";
+	_splitPath(_req.uri);
 	_req.pathInfo = "";
-	_req.queryStr = "";
 	_req.body = req.body;
+	_matchLocation(_req.serv.getLocation());
+	_req.serv.clearLocation();
 }
 
 std::string	HttpResponse::createResponse(void) {
 	// _checkRequest();
 	// TODO : match location in configfile
+	_findFile();
 	if (_isCgi(_req.path)) {
 		CgiHandler	cgi;
 
 		_body = cgi.execCgiScript(_req, _status);
 	}
 	else {
-		// _request.srcPath += "/index.html";
 		_readFile(_req.path, _body);
 	}
 	_createHeader();
@@ -201,6 +221,7 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
 
+// Finding special header in map headers
 std::string	HttpResponse::_findContent(std::map<std::string, std::string> & map, std::string const & content) {
 	std::map<std::string, std::string>::const_iterator	it;
 	std::string	value = "";
@@ -212,3 +233,87 @@ std::string	HttpResponse::_findContent(std::map<std::string, std::string> & map,
 	}
 	return value;
 }
+
+// Parsing URI to each path
+bool	HttpResponse::_splitPath(std::string url) {
+	std::size_t	found;
+
+	_req.path = "";
+	_req.queryStr = "";
+	_req.fragment = "";
+	found = url.find_last_of("#");
+	if (found != std::string::npos) {
+		_req.fragment = url.substr(found + 1);
+		url = url.substr(0, found);
+	}
+	found = url.find_last_of("?");
+	if (found != std::string::npos) {
+		_req.queryStr = url.substr(found + 1);
+		url = url.substr(0, found);
+	}
+	_req.path = url;
+	return true;
+}
+
+void	HttpResponse::prtParsedReq(void) {
+	std::cout <<  "--- Parsed Request ---" << std::endl;
+	std::cout << "cliIPaddr: " << PURPLE << _req.cliIPaddr << RESET << std::endl;
+	std::cout << "method: " << PURPLE << _req.method << RESET << std::endl;
+	std::cout << "uri: " << PURPLE << _req.uri << RESET << std::endl;
+	std::cout << "version: " << PURPLE << _req.version << RESET << std::endl;
+	std::cout << "contentLengt: " << PURPLE << _req.contentLength << RESET << std::endl;
+	std::cout << "contentType: " << PURPLE << _req.contentType << RESET << std::endl;
+	std::cout << "path: " << PURPLE << _req.path << RESET << std::endl;
+	std::cout << "pathInfo: " << PURPLE << _req.pathInfo << RESET << std::endl;
+	std::cout << "queryStr: " << PURPLE << _req.queryStr << RESET << std::endl;
+	std::cout << "fragment: " << PURPLE << _req.fragment << RESET << std::endl;
+	std::cout << "body: " << PURPLE << _req.body << RESET << std::endl;
+	prtMap(_req.headers);
+	std::cout <<  "--- Parsed Server ---" << std::endl;
+	_req.serv.prtServer();
+}
+
+bool	HttpResponse::_findFile(void) {
+	struct stat	fileInfo;
+	std::string	path;
+
+	if (_req.path == "/")
+		path = _req.serv.getRoot();
+	else
+		path = _req.serv.getRoot() + _req.path;
+	if (stat(path.c_str(), &fileInfo) != 0) {
+		std::cerr << "Path not real" << std::endl;
+		return false;
+	}
+	if (S_ISREG(fileInfo.st_mode)) { // is regular file
+		// std::cout << RED << "is reg" << RESET << std::endl;
+		_req.path = path;
+	}
+	else if (S_ISDIR(fileInfo.st_mode)) { // is directory
+		// std::cout << RED << "is dir" << RESET << std::endl;
+		std::vector<std::string>	index = _req.serv.getIndex();
+		std::string	filePath;
+		for (int i = 0; i < index.size(); i++) {
+			filePath = path + "/" + index[i];
+			if (stat(filePath.c_str(), &fileInfo) != 0)
+				continue;
+			if (S_ISREG(fileInfo.st_mode)) {
+				_req.path = filePath;
+				break;
+			}
+		}
+	}
+	else {
+		std::cerr << "Not a file" << std::endl;
+		return false;
+	}
+	// std::cout << "Find path success" << std::endl;
+	// std::cout << "path : " << PURPLE << _req.path << RESET << std::endl;
+	return true;
+}
+
+// int	HttpResponse::_matchLocation(void) {
+// 	int	i;
+
+// 	i = _mathServer(req, servs);
+// }
