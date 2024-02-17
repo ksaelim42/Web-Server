@@ -123,7 +123,6 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 		}
 		close(client_fd);
 		std::cout << "..." << std::endl;
-		// sleep(2);
 	}
 	return true;
 }

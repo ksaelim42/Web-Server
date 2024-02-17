@@ -50,13 +50,11 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 }
 
 std::string	HttpResponse::createResponse(void) {
-	// _checkRequest();
-	// TODO : match location in configfile
 	_findFile();
 	if (_isCgi(_req.path)) {
 		CgiHandler	cgi;
 
-		_body = cgi.execCgiScript(_req, _status);
+		_status = cgi.execCgiScript(_req, _body);
 	}
 	else {
 		_readFile(_req.path, _body);
@@ -277,10 +275,9 @@ bool	HttpResponse::_findFile(void) {
 	struct stat	fileInfo;
 	std::string	path;
 
-	if (_req.path == "/")
-		path = _req.serv.getRoot();
-	else
-		path = _req.serv.getRoot() + _req.path;
+	path = _req.serv.getRoot();
+	if (_req.path != "/")
+		path += _req.path;
 	if (stat(path.c_str(), &fileInfo) != 0) {
 		std::cerr << "Path not real" << std::endl;
 		return false;
@@ -307,8 +304,8 @@ bool	HttpResponse::_findFile(void) {
 		std::cerr << "Not a file" << std::endl;
 		return false;
 	}
-	// std::cout << "Find path success" << std::endl;
-	// std::cout << "path : " << PURPLE << _req.path << RESET << std::endl;
+	std::cout << "Find path success" << std::endl;
+	std::cout << "path : " << PURPLE << _req.path << RESET << std::endl;
 	return true;
 }
 

@@ -32,35 +32,23 @@ struct parsedReq {
 	Server								serv;
 };
 
-
-struct t_pipe
-{
-	pid_t	pid;
-	int		fd[2];
-	int		infd;
-	int		outfd;
-	int		pipeout;
-};
-
 class CgiHandler
 {
 	private:
 		pid_t	_pid;
 		int		_pipeInFd[2];
 		int		_pipeOutFd[2];
-		std::string	_path; // Tmp
+		short int	_status;
+		std::map<std::string, std::string>	_env;
 
 		// char**	_args; // store CGI script path to execute
-		bool	_createCgiRequest(parsedReq &);
+		bool	_initEnv(parsedReq &);
+		bool	_checkCgiScript(std::string path);
 		bool	_createPipe(void);
-		bool	_prepareScript(void);
-		std::map<std::string, std::string>	_env;
 	public:
 		CgiHandler(void);
 		// ~Cgi(void);
-		// char**	createArgs(std::string path);
-		std::string	execCgiScript(parsedReq &, short int &);
+		short int	execCgiScript(parsedReq &, std::string &);
 };
-
 
 #endif

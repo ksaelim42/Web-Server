@@ -25,7 +25,7 @@ Server	createServer(void) {
 	// std::vector<std::string>	index2;
 	serv.setLocation(createLocation("/", "html/static", index));
 	serv.setLocation(createLocation("/images", "html/static", index1));
-	serv.setLocation(createLocation("/cgi-bin", "./", index));
+	serv.setLocation(createLocation("/cgi-bin", ".", index));
 	return serv;
 }
 

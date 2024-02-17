@@ -5,43 +5,17 @@ CgiHandler::CgiHandler() {
 	_env["SERVER_SOFTWARE"] = PROGRAM_NAME;	// name of Webserv/version Ex: nginx/1.18.0
 }
 
-// bool	CgiHandler::CgiHandlerHandler() {
-// char*	strdup(std::string src) {
-// 	if (!str)
-// 		return nullptr;
-// 	char*	dest = new[src.length()];
-// 	std::strcpy()
-// }
-
-// }
-
-std::string	CgiHandler::execCgiScript(parsedReq & req, short int & statusCode) {
-	std::string	message;
+short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 	std::cout << "Start handler CGI" << std::endl;
-	std::cout << req.path << std::endl;
-	// Check path
-	// Check extension file must be sh for mandatory
-	// Check allow method ? still don't know why have to check
-	// init env : set all env get input from request
-	// pipe
-	(void)statusCode;
-	if (_createCgiRequest(req) == 0) {
-	// 	// TODO : set error
-		// return false;
-	}
-	// if (_prepareScript() == 0) {
-	// 	// TODO : set error
-	// 	return false;
-	// }
-	if (_createPipe() == 0) {
-		// TODO : set error = 500
-		// return false;
-	}
+	if (_checkCgiScript(req.path) == 0)
+		return _status;
+	if (_initEnv(req) == 0)
+		return _status;
+	if (_createPipe() == 0)
+		return 500;
 	_pid = fork();
-	if (_pid == -1) {
-		// TODO : set error = 500
-		// return false;
-	}
+	if (_pid == -1)
+		return 500;
 	else if (_pid == 0) { // Child Process
 		// close unnecessary pipe
 		close(_pipeInFd[1]);
@@ -52,7 +26,7 @@ std::string	CgiHandler::execCgiScript(parsedReq & req, short int & statusCode) {
 		close(_pipeInFd[0]);
 		close(_pipeOutFd[1]);
 		char	*args[2];
-		args[0] = strdup(_path);
+		args[0] = strdup(req.path);
 		args[1] = NULL;
 		char	**env = aopEnv(_env);
 		if (execve(args[0], args, env) == -1)
@@ -64,9 +38,9 @@ std::string	CgiHandler::execCgiScript(parsedReq & req, short int & statusCode) {
 		close(_pipeOutFd[1]);
 
 		// Server Section
-		// sleep(2); // Why
 		write(_pipeInFd[1], req.body.c_str(), req.body.size());
 		close(_pipeInFd[1]);
+		sleep(1);
 		char	buffer[5000];
 		int bytesRead = read(_pipeOutFd[0], buffer, 5000);
 		close(_pipeOutFd[0]);
@@ -74,7 +48,7 @@ std::string	CgiHandler::execCgiScript(parsedReq & req, short int & statusCode) {
 		std::cout << buffer;
 		message = buffer;
 	}
-	return message; // TODO
+	return 200;
 }
 
 bool	CgiHandler::_createPipe(void) {
@@ -87,31 +61,42 @@ bool	CgiHandler::_createPipe(void) {
 	return true;
 }
 
-bool	CgiHandler::_prepareScript(void) {
-	// check path cgi is true
+bool	CgiHandler::_checkCgiScript(std::string path) {
+	// check file is exist
+	if (access(path.c_str(), F_OK) != 0) {
+		std::cerr << RED << "No such file or directory" << RESET << std::endl;
+		// _status = ;
+		return false;
+	}
 	// check permission
+	if (access(path.c_str(), X_OK) != 0) {
+		std::cerr << RED << "Permission denied" << RESET << std::endl;
+		// _status = ;
+		return false;
+	}
+	// Check extension file must be sh for mandatory
+	// Check allow method ? still don't know why have to check
 	return true;
 }
 
-bool	CgiHandler::_createCgiRequest(parsedReq & req) {
-	_path = req.path;
+bool	CgiHandler::_initEnv(parsedReq & req) {
 	// meta-variable
-	_env["REQUEST_METHOD"] = req.method;	// HTTP method Ex: GET
-	_env["REQUEST_URI"] = req.uri;			// URI (not encode URL)
-	_env["SERVER_PROTOCOL"] = req.version;	// HTTP version that get from request (Server must check that support) Ex : HTTP/1.1
+	_env["REQUEST_METHOD"] = req.method;		// HTTP method Ex: GET
+	_env["REQUEST_URI"] = req.uri;				// URI (not encode URL)
+	_env["SERVER_PROTOCOL"] = req.version;		// HTTP version that get from request (Server must check that support) Ex : HTTP/1.1
 	_env["CONTENT_LENGTH"] = req.contentLength;	// Must specify on POST method for read body content
 	_env["CONTENT_TYPE"] = req.contentType;		// get from request
 	// Parsing
-	_env["SCRIPT_NAME"] = req.path;			// path of script (exclude Query string & path info) Ex: /script.sh
-	_env["QUERY_STRING"] = req.queryStr;	// on URL after ? Ex: www.test.com/script.sh?a=10&b=20 , query string = a=10&b=20
-	_env["PATH_INFO"] = req.pathInfo;		// sub-resource path that come after script name
+	_env["SCRIPT_NAME"] = req.path;				// path of script (exclude Query string & path info) Ex: /script.sh
+	_env["QUERY_STRING"] = req.queryStr;		// on URL after ? Ex: www.test.com/script.sh?a=10&b=20 , query string = a=10&b=20
+	_env["PATH_INFO"] = req.pathInfo;			// sub-resource path that come after script name
 	// _env["PATH_TRANSLATED"] = "";				// --
 	// for Server
 	_env["SERVER_NAME"] = req.serv.getName();	// name of server.
 	_env["SERVER_PORT"] = req.serv.getPort();	// Port of server Ex: 8080
 	// Special
-	// _env["AUTH_TYPE"] = "";					// Use for identify user
-	_env["REMOTE_ADDR"] = "";			// IP address of client that request Ex: 127.0.0.1
+	// _env["AUTH_TYPE"] = "";						// Use for identify user
+	_env["REMOTE_ADDR"] = "";				// IP address of client that request Ex: 127.0.0.1
 	_env["REMOTE_HOST"] = "";				// host name of client that request
 	_env["REMOTE_IDENT"] = "";				// empty
 	_env["REMOTE_USER"] = "";				// empty
@@ -119,9 +104,6 @@ bool	CgiHandler::_createCgiRequest(parsedReq & req) {
 	std::map<std::string, std::string>::const_iterator	it;
 	for (it = req.headers.begin(); it != req.headers.end(); it++)
 		_env[toProtoEnv(it->first)] = it->second; 
-	// check path cgi is true
-	// check permission
-	// (void)request;
 	return true;
 }
 
