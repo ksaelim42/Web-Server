@@ -138,18 +138,18 @@ std::string	HttpResponse::_getDate(void) {
 
 std::string	HttpResponse::_getStatusText(short int & statusCode) {
 	switch (statusCode) {
-	case 200:
-		return "OK";
-	case 403:
-		return "Forbidden";
-	case 404:
-		return "Not Found";
-	case 405:
-		return "Method Not Allowed";
-	case 505:
-		return "HTTP Version Not Supported";
-	default:
-		return "Undefined";
+		case 200:
+			return "OK";
+		case 403:
+			return "Forbidden";
+		case 404:
+			return "Not Found";
+		case 405:
+			return "Method Not Allowed";
+		case 505:
+			return "HTTP Version Not Supported";
+		default:
+			return "Undefined";
 	}
 }
 
@@ -192,20 +192,29 @@ bool	HttpResponse::_isCgi(std::string & path) {
 }
 
 bool	HttpResponse::_createErrorPage(short int & status, std::string & bodyMsg) {
-	std::string	path;
 	switch (status) {
-	case 403:
-		path = "html/errorPage/403";
-	case 404:
-		path = "html/errorPage/404";
-	case 405:
-		path = "html/errorPage/405";
-	case 505:
-		path = "html/errorPage/505";
-	default:
-		path = "html/errorPage/0";
+		case 403: {
+			_req.path = "html/errorPage/403.html";
+			break;
+		}
+		case 404: {
+			_req.path = "html/errorPage/404.html";
+			break;
+		}
+		case 405: {
+			_req.path = "html/errorPage/405.html";
+			break;
+		}
+		case 505: {
+			_req.path = "html/errorPage/505.html";
+			break;
+		}
+		default: {
+			bodyMsg = "Something went wrong";
+			return true;
+		}
 	}
-	_readFile(path, bodyMsg);
+	_readFile(_req.path, bodyMsg);
 	return true;
 }
 
