@@ -10,26 +10,6 @@
 // 	}
 // }
 
-bool	HttpResponse::_matchLocation(std::vector<Location> loc) {
-	Location	matchLoc;
-	
-	matchLoc.path = "";
-	for (int i = 0; i < loc.size(); i++) {
-		if (_req.path.find(loc[i].path) == 0 && loc[i].path.size() > matchLoc.path.size())
-			matchLoc = loc[i];
-	}
-	// if Match location use Location
-	if (matchLoc.path.size()) {
-		if (!matchLoc.root.empty())
-			_req.serv.setRoot(matchLoc.root);
-		if (!matchLoc.index.empty())
-			_req.serv.setIndex(matchLoc.index);
-		return true;
-	}
-	else
-		return false;
-}
-
 HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	// _allowMethod.push_back("GET");
 	// _allowMethod.push_back("POST");
@@ -50,14 +30,17 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 }
 
 std::string	HttpResponse::createResponse(void) {
-	_findFile();
-	if (_isCgi(_req.path)) {
-		CgiHandler	cgi;
-
-		_status = cgi.execCgiScript(_req, _body);
+	_status = _findFile();
+	if (_status == 200) {
+		if (_isCgi(_req.path)) {
+			_status = _cgi.execCgiScript(_req, _body);
+		}
+		else {
+			_status = _readFile(_req.path, _body);
+		}
 	}
-	else {
-		_readFile(_req.path, _body);
+	if (_status != 200) {
+		_createErrorPage(_status, _body);
 	}
 	_createHeader();
 	return _header + CRLF + _body;
@@ -153,53 +136,8 @@ std::string	HttpResponse::_getDate(void) {
 	return date + buffer + CRLF;
 }
 
-// ************************************************************************** //
-// ----------------------------- Body Messages ------------------------------ //
-// ************************************************************************** //
-
-bool	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
-	std::ifstream	inFile;
-	int				length;
-
-	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
-	if (!inFile.is_open()) {
-		if (errno == ENOENT) {	// 2 No such file or directory : 404
-			_status = 404;
-			return false;
-		}
-		if (errno == EACCES) { // 13 Permission denied : 403
-			_status = 403;
-			return false;
-		}
-		// EMFILE, ENFILE : Too many open file, File table overflow
-		// Server Error, May reach the limit of file descriptors : 500
-		// std::cerr << "Internal Server Error" << std::endl;
-		_status = 500;
-		return (false);
-	} // : TODO Check it is a file not a dir if dir are there autoindex
-	inFile.seekg(0, inFile.end);		// Set position to end of the stream
-	length = inFile.tellg();			// Get current position
-	inFile.seekg(0, inFile.beg);		// Set position back to begining of the stream
-	buffer.resize(length);
-	inFile.read(&buffer[0], length);	// Read all data in inFile to Buffer
-	inFile.close();						// Close inFile
-	_status = 200;
-	return (true);
-}
-
-bool	HttpResponse::_isCgi(std::string & path) {
-	size_t	index = path.find_last_of(".");
-	if (index != std::string::npos) {
-		std::string	ext = path.substr(index + 1);
-		if (ext == "sh")
-			return true;
-	}
-	return false;
-}
-
 std::string	HttpResponse::_getStatusText(short int & statusCode) {
-	switch (statusCode)
-	{
+	switch (statusCode) {
 	case 200:
 		return "OK";
 	case 403:
@@ -213,6 +151,62 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 	default:
 		return "Undefined";
 	}
+}
+
+// ************************************************************************** //
+// ----------------------------- Body Messages ------------------------------ //
+// ************************************************************************** //
+
+short int	HttpResponse::_readFile(std::string & fileName, std::string & buffer) {
+	std::ifstream	inFile;
+	int				length;
+
+	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
+	if (!inFile.is_open()) {
+		if (errno == ENOENT)	// 2 No such file or directory : 404
+			return 404;
+		if (errno == EACCES)	// 13 Permission denied : 403
+			return 403;
+		// EMFILE, ENFILE : Too many open file, File table overflow
+		// Server Error, May reach the limit of file descriptors : 500
+		// std::cerr << "Internal Server Error" << std::endl;
+		return 500;
+	} // : TODO Check it is a file not a dir if dir are there autoindex
+	inFile.seekg(0, inFile.end);		// Set position to end of the stream
+	length = inFile.tellg();			// Get current position
+	inFile.seekg(0, inFile.beg);		// Set position back to begining of the stream
+	buffer.resize(length);
+	inFile.read(&buffer[0], length);	// Read all data in inFile to Buffer
+	inFile.close();						// Close inFile
+	return 200;
+}
+
+bool	HttpResponse::_isCgi(std::string & path) {
+	size_t	index = path.find_last_of(".");
+	if (index != std::string::npos) {
+		std::string	ext = path.substr(index + 1);
+		if (ext == "sh")
+			return true;
+	}
+	return false;
+}
+
+bool	HttpResponse::_createErrorPage(short int & status, std::string & bodyMsg) {
+	std::string	path;
+	switch (status) {
+	case 403:
+		path = "html/errorPage/403";
+	case 404:
+		path = "html/errorPage/404";
+	case 405:
+		path = "html/errorPage/405";
+	case 505:
+		path = "html/errorPage/505";
+	default:
+		path = "html/errorPage/0";
+	}
+	_readFile(path, bodyMsg);
+	return true;
 }
 
 // ************************************************************************** //
@@ -253,35 +247,35 @@ bool	HttpResponse::_splitPath(std::string url) {
 	return true;
 }
 
-void	HttpResponse::prtParsedReq(void) {
-	std::cout <<  "--- Parsed Request ---" << std::endl;
-	std::cout << "cliIPaddr: " << PURPLE << _req.cliIPaddr << RESET << std::endl;
-	std::cout << "method: " << PURPLE << _req.method << RESET << std::endl;
-	std::cout << "uri: " << PURPLE << _req.uri << RESET << std::endl;
-	std::cout << "version: " << PURPLE << _req.version << RESET << std::endl;
-	std::cout << "contentLengt: " << PURPLE << _req.contentLength << RESET << std::endl;
-	std::cout << "contentType: " << PURPLE << _req.contentType << RESET << std::endl;
-	std::cout << "path: " << PURPLE << _req.path << RESET << std::endl;
-	std::cout << "pathInfo: " << PURPLE << _req.pathInfo << RESET << std::endl;
-	std::cout << "queryStr: " << PURPLE << _req.queryStr << RESET << std::endl;
-	std::cout << "fragment: " << PURPLE << _req.fragment << RESET << std::endl;
-	std::cout << "body: " << PURPLE << _req.body << RESET << std::endl;
-	prtMap(_req.headers);
-	std::cout <<  "--- Parsed Server ---" << std::endl;
-	_req.serv.prtServer();
+bool	HttpResponse::_matchLocation(std::vector<Location> loc) {
+	Location	matchLoc;
+	
+	matchLoc.path = "";
+	for (int i = 0; i < loc.size(); i++) {
+		if (_req.path.find(loc[i].path) == 0 && loc[i].path.size() > matchLoc.path.size())
+			matchLoc = loc[i];
+	}
+	// if Match location use Location
+	if (matchLoc.path.size()) {
+		if (!matchLoc.root.empty())
+			_req.serv.setRoot(matchLoc.root);
+		if (!matchLoc.index.empty())
+			_req.serv.setIndex(matchLoc.index);
+		return true;
+	}
+	else
+		return false;
 }
 
-bool	HttpResponse::_findFile(void) {
+short int	HttpResponse::_findFile(void) {
 	struct stat	fileInfo;
 	std::string	path;
 
 	path = _req.serv.getRoot();
 	if (_req.path != "/")
 		path += _req.path;
-	if (stat(path.c_str(), &fileInfo) != 0) {
-		std::cerr << "Path not real" << std::endl;
-		return false;
-	}
+	if (stat(path.c_str(), &fileInfo) != 0)
+		return 404;
 	if (S_ISREG(fileInfo.st_mode)) { // is regular file
 		// std::cout << RED << "is reg" << RESET << std::endl;
 		_req.path = path;
@@ -306,11 +300,23 @@ bool	HttpResponse::_findFile(void) {
 	}
 	std::cout << "Find path success" << std::endl;
 	std::cout << "path : " << PURPLE << _req.path << RESET << std::endl;
-	return true;
+	return 200;
 }
 
-// int	HttpResponse::_matchLocation(void) {
-// 	int	i;
-
-// 	i = _mathServer(req, servs);
-// }
+void	HttpResponse::prtParsedReq(void) {
+	std::cout <<  "--- Parsed Request ---" << std::endl;
+	std::cout << "cliIPaddr: " << PURPLE << _req.cliIPaddr << RESET << std::endl;
+	std::cout << "method: " << PURPLE << _req.method << RESET << std::endl;
+	std::cout << "uri: " << PURPLE << _req.uri << RESET << std::endl;
+	std::cout << "version: " << PURPLE << _req.version << RESET << std::endl;
+	std::cout << "contentLengt: " << PURPLE << _req.contentLength << RESET << std::endl;
+	std::cout << "contentType: " << PURPLE << _req.contentType << RESET << std::endl;
+	std::cout << "path: " << PURPLE << _req.path << RESET << std::endl;
+	std::cout << "pathInfo: " << PURPLE << _req.pathInfo << RESET << std::endl;
+	std::cout << "queryStr: " << PURPLE << _req.queryStr << RESET << std::endl;
+	std::cout << "fragment: " << PURPLE << _req.fragment << RESET << std::endl;
+	std::cout << "body: " << PURPLE << _req.body << RESET << std::endl;
+	prtMap(_req.headers);
+	std::cout <<  "--- Parsed Server ---" << std::endl;
+	_req.serv.prtServer();
+}

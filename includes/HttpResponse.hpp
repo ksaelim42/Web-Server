@@ -19,6 +19,7 @@ class HttpResponse
 		std::vector<std::string>	_allowMethod;
 		// input
 		parsedReq		_req;
+		CgiHandler		_cgi;
 
 		short int	_status;
 		std::string	_header;
@@ -42,12 +43,13 @@ class HttpResponse
 		std::string	_getStatusLine(short int &);
 		std::string	_getStatusText(short int &);
 		// body messages
-		bool		_readFile(std::string &, std::string &);
+		short int	_readFile(std::string &, std::string &);
+		bool		_createErrorPage(short int &, std::string &);
 		// parsing request
 		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
 		bool		_splitPath(std::string url);
 		bool		_matchLocation(std::vector<Location>);
-		bool		_findFile(void);
+		short int	_findFile(void);
 	public:
 		HttpResponse(Server &, httpReq &);
 		~HttpResponse() {}
