@@ -23,6 +23,7 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	_req.contentLength = _findContent(_req.headers, "Content-Length");
 	_req.contentType = _findContent(_req.headers, "Content-Type");
 	_splitPath(_req.uri);
+	_urlEncoding(_req.path);
 	_req.pathInfo = "";
 	_req.body = req.body;
 	_matchLocation(_req.serv.getLocation());
@@ -187,6 +188,8 @@ bool	HttpResponse::_isCgi(std::string & path) {
 		std::string	ext = path.substr(index + 1);
 		if (ext == "sh")
 			return true;
+		else if (ext == "pl")
+			return true;
 	}
 	return false;
 }
@@ -233,6 +236,24 @@ std::string	HttpResponse::_findContent(std::map<std::string, std::string> & map,
 		map.erase(it);
 	}
 	return value;
+}
+
+// Percent encode
+bool	HttpResponse::_urlEncoding(std::string & path) {
+	std::size_t	found;
+
+	found = path.find_first_of("%");	// return index of found character
+	while (found != std::string::npos) {
+		if (found + 2 >= path.length())	// if not follow with 2 character
+			return false;				// 400 : bad request
+		if (!std::isxdigit(path[found + 1]) || !std::isxdigit(path[found + 2]))
+			return false;
+		std::string	hex = path.substr(found + 1, 2);
+		char	c = std::strtol(hex.c_str(), NULL, 16);
+		path.replace(found, 3, 1, c);
+		found = path.find_first_of("%");
+	}
+	return true;
 }
 
 // Parsing URI to each path

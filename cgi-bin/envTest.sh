@@ -1,5 +1,4 @@
 #!/bin/bash
-
 echo "Content-Type: Text/plain"
 
 echo ""

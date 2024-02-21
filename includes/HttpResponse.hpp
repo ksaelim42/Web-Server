@@ -48,6 +48,7 @@ class HttpResponse
 		// parsing request
 		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
 		bool		_splitPath(std::string url);
+		bool		_urlEncoding(std::string & path);
 		bool		_matchLocation(std::vector<Location>);
 		short int	_findFile(void);
 	public:
