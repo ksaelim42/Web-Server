@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/02/15 12:23:40 by prachman         ###   ########.fr       */
+/*   Updated: 2024/02/23 13:25:23 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 httpReq	storeReq(std::string rawReq)
 {
 	// // // the string has 14 newline characters
-	std::vector<std::string>	vecReq;
+	std::vector<std::string>	headVec;
+	std::vector<std::string>	tailVec;
 	std::vector<std::string>	vecStartLine;
 	httpReq 					reqData;
 	int							count = 0;
@@ -33,35 +34,29 @@ httpReq	storeReq(std::string rawReq)
 	reqData.version = vecStartLine[2];
 	for (int i = 0; rawReq[i]; i++)
 	{
-		std::string tmp;
+		std::string headTmp;
+		if (rawReq[i - 1] == '\n')
+		{
+			while (rawReq[i] != ':')
+				headTmp += rawReq[i++];
+			headVec.push_back(headTmp);
+		}
+		std::string tailTmp;
 		if (rawReq[i] == ':' && rawReq[i + 1] == ' ')
 		{
 			i += 2;
 			while (rawReq[i] != '\n')
-				tmp += rawReq[i++];
-			vecReq.push_back(tmp);
+				tailTmp += rawReq[i++];
+			tailVec.push_back(tailTmp);
 		}
 	}
-	//sec_ua == user-agent
-	//mobile == indicates whether the user using mobile
-	//accept == what types of content that client can understand
-	//fetch_site == indicates where the request originated from
-	//referer == provides the URL of the page that referred the client to the current requests 
-	//language == specifies the preferred languages for the response
-	//!!  >>>>>> those that are not defined are the headers that I am not sure we need <<<<<
-	reqData.headers["Host"] = vecReq[0];
-	reqData.headers["Connection"] = vecReq[1];
-	reqData.headers["sec-ch-ua"] = vecReq[2];
-	reqData.headers["sec-ch-mobile"] = vecReq[3];
-	reqData.headers["User-Agent"] = vecReq[4];
-	reqData.headers["sec-ch-ua-platform"] = vecReq[5];
-	reqData.headers["Accept"] = vecReq[6];
-	reqData.headers["Sec-Fetch-Site"] = vecReq[7];
-	reqData.headers["Sec-Fetch-Mode"] = vecReq[8];
-	reqData.headers["Sec-Fetch-Dest"] = vecReq[9];
-	reqData.headers["Referer"] = vecReq[10];
-	reqData.headers["Accept-Encoding"] = vecReq[11];
-	reqData.headers["Accept-Language"] = vecReq[12];
+	if (headVec.size() != tailVec.size())
+	{
+		std::cout << "Error: Something is wrong when trying to store the request" << std::endl;
+		exit(1);
+	}
+	for (int i = 0; i < headVec.size(); i++) 
+		reqData.headers[headVec[i]] = tailVec[i];
 	
 	return reqData;
 }
