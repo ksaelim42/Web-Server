@@ -1,17 +1,26 @@
-FROM	debian
+FROM	debian:bookworm
 
 # install nginx
 RUN		apt update\
-		&& apt install vim nginx -y
+		&& apt install vim nginx procps tree -y
 
 # install cgi shell
-RUN		apt install spawn-fcgi fcgiwrap python3 -y
+RUN		apt install spawn-fcgi fcgiwrap -y
+
+# install cgi python3
+RUN		apt install python3 -y
+
+# install cgi php
+RUN		apt install php8.2 php8.2-fpm -y
 
 # copy nginx conf
 COPY	./conf/nginx.conf /etc/nginx/conf.d/
 
-# copy 
+# copy bashrc
 COPY	./tools/.bashrc /root
+
+# copy vimrc
+COPY	./tools/.vimrc /root
 
 # copy run script
 COPY	./tools/start_server.sh /root

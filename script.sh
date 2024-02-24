@@ -1,20 +1,18 @@
 #!/bin/bash
 
-# echo 'Content-Type: text/plain'
+# Example strings
+string1="variable=value"
+string2="just_a_value"
 
-# echo ''
+# Check if a string contains an equal sign
+if [[ $string1 == *"="* ]]; then
+    echo "$string1 contains an equal sign."
+else
+    echo "$string1 does not contain an equal sign."
+fi
 
-# echo -n "Time :"
-
-# date
-
-# Read the content from standard input
-# read -n 40 post_data
-
-# Process the received data
-# echo "Content-Type: text/html"
-# echo ""
-# echo "<html><body>"
-# echo "<p>Received data: $post_data</p>"
-# echo "</body></html>"
-echo "Hello from scirpt.sh"
+if [[ $string2 == *"="* ]]; then
+    echo "$string2 contains an equal sign."
+else
+    echo "$string2 does not contain an equal sign."
+fi
