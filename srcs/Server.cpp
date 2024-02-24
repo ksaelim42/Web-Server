@@ -1,5 +1,13 @@
 #include "Server.hpp"
 
+void	Server::_initErrPage(void) {
+	errPage[400] = "html/errorPage/400.html";
+	errPage[403] = "html/errorPage/403.html";
+	errPage[404] = "html/errorPage/404.html";
+	errPage[405] = "html/errorPage/405.html";
+	errPage[505] = "html/errorPage/505.html";
+}
+
 Server::Server(void) {
 	// if didn't specify Types context Server will use default Types
 	if (1) { //:TODO fix to check config file
@@ -10,9 +18,11 @@ Server::Server(void) {
 	_port = "80";
 	_root = "html/default";
 	_index.push_back("index.html");
-	_cliHeadSize = HEADBUFSIZE;
-	_cliBodySize = BODYBUFSIZE;
-
+	cliBodySize = BODYBUFSIZE;
+	_initErrPage();
+	allowMethod = 0;
+	INIT_METHOD(allowMethod);	// TODO: in case of not limit method
+	// SET_METHOD(allowMethod, METHOD_POST);
 }
 
 void	Server::prtServer(void) {
@@ -24,8 +34,7 @@ void	Server::prtServer(void) {
 	for (int i = 0; i < _index.size(); i++)
 		std::cout << PURPLE << _index[i] << ", ";
 	std::cout << RESET << std::endl;
-	std::cout << "CliHeadSize : " << PURPLE << _cliHeadSize << RESET << std::endl;
-	std::cout << "CliBodySize : " << PURPLE << _cliBodySize << RESET << std::endl;
+	std::cout << "CliBodySize : " << PURPLE << cliBodySize << RESET << std::endl;
 	for (int i = 0; i < _location.size(); i++) {
 		std::cout << "*** Location[" << i << "] ***" << std::endl;
 		std::cout << "path        : " << PURPLE << _location[i].path << RESET << std::endl;
@@ -65,14 +74,6 @@ void	Server::setIndex(std::vector<std::string> index) {
 	_index = index;
 }
 
-void	Server::setCliHeadSize(std::string size) {
-	_cliHeadSize = strToNum(size);
-}
-
-void	Server::setCliBodySize(std::string size) {
-	_cliBodySize = strToNum(size);
-}
-
 void	Server::setLocation(Location location) {
 	_location.push_back(location);
 }
@@ -97,10 +98,6 @@ std::string	Server::getRoot(void) const {return _root;}
 
 std::vector<std::string>	Server::getIndex(void) const {return _index;}
 
-size_t	Server::getCliHeadSize(void) const {return _cliHeadSize;}
-
-size_t	Server::getCliBodySize(void) const {return _cliBodySize;}
-
 std::vector<Location>	Server::getLocation(void) const {return _location;}
 
 std::string	Server::getMimeType(const std::string & extension) const {
@@ -110,6 +107,14 @@ std::string	Server::getMimeType(const std::string & extension) const {
 		return it->second;
 	it = _mimeType.find("default");
 	return it->second;
+}
+
+std::string	Server::getErrPage(short int & errCode) const {
+	std::map<short int, std::string>::const_iterator	it;
+	it = errPage.find(errCode);
+	if (it != errPage.end())
+		return it->second;
+	return "";
 }
 
 struct sockaddr	Server::getSockAddr(void) const {

@@ -4,10 +4,6 @@
 # define CGI_VERS		"CGI/1.0"
 # define PROGRAM_NAME	"MPM/1.0"
 
-// #include <iostream>
-// #include <string>
-// #include <string.h>
-// #include <cstdlib>
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -15,6 +11,7 @@
 #include "httpReq.hpp"
 #include "Utils.hpp"
 #include "Server.hpp"
+#include "Struct.hpp"
 
 struct parsedReq {
 	std::string							cliIPaddr;
@@ -31,6 +28,7 @@ struct parsedReq {
 	std::string							body;
 	Server								serv;
 };
+
 
 class CgiHandler
 {

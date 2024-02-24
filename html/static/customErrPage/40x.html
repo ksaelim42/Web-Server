@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Error 404</title>
+	<style>
+		html {color-scheme: light dark;}
+		body {margin: 50px; height: 100vh;}
+		h1 { font-size: 4rem; text-align: center; margin-top: 1rem;}
+		h2 { font-size: 2rem; text-align: center; margin-top: 0;}
+		img {width: 8rem; height: fit-content;}
+		.flex-container {
+			height: 60vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+		.grid-container {
+			display: grid;
+			grid-template-columns: min-content min-content;
+			grid-template-rows: 6rem min-content;
+			column-gap: 30px;
+		}
+		.box {
+			/* background-color: aqua; */
+			white-space: nowrap;
+		}
+		.text {
+			order: 2;
+		}
+		.cat {
+			grid-row: span 2;
+		}
+		@media (max-width: 750px) {
+			body {margin: 20px;}
+			h1 { font-size: 1.3rem; text-align: center; margin-top: 0.8rem;}
+			h2 { font-size: 0.8rem; text-align: center;}
+			img {width: 4rem; height: fit-content;}
+			.grid-container {grid-template-rows: 3rem min-content; column-gap: 10px;}
+		}
+	</style>
+</head>
+<body>
+	<div class="flex-container">
+		<div class="grid-container">
+			<div class="box status">
+				<h1 class="box status">40x</h1>	
+			</div>
+			<div class="box text">
+				<h2>Client Error Responses</h2>
+			</div>
+			<div class="box cat">
+				<img class="box cat" src="../images/shock_cat.png" alt="shock cat">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

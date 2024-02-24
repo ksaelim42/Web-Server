@@ -32,10 +32,10 @@ class HttpResponse
 
 		// std::string	_encodeURL(std::string uri);
 		bool		_isCgi(std::string &);
-		bool		_checkRequest(void);
+		short int	_checkRequest(void);
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
-		// header field
+		// --- Header Field --- //
 		bool		_createHeader(void);
 		std::string	_getContentType(std::string &);
 		std::string	_getContentLength(void);

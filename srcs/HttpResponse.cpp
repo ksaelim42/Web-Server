@@ -11,9 +11,6 @@
 // }
 
 HttpResponse::HttpResponse(Server & serv, httpReq & req) {
-	// _allowMethod.push_back("GET");
-	// _allowMethod.push_back("POST");
-	// _allowMethod.push_back("HEAD");
 	_req.serv = serv;
 	_req.cliIPaddr = "";		// Can't find way
 	_req.method = req.method;
@@ -28,10 +25,14 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	_req.body = req.body;
 	_matchLocation(_req.serv.getLocation());
 	_req.serv.clearLocation();
+	_status = 200;	// TODO : must get from prach
 }
 
 std::string	HttpResponse::createResponse(void) {
-	_status = _findFile();
+	if (_status == 200)
+		_status = _checkRequest();
+	if (_status == 200)
+		_status = _findFile();
 	if (_status == 200) {
 		if (_isCgi(_req.path)) {
 			_status = _cgi.execCgiScript(_req, _body);
@@ -58,18 +59,6 @@ bool	HttpResponse::_createHeader(void) {
 	return true;
 }
 
-bool	HttpResponse::_checkRequest(void) {
-	if (!_checkMethod("GET")) { // TODO : get from request
-		_status = 405;
-		return false;
-	}
-	if (!_checkVersion("HTTP/1.1")) { // TODO get from request
-		_status = 505;
-		return false;
-	}
-	return true;
-}
-
 void	HttpResponse::prtResponse(void) {
 	std::cout << _contentType;
 	std::cout << _contentLength;
@@ -82,11 +71,23 @@ void	HttpResponse::prtResponse(void) {
 // -------------------------- Check Header Fields --------------------------- //
 // ************************************************************************** //
 
+short int	HttpResponse::_checkRequest(void) {
+	if (!_checkMethod(_req.method))
+		return 405;
+	if (!_checkVersion(_req.version))
+		return 505;
+	return 200;
+}
+
 bool	HttpResponse::_checkMethod(std::string method) {
-	for (size_t i = 0; i < _allowMethod.size(); i++) {
-		if (method.compare(_allowMethod[i]) == 0)
-			return true;
-	}
+	if (method == "GET")
+		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_GET);
+	else if (method == "HEAD")
+		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_HEAD);
+	else if (method == "POST")
+		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_POST);
+	else if (method == "DEL")
+		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_DEL);
 	return false;
 }
 
@@ -164,6 +165,7 @@ short int	HttpResponse::_readFile(std::string & fileName, std::string & buffer) 
 
 	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
 	if (!inFile.is_open()) {
+		std::cout << "What wrong :" << fileName << std::endl;
 		if (errno == ENOENT)	// 2 No such file or directory : 404
 			return 404;
 		if (errno == EACCES)	// 13 Permission denied : 403
@@ -195,29 +197,17 @@ bool	HttpResponse::_isCgi(std::string & path) {
 }
 
 bool	HttpResponse::_createErrorPage(short int & status, std::string & bodyMsg) {
-	switch (status) {
-		case 403: {
-			_req.path = "html/errorPage/403.html";
-			break;
-		}
-		case 404: {
-			_req.path = "html/errorPage/404.html";
-			break;
-		}
-		case 405: {
-			_req.path = "html/errorPage/405.html";
-			break;
-		}
-		case 505: {
-			_req.path = "html/errorPage/505.html";
-			break;
-		}
-		default: {
+	_req.path = _req.serv.getErrPage(status);
+	if (_req.path.empty())
+		bodyMsg = "Something went wrong";
+	else {
+		if (_readFile(_req.path, bodyMsg) != 200) {
+			std::cout << "read err file" << std::endl;
 			bodyMsg = "Something went wrong";
-			return true;
 		}
+		else
+			std::cout << "read err file success" << std::endl;
 	}
-	_readFile(_req.path, bodyMsg);
 	return true;
 }
 
@@ -304,8 +294,10 @@ short int	HttpResponse::_findFile(void) {
 	path = _req.serv.getRoot();
 	if (_req.path != "/")
 		path += _req.path;
-	if (stat(path.c_str(), &fileInfo) != 0)
+	if (stat(path.c_str(), &fileInfo) != 0) {
+		std::cout << RED << "Not found file in stat" << RESET << std::endl;
 		return 404;
+	}
 	if (S_ISREG(fileInfo.st_mode)) { // is regular file
 		// std::cout << RED << "is reg" << RESET << std::endl;
 		_req.path = path;

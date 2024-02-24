@@ -21,7 +21,7 @@ SRCS	= $(wildcard $(DIR_SRCS)/*.cpp)
 OBJS	= $(subst $(DIR_SRCS), $(DIR_OBJS), $(SRCS:.cpp=.o))
 
 ### Compilation Rule ###
-$(DIR_OBJS)/%.o:$(DIR_SRCS)/%.cpp $(HEADERS) $(DIR_INCS)/Webserv.hpp
+$(DIR_OBJS)/%.o:$(DIR_SRCS)/%.cpp $(HEADERS) $(DIR_INCS)/Struct.hpp
 	@mkdir -p $(DIR_OBJS)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
 
