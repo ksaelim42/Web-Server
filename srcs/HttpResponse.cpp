@@ -247,6 +247,9 @@ bool	HttpResponse::_urlEncoding(std::string & path) {
 }
 
 // Parsing URI to each path
+// 1. fragment
+// 2. query string
+// 3. path info & path translate
 bool	HttpResponse::_splitPath(std::string url) {
 	std::size_t	found;
 
@@ -263,8 +266,22 @@ bool	HttpResponse::_splitPath(std::string url) {
 		_req.queryStr = url.substr(found + 1);
 		url = url.substr(0, found);
 	}
+	if (cgiPass) {
+
+	}
 	_req.path = url;
 	return true;
+}
+bool	HttpResponse::_isCgi(std::string & path) {
+	size_t	index = path.find_last_of(".");
+	if (index != std::string::npos) {
+		std::string	ext = path.substr(index + 1);
+		if (ext == "sh")
+			return true;
+		else if (ext == "pl")
+			return true;
+	}
+	return false;
 }
 
 bool	HttpResponse::_matchLocation(std::vector<Location> loc) {

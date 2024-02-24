@@ -1,30 +1,23 @@
-FROM	debian:bullseye
-
-ARG		DB_NAME \
-		DB_USER \
-		DB_PASSWORD
+FROM	debian
 
 # install nginx
 RUN		apt update\
 		&& apt install vim nginx -y
 
 # install cgi shell
-RUN		apt install fcgiwrap -y
+RUN		apt install spawn-fcgi fcgiwrap python3 -y
 
 # copy nginx conf
 COPY	./conf/nginx.conf /etc/nginx/conf.d/
 
-# copy mariadb script
-COPY	./tools/mariadb.sh /home/
-
-# copy wordpress script
-COPY	./tools/wordpress.sh /home/
+# copy 
+COPY	./tools/.bashrc /root
 
 # copy run script
-COPY	./tools/start_server.sh ./home/
+COPY	./tools/start_server.sh /root
 
-RUN		bash /home/mariadb.sh
+CMD		[ "bash", "/root/start_server.sh" ]
 
-CMD		[ "bash", "/home/start_server.sh" ]
+# CMD [ "sleep", "infinity" ]
 
-EXPOSE	120
+EXPOSE	1400 1410 1420
