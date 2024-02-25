@@ -1,31 +1,36 @@
 #include "Socket.hpp"
+#include "Struct.hpp"
 
 bool	matchLocation(std::vector<Server> servers, std::string path) {
 	return true;
 }
 
 Location	createLocation(std::string path, \
-std::string root, std::vector<std::string> index) {
+std::string root, std::vector<std::string> index, return_t retur) {
 	Location	loc;
 	loc.path = path;
 	loc.root = root;
 	loc.index = index;
+	loc.retur = retur;
 	return loc;
 }
 
 Server	createServer(void) {
 	Server	serv;
 	serv.setName("testwebserv1");
-	serv.setPort("8002");
+	serv.setPort("8003");
 	serv.setRoot("html/default");
 	std::vector<std::string>	index;
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
 	index1.push_back("test.png");
 	// std::vector<std::string>	index2;
-	serv.setLocation(createLocation("/", "html/static", index));
-	serv.setLocation(createLocation("/images", "html/static", index1));
-	serv.setLocation(createLocation("/cgi-bin", ".", index));
+	return_t	retur;
+	retur.have = 0;
+	serv.setLocation(createLocation("/", "html/static", index, retur));
+	serv.setLocation(createLocation("/images", "html/static", index1, retur));
+	serv.setLocation(createLocation("/cgi-bin", ".", index, retur));
+	serv.setLocation(createLocation("/redir", "html/static", index, return_t{1, 301, "/simple.html"}));
 	return serv;
 }
 

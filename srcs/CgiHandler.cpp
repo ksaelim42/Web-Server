@@ -106,4 +106,3 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 		_env[toProtoEnv(it->first)] = it->second; 
 	return true;
 }
-

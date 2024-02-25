@@ -23,6 +23,8 @@ Server::Server(void) {
 	allowMethod = 0;
 	INIT_METHOD(allowMethod);	// TODO: in case of not limit method
 	// SET_METHOD(allowMethod, METHOD_POST);
+	retur.have = 0;
+	retur.code = 0;
 }
 
 void	Server::prtServer(void) {
@@ -43,6 +45,7 @@ void	Server::prtServer(void) {
 		for (int j = 0; j < _location[i].index.size(); j++)
 			std::cout << PURPLE << _location[i].index[j] << ", ";
 		std::cout << RESET << std::endl;
+		std::cout << "return      : " << PURPLE << _location[i].retur.have << ", " << _location[i].retur.code << ", " << _location[i].retur.text << RESET << std::endl;
 	}
 	// TODO : MimeType
 }

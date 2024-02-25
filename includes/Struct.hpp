@@ -5,15 +5,9 @@
 #include <vector>
 
 struct return_t {
+	bool		have;
 	short int	code;	// Status Code
 	std::string	text;	// Option
-};
-
-struct method_t {
-	bool	get;
-	bool	head;
-	bool	post;
-	bool	del;
 };
 
 struct Location

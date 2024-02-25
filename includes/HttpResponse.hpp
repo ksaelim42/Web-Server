@@ -42,6 +42,7 @@ class HttpResponse
 		std::string	_getDate(void);
 		std::string	_getStatusLine(short int &);
 		std::string	_getStatusText(short int &);
+		std::string	_getLocation(std::string & url);
 		// body messages
 		short int	_readFile(std::string &, std::string &);
 		bool		_createErrorPage(short int &, std::string &);

@@ -31,6 +31,11 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 std::string	HttpResponse::createResponse(void) {
 	if (_status == 200)
 		_status = _checkRequest();
+	std::cout << "return have : " << _req.serv.retur.have << std::endl;
+	if (_req.serv.retur.have) {
+		_status = _req.serv.retur.code;
+		_body = _req.serv.retur.text;
+	}
 	if (_status == 200)
 		_status = _findFile();
 	if (_status == 200) {
@@ -41,21 +46,20 @@ std::string	HttpResponse::createResponse(void) {
 			_status = _readFile(_req.path, _body);
 		}
 	}
-	if (_status != 200) {
+	std::cout << RED << "Success for readfile : " << _status << std::endl;
+	if (_status >= 400 && _status < 600)
 		_createErrorPage(_status, _body);
-	}
 	_createHeader();
 	return _header + CRLF + _body;
 }
 
 bool	HttpResponse::_createHeader(void) {
-	_contentType = _getContentType(_req.path);
-	_contentLength = _getContentLength();
-	_date = _getDate();
 	_header = _getStatusLine(_status);
-	_header += _contentLength;
-	_header += _contentType;
-	_header += _date;
+	_header += _getContentLength();
+	_header += _getContentType(_req.path);
+	_header += _getDate();
+	if (_status >= 300 && _status < 400)
+		_header += _getLocation(_req.serv.retur.text);
 	return true;
 }
 
@@ -153,6 +157,16 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 		default:
 			return "Undefined";
 	}
+}
+
+std::string	HttpResponse::_getLocation(std::string & url) {
+	std::string	location = "Location: ";
+
+	std::map<std::string, std::string>::const_iterator	it;
+	it = _req.headers.find("Host");
+	if (it == _req.headers.end())
+		return location + it->second + url + CRLF;
+	return location + url + CRLF;
 }
 
 // ************************************************************************** //
@@ -266,23 +280,20 @@ bool	HttpResponse::_splitPath(std::string url) {
 		_req.queryStr = url.substr(found + 1);
 		url = url.substr(0, found);
 	}
-	if (cgiPass) {
-
-	}
 	_req.path = url;
 	return true;
 }
-bool	HttpResponse::_isCgi(std::string & path) {
-	size_t	index = path.find_last_of(".");
-	if (index != std::string::npos) {
-		std::string	ext = path.substr(index + 1);
-		if (ext == "sh")
-			return true;
-		else if (ext == "pl")
-			return true;
-	}
-	return false;
-}
+// bool	HttpResponse::_isCgi(std::string & path) {
+// 	size_t	index = path.find_last_of(".");
+// 	if (index != std::string::npos) {
+// 		std::string	ext = path.substr(index + 1);
+// 		if (ext == "sh")
+// 			return true;
+// 		else if (ext == "pl")
+// 			return true;
+// 	}
+// 	return false;
+// }
 
 bool	HttpResponse::_matchLocation(std::vector<Location> loc) {
 	Location	matchLoc;
@@ -298,6 +309,8 @@ bool	HttpResponse::_matchLocation(std::vector<Location> loc) {
 			_req.serv.setRoot(matchLoc.root);
 		if (!matchLoc.index.empty())
 			_req.serv.setIndex(matchLoc.index);
+		if (matchLoc.retur.have)
+			_req.serv.retur = matchLoc.retur;
 		return true;
 	}
 	else

@@ -2,7 +2,7 @@ FROM	debian:bookworm
 
 # install nginx
 RUN		apt update\
-		&& apt install vim nginx procps tree -y
+		&& apt install vim nginx procps tree xclip -y
 
 # install cgi shell
 RUN		apt install spawn-fcgi fcgiwrap -y
