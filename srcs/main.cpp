@@ -5,13 +5,18 @@ bool	matchLocation(std::vector<Server> servers, std::string path) {
 	return true;
 }
 
-Location	createLocation(std::string path, \
-std::string root, std::vector<std::string> index, return_t retur) {
+Location	createLocation(std::string path, std::string root, \
+std::vector<std::string> index, uint16_t method, bool autoIndex, \
+size_t cliSize, return_t retur, bool cgiPass) {
 	Location	loc;
 	loc.path = path;
 	loc.root = root;
 	loc.index = index;
+	loc.allowMethod = method;
+	loc.autoIndex = autoIndex;
+	loc.cliBodySize = cliSize;
 	loc.retur = retur;
+	loc.cgiPass = cgiPass;
 	return loc;
 }
 
@@ -19,18 +24,18 @@ Server	createServer(void) {
 	Server	serv;
 	serv.setName("testwebserv1");
 	serv.setPort("8003");
-	serv.setRoot("html/default");
+	serv.setRoot("html/static");
 	std::vector<std::string>	index;
+	return_t	retur{0,0,""};
+	uint16_t	method = -1;
+	serv.setLocation(createLocation("/", "html/static", index, method, 0, BODYBUFSIZE, retur, 0));
+	serv.setLocation(createLocation("/redir", "html/static", index, method, 0, BODYBUFSIZE, return_t{1, 301, "/simple.html"}, 0));
+	serv.setLocation(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1));
+	serv.setLocation(createLocation("/subdir", "html/static", index, method, 1, BODYBUFSIZE, retur, 0));
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
 	index1.push_back("test.png");
-	// std::vector<std::string>	index2;
-	return_t	retur;
-	retur.have = 0;
-	serv.setLocation(createLocation("/", "html/static", index, retur));
-	serv.setLocation(createLocation("/images", "html/static", index1, retur));
-	serv.setLocation(createLocation("/cgi-bin", ".", index, retur));
-	serv.setLocation(createLocation("/redir", "html/static", index, return_t{1, 301, "/simple.html"}));
+	serv.setLocation(createLocation("/images", "html/static", index1, method, 0, BODYBUFSIZE, retur, 0));
 	return serv;
 }
 

@@ -10,21 +10,19 @@ void	Server::_initErrPage(void) {
 
 Server::Server(void) {
 	// if didn't specify Types context Server will use default Types
-	if (1) { //:TODO fix to check config file
-		_mimeType = initMineTypeDefault();
-	}
-	_name = "";
-	_ipAddr = "0.0.0.0";
-	_port = "80";
-	_root = "html/default";
-	_index.push_back("index.html");
-	cliBodySize = BODYBUFSIZE;
-	_initErrPage();
-	allowMethod = 0;
-	INIT_METHOD(allowMethod);	// TODO: in case of not limit method
-	// SET_METHOD(allowMethod, METHOD_POST);
-	retur.have = 0;
+	_mimeType = initMineTypeDefault();
+	_name = "";						// default : null
+	_ipAddr = "0.0.0.0";			// default : any addr
+	_port = "80";					// default : 80
+	_root = "html";					// default : html directory
+	_index.push_back("index.html");	// default : index.html
+	cliBodySize = BODYBUFSIZE;		// dafault : 1m byte
+	INIT_METHOD(allowMethod);		// default : allow all method
+	autoIndex = 0;					// defualt : off
+	retur.have = 0;					// default : --
 	retur.code = 0;
+	retur.text = "";
+	_initErrPage();					// default
 }
 
 void	Server::prtServer(void) {
