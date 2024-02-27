@@ -33,11 +33,12 @@ class Server
 		std::map<std::string, std::string>	_mimeType;
 	public:
 		int									sockFd;
+		std::map<short int, std::string>	errPage;
 		size_t								cliBodySize;
 		uint16_t							allowMethod;
 		bool								autoIndex;
 		return_t							retur;
-		std::map<short int, std::string>	errPage;
+		bool								cgiPass;
 
 		Server(void);
 		void	_initErrPage(void);

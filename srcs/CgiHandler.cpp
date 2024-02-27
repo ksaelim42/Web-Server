@@ -7,7 +7,7 @@ CgiHandler::CgiHandler() {
 
 short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 	std::cout << "Start handler CGI" << std::endl;
-	if (_checkCgiScript(req.path) == 0)
+	if (_checkCgiScript(req.pathSrc) == 0)
 		return _status;
 	if (_initEnv(req) == 0)
 		return _status;
@@ -26,7 +26,7 @@ short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 		close(_pipeInFd[0]);
 		close(_pipeOutFd[1]);
 		char	*args[2];
-		args[0] = strdup(req.path);
+		args[0] = strdup(req.pathSrc);
 		args[1] = NULL;
 		char	**env = aopEnv(_env);
 		if (execve(args[0], args, env) == -1)
@@ -87,10 +87,10 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env["CONTENT_LENGTH"] = req.contentLength;	// Must specify on POST method for read body content
 	_env["CONTENT_TYPE"] = req.contentType;		// get from request
 	// Parsing
-	_env["SCRIPT_NAME"] = req.path;				// path of script (exclude Query string & path info) Ex: /script.sh
+	_env["SCRIPT_NAME"] = req.pathSrc;			// path of script (exclude Query string & path info) Ex: /script.sh
 	_env["QUERY_STRING"] = req.queryStr;		// on URL after ? Ex: www.test.com/script.sh?a=10&b=20 , query string = a=10&b=20
 	_env["PATH_INFO"] = req.pathInfo;			// sub-resource path that come after script name
-	// _env["PATH_TRANSLATED"] = "";				// --
+	_env["PATH_TRANSLATED"] = req.serv.getRoot() + req.pathInfo;	// --
 	// for Server
 	_env["SERVER_NAME"] = req.serv.getName();	// name of server.
 	_env["SERVER_PORT"] = req.serv.getPort();	// Port of server Ex: 8080

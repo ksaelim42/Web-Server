@@ -25,6 +25,8 @@ struct parsedReq {
 	std::string							pathInfo;
 	std::string							queryStr;
 	std::string							fragment;
+	std::string							redirPath;
+	std::string							pathSrc;
 	std::string							body;
 	Server								serv;
 };

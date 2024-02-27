@@ -6,6 +6,9 @@
 
 #include <ctime>
 #include <exception>
+#include <dirent.h>		// opendir
+#include <sstream>		// ostringstream
+#include <iomanip>		// setw
 
 #include "Utils.hpp"
 #include "httpReq.hpp"
@@ -29,9 +32,10 @@ class HttpResponse
 		std::string	_connection;
 		std::string	_location;
 		std::string	_date;
+		struct stat	_fileInfo;
 
 		// std::string	_encodeURL(std::string uri);
-		bool		_isCgi(std::string &);
+		// bool		_isCgi(std::string &);
 		short int	_checkRequest(void);
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
@@ -45,13 +49,15 @@ class HttpResponse
 		std::string	_getLocation(std::string & url);
 		// body messages
 		short int	_readFile(std::string &, std::string &);
+		short int	_listFile(std::string &, std::string &);
 		bool		_createErrorPage(short int &, std::string &);
 		// parsing request
 		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
-		bool		_splitPath(std::string url);
+		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);
 		bool		_matchLocation(std::vector<Location>);
 		short int	_findFile(void);
+		short int	_findType(void);
 	public:
 		HttpResponse(Server &, httpReq &);
 		~HttpResponse() {}

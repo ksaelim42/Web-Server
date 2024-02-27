@@ -1,5 +1,7 @@
 #include "Socket.hpp"
 
+int	requestNumber = 1;
+
 Socket::~Socket() {
 	// freeaddrinfo(_sockAddr);
 }
@@ -10,13 +12,13 @@ int	Socket::acceptConnection(int & serverSock) {
 	socklen_t			clientAddrLen = sizeof(clientAddr);
 
 	// Accept connection
+	std::cout << GREEN << "Waiting for client request..." << RESET << std::endl;
 	client_fd	= accept(serverSock, (struct sockaddr *)&clientAddr, &clientAddrLen);
 	if (client_fd < 0)
 		throw SocketException("Accept fail");
 	else {
-		std::cout << GREEN << "connection accepted from " << RESET << std::endl;
-		std::cout << "client fd: " << client_fd \
-		<< ", client IP address: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
+		std::cout << GREEN << requestNumber++ << " : connection accepted from: " << RESET;
+		std::cout << "client fd: " << client_fd << ", addr: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
 	}
 	return client_fd;
 }
@@ -35,9 +37,10 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 	}
 	request = buffer;
 	std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << buffer << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
+	// std::cout << "-----------------------------------------" << std::endl;
+	// std::cout << buffer << std::endl;
+	// std::cout << "-----------------------------------------" << std::endl;
+	// exit(0);
 	return true;
 }
 
@@ -73,23 +76,29 @@ bool	Socket::initServer(std::vector<Server> & servs) {
 
 // Tempolary Function
 std::string	strCutTo(std::string & str, std::string delimiter) {
-	std::size_t	found = str.find_first_of(delimiter);
+	std::size_t	found = str.find(delimiter);
 	std::string	word = str.substr(0, found);
-	str.erase(0, found + 1);
+	str.erase(0, found + delimiter.length());
 	return word;
 }
 
-// request_t	genRequest(std::string str) {
-// 	request_t	request;
-// 	// std::string	root = "content/static";
+httpReq	genRequest(std::string str) {
+	httpReq	req;
 
-// 	// request.path = "./content/static/index.html";
-// 	request.method = strCutTo(str, " ");
-// 	request.path = strCutTo(str, " ");
-// 	request.version = strCutTo(str, "\r\n");
-// 	request.body = "";
-// 	return request;
-// }
+	req.method = strCutTo(str, " ");
+	req.srcPath = strCutTo(str, " ");
+	req.version = strCutTo(str, CRLF);
+	while (str.compare(0, 2, CRLF) != 0) {
+		std::string key = strCutTo(str, ": ");
+		std::string value = strCutTo(str, CRLF);;
+		// std::cout << "key: " << key << std::endl;
+		// std::cout << "value: " << value << std::endl;
+		req.headers[key] = value;
+		// sleep(1);
+	}
+	req.body = "";
+	return req;
+}
 
 void	prtRequest(httpReq request) {
 	std::cout <<  "--- HTTP Request ---" << std::endl;
@@ -108,12 +117,13 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 	while (1) {
 		client_fd = acceptConnection(server.sockFd);
 		if (receiveRequest(client_fd, reqMsg)) {
-			// _request = genRequest(reqMsg);
-			_request = storeReq(reqMsg);
+			_request = genRequest(reqMsg);
+			// _request = storeReq(reqMsg);
+			std::cerr << "Header Line: " << _request.srcPath << std::endl;
 			// prtRequest(_request);
 			try {
 				HttpResponse	response(server, _request);
-				response.prtParsedReq();
+				// response.prtParsedReq();
 				_resMsg = response.createResponse();
 				sendResponse(client_fd, _resMsg);
 			}

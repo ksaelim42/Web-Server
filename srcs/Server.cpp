@@ -23,6 +23,7 @@ Server::Server(void) {
 	retur.code = 0;
 	retur.text = "";
 	_initErrPage();					// default
+	cgiPass = 0;
 }
 
 void	Server::prtServer(void) {
@@ -43,7 +44,11 @@ void	Server::prtServer(void) {
 		for (int j = 0; j < _location[i].index.size(); j++)
 			std::cout << PURPLE << _location[i].index[j] << ", ";
 		std::cout << RESET << std::endl;
+		std::cout << "allowMethod : " << PURPLE << _location[i].allowMethod << RESET << std::endl;
+		std::cout << "autoIndex   : " << PURPLE << _location[i].autoIndex << RESET << std::endl;
+		std::cout << "cliBodySize : " << PURPLE << _location[i].cliBodySize << RESET << std::endl;
 		std::cout << "return      : " << PURPLE << _location[i].retur.have << ", " << _location[i].retur.code << ", " << _location[i].retur.text << RESET << std::endl;
+		std::cout << "cgiPass     : " << PURPLE << _location[i].cgiPass << RESET << std::endl;
 	}
 	// TODO : MimeType
 }
