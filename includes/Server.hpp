@@ -2,7 +2,7 @@
 # define SERVER_HPP
 
 #define HEADBUFSIZE 1000
-#define BODYBUFSIZE 1000000
+#define BODYBUFSIZE 1000000	// defautl
 
 #define	METHOD_GET	0x1
 #define	METHOD_HEAD	0x2
@@ -33,16 +33,17 @@ class Server
 		std::map<std::string, std::string>	_mimeType;
 	public:
 		int									sockFd;
-		std::map<short int, std::string>	errPage;
 		size_t								cliBodySize;
-		uint16_t							allowMethod;
 		bool								autoIndex;
-		return_t							retur;
 		bool								cgiPass;
+		uint16_t							allowMethod;
+		return_t							retur;
+		std::map<short int, std::string>	errPage;
 
 		Server(void);
+		~Server(void) {}
 		void	_initErrPage(void);
-		// ~Server(void) {}
+		void	_initMineTypeDefault(void);
 		void	setName(std::string name);
 		void	setIPaddr(std::string ipAddr);
 		void	setPort(std::string port);
@@ -53,15 +54,15 @@ class Server
 		void	clearLocation(void);
 		void	prtServer(void);
 
-		std::string							getName(void) const;
-		std::string							getIPaddr(void) const;
-		std::string							getPort(void) const;
-		std::string							getRoot(void) const;
-		std::vector<std::string>			getIndex(void) const;
-		std::vector<Location>				getLocation(void) const;
+		std::string					getName(void) const;
+		std::string					getIPaddr(void) const;
+		std::string					getPort(void) const;
+		std::string					getRoot(void) const;
 		std::string					getMimeType(const std::string & extension) const;
-		struct sockaddr						getSockAddr(void) const;
-		std::string							getErrPage(short int &) const;
+		std::string					getErrPage(short int &) const;
+		std::vector<std::string>	getIndex(void) const;
+		std::vector<Location>		getLocation(void) const;
+		struct sockaddr				getSockAddr(void) const;
 };
 
 #endif

@@ -25,8 +25,9 @@ class HttpResponse
 		CgiHandler		_cgi;
 
 		short int	_status;
-		std::string	_header;
+		std::map<std::string, std::string>	_headers;
 		std::string	_body;
+		std::string	_statusLine;
 		std::string	_contentType;
 		std::string	_contentLength;
 		std::string	_connection;
@@ -34,13 +35,20 @@ class HttpResponse
 		std::string	_date;
 		struct stat	_fileInfo;
 
-		// std::string	_encodeURL(std::string uri);
+		// parsing request
 		// bool		_isCgi(std::string &);
+		bool		_parsePath(std::string);
+		bool		_urlEncoding(std::string & path);
+		bool		_matchLocation(std::vector<Location>);
+		short int	_findFile(void);
+		short int	_findType(void);
+		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
+		// check request
 		short int	_checkRequest(void);
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
-		// --- Header Field --- //
-		bool		_createHeader(void);
+		// header field
+		std::string	_createHeader(void);
 		std::string	_getContentType(std::string &);
 		std::string	_getContentLength(void);
 		std::string	_getDate(void);
@@ -51,13 +59,8 @@ class HttpResponse
 		short int	_readFile(std::string &, std::string &);
 		short int	_listFile(std::string &, std::string &);
 		bool		_createErrorPage(short int &, std::string &);
-		// parsing request
-		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
-		bool		_parsePath(std::string);
-		bool		_urlEncoding(std::string & path);
-		bool		_matchLocation(std::vector<Location>);
-		short int	_findFile(void);
-		short int	_findType(void);
+		// check CGI response
+		short int	_inspectCgiHeaders(std::string &);
 	public:
 		HttpResponse(Server &, httpReq &);
 		~HttpResponse() {}

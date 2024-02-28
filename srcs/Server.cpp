@@ -1,16 +1,8 @@
 #include "Server.hpp"
 
-void	Server::_initErrPage(void) {
-	errPage[400] = "html/errorPage/400.html";
-	errPage[403] = "html/errorPage/403.html";
-	errPage[404] = "html/errorPage/404.html";
-	errPage[405] = "html/errorPage/405.html";
-	errPage[505] = "html/errorPage/505.html";
-}
-
 Server::Server(void) {
-	// if didn't specify Types context Server will use default Types
-	_mimeType = initMineTypeDefault();
+	_initMineTypeDefault();
+	_initErrPage();
 	_name = "";						// default : null
 	_ipAddr = "0.0.0.0";			// default : any addr
 	_port = "80";					// default : 80
@@ -22,7 +14,6 @@ Server::Server(void) {
 	retur.have = 0;					// default : --
 	retur.code = 0;
 	retur.text = "";
-	_initErrPage();					// default
 	cgiPass = 0;
 }
 
@@ -143,4 +134,129 @@ struct sockaddr	Server::getSockAddr(void) const {
 
 void	Server::clearLocation(void) {
 	_location.clear();
+}
+
+// ************************************************************************** //
+// ------------------------------- Initialize ------------------------------- //
+// ************************************************************************** //
+
+void	Server::_initErrPage(void) {
+	errPage[400] = "html/errorPage/400.html";
+	errPage[403] = "html/errorPage/403.html";
+	errPage[404] = "html/errorPage/404.html";
+	errPage[405] = "html/errorPage/405.html";
+	errPage[502] = "html/errorPage/502.html";
+	errPage[505] = "html/errorPage/505.html";
+}
+
+void	Server::_initMineTypeDefault(void) {
+	// Text Type
+	_mimeType["default"] = "text/plain";
+	_mimeType["html"] = "text/html";
+	_mimeType["htm"] = "text/html";
+	_mimeType["shtml"] = "text/html";
+	_mimeType["css"] = "text/css";
+	_mimeType["xml"] = "text/xml";
+	_mimeType["mml"] = "text/mathml";
+	_mimeType["txt"] = "text/plain";
+	_mimeType["jad"] = "text/vnd.sun.j2me.app-descriptor";
+	_mimeType["wml"] = "text/vnd.wap.wml";
+	_mimeType["htc"] = "text/x-component";
+	// Images Type
+	_mimeType["gif"] = "image/gif";
+	_mimeType["jpeg"] = "image/jpeg";
+	_mimeType["jpg"] = "image/jpeg";
+	_mimeType["png"] = "image/png";
+	_mimeType["tif"] = "image/tiff";
+	_mimeType["tiff"] = "image/tiff";
+	_mimeType["wbmp"] = "image/vnd.wap.wbmp";
+	_mimeType["ico"] = "image/x-icon";
+	_mimeType["jng"] = "image/x-jng";
+	_mimeType["bmp"] = "image/x-ms-bmp";
+	_mimeType["svg"] = "image/svg+xml";
+	_mimeType["svgz"] = "image/svg+xml";
+	_mimeType["webp"] = "image/webp";
+	// application it is a top-level media type (not Text or Multimedia)
+	_mimeType["js"] = "application/javascript";
+	_mimeType["atom"] = "application/atom+xml";
+	_mimeType["rss"] = "application/rss+xml";
+	_mimeType["woff"] = "application/font-woff";
+	_mimeType["jar"] = "application/java-archive";
+	_mimeType["war"] = "application/java-archive";
+	_mimeType["ear"] = "application/java-archive";
+	_mimeType["json"] = "application/json";
+	_mimeType["hqx"] = "application/mac-binhex40";
+	_mimeType["doc"] = "application/msword";
+	_mimeType["pdf"] = "application/pdf";
+	_mimeType["ps"] = "application/postscript";
+	_mimeType["eps"] = "application/postscript";
+	_mimeType["ai"] = "application/postscript";
+	_mimeType["rtf"] = "application/rtf";
+	_mimeType["m3u8"] = "application/vnd.apple.mpegurl";
+	_mimeType["xls"] = "application/vnd.ms-excel";
+	_mimeType["eot"] = "application/vnd.ms-fontobject";
+	_mimeType["ppt"] = "application/vnd.ms-powerpoint";
+	_mimeType["wmlc"] = "application/vnd.wap.wmlc";
+	_mimeType["kml"] = "application/vnd.google-earth.kml+xml";
+	_mimeType["kmz"] = "application/vnd.google-earth.kmz";
+	_mimeType["7z"] = "application/x-7z-compressed";
+	_mimeType["cco"] = "application/x-cocoa";
+	_mimeType["jardiff"] = "application/x-java-archive-diff";
+	_mimeType["jnlp"] = "application/x-java-jnlp-file";
+	_mimeType["run"] = "application/x-makeself";
+	_mimeType["pl"] = "application/x-perl";
+	_mimeType["pm"] = "application/x-perl";
+	_mimeType["prc"] = "application/x-pilot";
+	_mimeType["pdb"] = "application/x-pilot";
+	_mimeType["rar"] = "application/x-rar-compressed";
+	_mimeType["rpm"] = "application/x-redhat-package-manager";
+	_mimeType["sea"] = "application/x-sea";
+	_mimeType["swf"] = "application/x-shockwave-flash";
+	_mimeType["sit"] = "application/x-stuffit";
+	_mimeType["tcl"] = "application/x-tcl";
+	_mimeType["tk"] = "application/x-tcl";
+	_mimeType["der"] = "application/x-x509-ca-cert";
+	_mimeType["pem"] = "application/x-x509-ca-cert";
+	_mimeType["crt"] = "application/x-x509-ca-cert";
+	_mimeType["xpi"] = "application/x-xpinstall";
+	_mimeType["xhtml"] = "application/xhtml+xml";
+	_mimeType["xspf"] = "application/xspf+xml";
+	_mimeType["zip"] = "application/zip";
+	_mimeType["bin"] = "application/octet-stream";
+	_mimeType["exe"] = "application/octet-stream";
+	_mimeType["dll"] = "application/octet-stream";
+	_mimeType["deb"] = "application/octet-stream";
+	_mimeType["dmg"] = "application/octet-stream";
+	_mimeType["iso"] = "application/octet-stream";
+	_mimeType["img"] = "application/octet-stream";
+	_mimeType["msi"] = "application/octet-stream";
+	_mimeType["msp"] = "application/octet-stream";
+	_mimeType["msm"] = "application/octet-stream";
+	_mimeType["docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+	_mimeType["xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+	_mimeType["pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+	// Audio Type
+	_mimeType["mid"] = "audio/midi";
+	_mimeType["midi"] = "audio/midi";
+	_mimeType["kar"] = "audio/midi";
+	_mimeType["mp3"] = "audio/mpeg";
+	_mimeType["ogg"] = "audio/ogg";
+	_mimeType["m4a"] = "audio/x-m4a";
+	_mimeType["ra"] = "audio/x-realaudio";
+	// Video Type
+	_mimeType["3gpp"] = "video/3gpp";
+	_mimeType["3gp"] = "video/3gpp";
+	_mimeType["ts"] = "video/mp2t";
+	_mimeType["mp4"] = "video/mp4";
+	_mimeType["mpeg"] = "video/mpeg";
+	_mimeType["mpg"] = "video/mpeg";
+	_mimeType["mov"] = "video/quicktime";
+	_mimeType["webm"] = "video/webm";
+	_mimeType["flv"] = "video/x-flv";
+	_mimeType["m4v"] = "video/x-m4v";
+	_mimeType["mng"] = "video/x-mng";
+	_mimeType["asx"] = "video/x-ms-asf";
+	_mimeType["asf"] = "video/x-ms-asf";
+	_mimeType["wmv"] = "video/x-ms-wmv";
+	_mimeType["avi"] = "video/x-msvideo";
 }

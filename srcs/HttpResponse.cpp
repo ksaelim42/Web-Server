@@ -1,6 +1,7 @@
 #include "HttpResponse.hpp"
 
 HttpResponse::HttpResponse(Server & serv, httpReq & req) {
+	// Request Field
 	_req.serv = serv;
 	_req.cliIPaddr = "";		// Can't find way
 	_req.method = req.method;
@@ -45,18 +46,29 @@ std::string	HttpResponse::createResponse(void) {
 		if (_status >= 400 && _status < 600)
 			_createErrorPage(_status, _body);
 	}
-	_createHeader();
-	return _header + CRLF + _body;
+	return _createHeader() + CRLF + _body;
 }
 
-bool	HttpResponse::_createHeader(void) {
-	_header = _getStatusLine(_status);
-	_header += _getContentLength();
-	_header += _getContentType(_req.pathSrc);
-	_header += _getDate();
-	if (_status >= 300 && _status < 400)
-		_header += _getLocation(_req.path);
-	return true;
+std::string	HttpResponse::_createHeader(void) {
+	std::string	headerMsg;
+	std::map<std::string, std::string>::const_iterator	it;
+
+	headerMsg.reserve(HEADBUFSIZE);
+	headerMsg = _getStatusLine(_status);
+	if (_headers.count("Content-Length") == 0)
+		_headers["Content-Length"] = _getContentLength();
+	if (_headers.count("Content-Type") == 0)
+		_headers["Content-Type"] = _getContentType(_req.pathSrc);
+	if (_headers.count("Date") == 0)
+		_headers["Date"] = _getDate();
+	if (_status >= 300 && _status < 400) {
+		if (_headers.count("Location") == 0)
+		_headers["Location"] = _getLocation(_req.path);
+	}
+	size_t	i = 0;
+	for (it = _headers.begin(); it != _headers.end(); it++)
+		headerMsg += it->first + ":" + it->second + CRLF;
+	return headerMsg;
 }
 
 void	HttpResponse::prtResponse(void) {
@@ -109,23 +121,19 @@ std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 }
 
 std::string	HttpResponse::_getContentLength(void) {
-	std::string	contentLength = "Content-Length: ";
-	size_t	length = _body.length();
-	return contentLength + numToStr(length) + CRLF;
+	return numToStr(_body.length());
 }
 
 std::string	HttpResponse::_getContentType(std::string & path) {
-	std::string	contentType = "Content-Type: ";
 	size_t	index = path.find_last_of(".");
 	if (index != std::string::npos) {
 		std::string	ext = path.substr(index + 1);
-		return contentType + _req.serv.getMimeType(ext) + CRLF;
+		return _req.serv.getMimeType(ext);
 	}
-	return contentType + _req.serv.getMimeType("default") + CRLF;
+	return _req.serv.getMimeType("default");
 }
 
 std::string	HttpResponse::_getDate(void) {
-	std::string	date = "Date: ";
 	std::time_t	currentTime;
 	struct tm	*gmTime;
 	char		buffer[30];
@@ -135,7 +143,7 @@ std::string	HttpResponse::_getDate(void) {
 
 	// Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %T %Z", gmTime);
-	return date + buffer + CRLF;
+	return buffer;
 }
 
 std::string	HttpResponse::_getStatusText(short int & statusCode) {
@@ -152,6 +160,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 			return "Not Found";
 		case 405:
 			return "Method Not Allowed";
+		case 502:
+			return "Bad Gateway";
 		case 505:
 			return "HTTP Version Not Supported";
 		default:
@@ -160,14 +170,14 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 }
 
 std::string	HttpResponse::_getLocation(std::string & url) {
-	std::string	location = "Location: http://";
+	std::string	location = "http://";
 
 	std::cout << "url :    " << url << std::endl;
 	std::map<std::string, std::string>::const_iterator	it;
 	it = _req.headers.find("Host");
 	if (it == _req.headers.end())
 		return "";
-	return location + it->second + url + "/" + CRLF;
+	return location + it->second + url + "/";
 }
 
 // ************************************************************************** //
@@ -452,3 +462,108 @@ short int	HttpResponse::_listFile(std::string & path, std::string & body) {
 	_req.pathSrc = "list.html";
 	return 200;
 }
+
+// ************************************************************************** //
+// --------------------------- Inspect CGI script --------------------------- //
+// ************************************************************************** //
+
+short int	HttpResponse::_inspectCgiHeaders(std::string & cgiMsg) {
+	std::size_t	found  = cgiMsg.find_first_of("\n");
+
+	while (found != std::string::npos) {
+		std::string	header(strCutTo(cgiMsg, "\n"));
+		std::string	key(strCutTo(header, ":"));
+		if (key.find(" ") != std::string::npos)
+			return 502;
+		_headers[toProperCase(key)] = header;
+		found = cgiMsg.find_first_of("\n");
+	}
+	return 200;
+}
+
+// std::string	HttpResponse::_inspectCgiResponse(std::string & cgiMsg) {
+// 	std::size_t	found;
+
+// 	for (found = cgiMsg.find_first_of("\n"); found != std::string::npos;) {
+
+// 		found = cgiMsg.find_first_of("\n")
+// 	}
+
+// 	}
+// 	if (found != std::string::npos) {
+// 		_req.fragment = url.substr(found + 1);
+// 		url = url.substr(0, found);
+// 	}
+
+// 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
+// }
+
+// httpReq	genRequest(std::string str) {
+// 	// Response Field
+// 	_header = "";
+// 	_body = "";
+// 	_contentType = "";
+// 	_contentLength = "";
+// 	_connection = "";
+// 	_location = "";
+// 	_date = "";
+// 	httpReq	req;
+
+
+// 	req.method = strCutTo(str, " ");
+// 	req.srcPath = strCutTo(str, " ");
+// 	req.version = strCutTo(str, CRLF);
+// 	while (str.compare(0, 2, CRLF) != 0) {
+// 		std::string key = strCutTo(str, ": ");
+// 		std::string value = strCutTo(str, CRLF);;
+// 		// std::cout << "key: " << key << std::endl;
+// 		// std::cout << "value: " << value << std::endl;
+// 		req.headers[key] = value;
+// 		// sleep(1);
+// 	}
+// 	req.body = "";
+// 	return req;
+// }
+
+// std::string	HttpResponse::_inspectCgiHeader(short int & statusCode) {
+// 	std::string	httpVer = HTTP_VERS;
+// 	std::string	httpStatCode = numToStr(statusCode);
+// 	std::string httpStatText = _getStatusText(statusCode);
+// 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
+// }
+
+
+
+
+
+
+// back up
+// std::string	HttpResponse::_getContentLength(void) {
+// 	std::string	contentLength = "Content-Length: ";
+// 	size_t	length = _body.length();
+// 	return contentLength + numToStr(length) + CRLF;
+// }
+
+// std::string	HttpResponse::_getContentType(std::string & path) {
+// 	std::string	contentType = "Content-Type: ";
+// 	size_t	index = path.find_last_of(".");
+// 	if (index != std::string::npos) {
+// 		std::string	ext = path.substr(index + 1);
+// 		return contentType + _req.serv.getMimeType(ext) + CRLF;
+// 	}
+// 	return contentType + _req.serv.getMimeType("default") + CRLF;
+// }
+
+// std::string	HttpResponse::_getDate(void) {
+// 	std::string	date = "Date: ";
+// 	std::time_t	currentTime;
+// 	struct tm	*gmTime;
+// 	char		buffer[30];
+
+// 	std::time(&currentTime);		// get current time.
+// 	gmTime = gmtime(&currentTime);	// convert to tm struct GMT
+
+// 	// Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
+// 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %T %Z", gmTime);
+// 	return date + buffer + CRLF;
+// }

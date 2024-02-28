@@ -7,6 +7,7 @@
 # define RESET			"\e[0m"
 # define CRLF			"\r\n"
 
+#include <cctype>
 #include <string>
 #include <map>
 #include <vector>
@@ -14,13 +15,14 @@
 #include <iostream>
 
 std::string	numToStr(size_t);
-std::string	toProtoEnv(std::string var);
+std::string	toProtoEnv(std::string);
+std::string	toProperCase(std::string &);
+std::string	strCutTo(std::string &, std::string );
 size_t		strToNum(std::string);
-std::map<std::string, std::string>	initMineTypeDefault(void);
-char*	strdup(std::string);
-char**	aopArgs(std::vector<std::string>);
-char**	aopEnv(std::map<std::string, std::string>);
+char*		strdup(std::string);
+char**		aopArgs(std::vector<std::string> &);
+char**		aopEnv(std::map<std::string, std::string> &);
 
-void	prtMap(std::map<std::string, std::string> set);
+void	prtMap(std::map<std::string, std::string> &);
 
 #endif

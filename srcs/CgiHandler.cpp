@@ -40,9 +40,18 @@ short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 		// Server Section
 		write(_pipeInFd[1], req.body.c_str(), req.body.size());
 		close(_pipeInFd[1]);
-		sleep(1);
-		char	buffer[5000];
-		int bytesRead = read(_pipeOutFd[0], buffer, 5000);
+
+		// Read Output
+		char	buffer[10000];
+		size_t	bytesRead;
+		size_t	i = 0;
+		bytesRead = read(_pipeOutFd[0], &buffer[i], 10000);
+		// while (i < HEADBUFSIZE) {
+		// 	bytesRead = read(_pipeOutFd[0], &buffer[i], 1);
+		// 	if (buffer[i] == '\n' && i && buffer[i - 1] == '\n') {
+		// 		i
+		// 	}
+		// }
 		close(_pipeOutFd[0]);
 		std::cout << "bytes read: " << bytesRead << std::endl;
 		std::cout << buffer;

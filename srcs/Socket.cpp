@@ -74,14 +74,6 @@ bool	Socket::initServer(std::vector<Server> & servs) {
 	return true;
 }
 
-// Tempolary Function
-std::string	strCutTo(std::string & str, std::string delimiter) {
-	std::size_t	found = str.find(delimiter);
-	std::string	word = str.substr(0, found);
-	str.erase(0, found + delimiter.length());
-	return word;
-}
-
 httpReq	genRequest(std::string str) {
 	httpReq	req;
 
