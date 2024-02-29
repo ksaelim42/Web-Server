@@ -14,9 +14,19 @@ std::string	toProperCase(std::string & src) {
 	if (src.empty())
 		return "";
 	std::string	dest(src);
-	dest[0] = toupper(dest[0]);
-	for (size_t i = 1; i < dest.length(); i++)
-		dest[i] = tolower(dest[i]);
+	bool	first = 1;
+	for (size_t i = 0; i < dest.length(); i++) {
+		if (std::isalnum(dest[i]) || dest[i] == '_') {
+			if (first) {
+				dest[i] = std::toupper(dest[i]);
+				first = 0;
+			}
+			else
+				dest[i] = std::tolower(dest[i]);
+		}
+		else
+			first = 1;
+	}
 	return dest;
 }
 
@@ -77,7 +87,6 @@ std::string	strCutTo(std::string & str, std::string lim) {
 	}
 	return word;
 }
-
 
 void	prtMap(std::map<std::string, std::string> & set) {
 	std::map<std::string, std::string>::const_iterator	it;

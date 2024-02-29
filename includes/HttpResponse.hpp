@@ -27,12 +27,13 @@ class HttpResponse
 		short int	_status;
 		std::map<std::string, std::string>	_headers;
 		std::string	_body;
-		std::string	_statusLine;
-		std::string	_contentType;
-		std::string	_contentLength;
-		std::string	_connection;
-		std::string	_location;
-		std::string	_date;
+		// std::string	_statusLine;
+		// std::string	_contentType;
+		// std::string	_contentLength;
+		// std::string	_connection;
+		// std::string	_location;
+		// std::string	_date;
+		std::string	_cgiHeader;
 		struct stat	_fileInfo;
 
 		// parsing request
@@ -60,6 +61,7 @@ class HttpResponse
 		short int	_listFile(std::string &, std::string &);
 		bool		_createErrorPage(short int &, std::string &);
 		// check CGI response
+		short int	_parseCgiHeader(std::string &);
 		short int	_inspectCgiHeaders(std::string &);
 	public:
 		HttpResponse(Server &, httpReq &);

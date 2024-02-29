@@ -35,8 +35,15 @@ std::string	HttpResponse::createResponse(void) {
 		if (_status == 200) {
 			std::cout << "cgi Pass:   " << _req.serv.cgiPass << std::endl;
 			std::cout << "path info : " << _req.pathInfo << std::endl;
-			if (_req.serv.cgiPass)
+			if (_req.serv.cgiPass) {
 				_status = _cgi.execCgiScript(_req, _body);
+				if (_status == 200)
+					_status = _parseCgiHeader(_body);
+				std::cout << "--------------------- cgiHeader ----------------------" << std::endl;
+				std::cout << _cgiHeader << std::endl;
+				if (_status == 200)
+					_status = _inspectCgiHeaders(_cgiHeader);
+			}
 			else if (_req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 				_status = _listFile(_req.path, _body);
 			else
@@ -65,6 +72,8 @@ std::string	HttpResponse::_createHeader(void) {
 		if (_headers.count("Location") == 0)
 		_headers["Location"] = _getLocation(_req.path);
 	}
+	std::cout << "--------------- header ---------------" << std::endl;
+	prtMap(_headers); // TODO check
 	size_t	i = 0;
 	for (it = _headers.begin(); it != _headers.end(); it++)
 		headerMsg += it->first + ":" + it->second + CRLF;
@@ -72,9 +81,7 @@ std::string	HttpResponse::_createHeader(void) {
 }
 
 void	HttpResponse::prtResponse(void) {
-	std::cout << _contentType;
-	std::cout << _contentLength;
-	std::cout << _date;
+	prtMap(_headers);
 	std::cout << "-----------------------------------------" << std::endl;
 	std::cout << _body;
 }
@@ -140,7 +147,6 @@ std::string	HttpResponse::_getDate(void) {
 
 	std::time(&currentTime);		// get current time.
 	gmTime = gmtime(&currentTime);	// convert to tm struct GMT
-
 	// Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %T %Z", gmTime);
 	return buffer;
@@ -467,75 +473,32 @@ short int	HttpResponse::_listFile(std::string & path, std::string & body) {
 // --------------------------- Inspect CGI script --------------------------- //
 // ************************************************************************** //
 
-short int	HttpResponse::_inspectCgiHeaders(std::string & cgiMsg) {
-	std::size_t	found  = cgiMsg.find_first_of("\n");
+short int	HttpResponse::_parseCgiHeader(std::string & cgiMsg) {
+	std::cout << cgiMsg << std::endl;
+	std::size_t	found  = cgiMsg.find("\n\n");
+	if (found == std::string::npos)
+		return 502;
+	_cgiHeader = cgiMsg.substr(0, found + 1);	// Cut the second '\n' out
+	cgiMsg.erase(0, found + 2);					// Kept only body Message
+	return 200;
+}
+
+short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeader) {
+	std::size_t	found  = cgiHeader.find_first_of("\n");
 
 	while (found != std::string::npos) {
-		std::string	header(strCutTo(cgiMsg, "\n"));
+		std::string	header(strCutTo(cgiHeader, "\n"));
 		std::string	key(strCutTo(header, ":"));
 		if (key.find(" ") != std::string::npos)
 			return 502;
 		_headers[toProperCase(key)] = header;
-		found = cgiMsg.find_first_of("\n");
+		found = cgiHeader.find_first_of("\n");
 	}
+	std::cout << "Inspect CGI heasers success" << std::endl;
+	std::cout << "header size: " << _headers.size() << std::endl;
+	// prtMap(_headers);
 	return 200;
 }
-
-// std::string	HttpResponse::_inspectCgiResponse(std::string & cgiMsg) {
-// 	std::size_t	found;
-
-// 	for (found = cgiMsg.find_first_of("\n"); found != std::string::npos;) {
-
-// 		found = cgiMsg.find_first_of("\n")
-// 	}
-
-// 	}
-// 	if (found != std::string::npos) {
-// 		_req.fragment = url.substr(found + 1);
-// 		url = url.substr(0, found);
-// 	}
-
-// 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
-// }
-
-// httpReq	genRequest(std::string str) {
-// 	// Response Field
-// 	_header = "";
-// 	_body = "";
-// 	_contentType = "";
-// 	_contentLength = "";
-// 	_connection = "";
-// 	_location = "";
-// 	_date = "";
-// 	httpReq	req;
-
-
-// 	req.method = strCutTo(str, " ");
-// 	req.srcPath = strCutTo(str, " ");
-// 	req.version = strCutTo(str, CRLF);
-// 	while (str.compare(0, 2, CRLF) != 0) {
-// 		std::string key = strCutTo(str, ": ");
-// 		std::string value = strCutTo(str, CRLF);;
-// 		// std::cout << "key: " << key << std::endl;
-// 		// std::cout << "value: " << value << std::endl;
-// 		req.headers[key] = value;
-// 		// sleep(1);
-// 	}
-// 	req.body = "";
-// 	return req;
-// }
-
-// std::string	HttpResponse::_inspectCgiHeader(short int & statusCode) {
-// 	std::string	httpVer = HTTP_VERS;
-// 	std::string	httpStatCode = numToStr(statusCode);
-// 	std::string httpStatText = _getStatusText(statusCode);
-// 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
-// }
-
-
-
-
-
 
 // back up
 // std::string	HttpResponse::_getContentLength(void) {

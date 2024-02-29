@@ -44,8 +44,9 @@ short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 		// Read Output
 		char	buffer[10000];
 		size_t	bytesRead;
-		size_t	i = 0;
-		bytesRead = read(_pipeOutFd[0], &buffer[i], 10000);
+		// size_t	i = 0;
+		sleep(2);
+		bytesRead = read(_pipeOutFd[0], buffer, 10000);
 		// while (i < HEADBUFSIZE) {
 		// 	bytesRead = read(_pipeOutFd[0], &buffer[i], 1);
 		// 	if (buffer[i] == '\n' && i && buffer[i - 1] == '\n') {
@@ -54,7 +55,7 @@ short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 		// }
 		close(_pipeOutFd[0]);
 		std::cout << "bytes read: " << bytesRead << std::endl;
-		std::cout << buffer;
+		std::cout << YELLOW << buffer << RESET;
 		message = buffer;
 	}
 	return 200;

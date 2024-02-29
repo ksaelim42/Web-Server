@@ -3,11 +3,11 @@
 # echo "server:XO"
 # echo "monaLisa:XO"
 
-# echo "Date: Wed, 01 Jan 2000 00:00:00 GMT"
+echo "Date: Wed, 01 Jan 2000 00:00:00 GMT"
 
 # echo "NomoreADK$ :ad"
 
-echo "Content-Type: text/html"
+echo "content-type: text/html"
 # echo "aloha"
 
 echo ""
