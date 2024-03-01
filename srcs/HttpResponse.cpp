@@ -12,7 +12,6 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 	_req.contentType = _findContent(_req.headers, "Content-Type");
 	_parsePath(_req.uri);
 	_urlEncoding(_req.path);
-	_req.body = ""; // TODO
 	_matchLocation(_req.serv.getLocation());
 	_req.serv.clearLocation();
 	_status = 200; // TODO : must get from prach
@@ -21,7 +20,9 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 		_status = _req.serv.retur.code;
 		_body = _req.serv.retur.text;
 		_req.pathSrc = _req.serv.retur.text;
+		return ;
 	}
+	_req.body = req.body; // TODO must be read in post method
 }
 
 std::string	HttpResponse::createResponse(void) {
@@ -33,14 +34,12 @@ std::string	HttpResponse::createResponse(void) {
 		if (_status == 200)
 			_status = _findType();
 		if (_status == 200) {
-			std::cout << "cgi Pass:   " << _req.serv.cgiPass << std::endl;
-			std::cout << "path info : " << _req.pathInfo << std::endl;
+			// std::cout << "cgi Pass:   " << _req.serv.cgiPass << std::endl;
+			// std::cout << "path info : " << _req.pathInfo << std::endl;
 			if (_req.serv.cgiPass) {
 				_status = _cgi.execCgiScript(_req, _body);
 				if (_status == 200)
 					_status = _parseCgiHeader(_body);
-				std::cout << "--------------------- cgiHeader ----------------------" << std::endl;
-				std::cout << _cgiHeader << std::endl;
 				if (_status == 200)
 					_status = _inspectCgiHeaders(_cgiHeader);
 			}
@@ -49,7 +48,7 @@ std::string	HttpResponse::createResponse(void) {
 			else
 				_status = _readFile(_req.pathSrc, _body);
 		}
-		std::cout << RED << "Success for readfile : " << _status << std::endl;
+		std::cout << CYAN << "Success for readfile : " << _status << RESET << std::endl;
 		if (_status >= 400 && _status < 600)
 			_createErrorPage(_status, _body);
 	}
@@ -72,8 +71,6 @@ std::string	HttpResponse::_createHeader(void) {
 		if (_headers.count("Location") == 0)
 		_headers["Location"] = _getLocation(_req.path);
 	}
-	std::cout << "--------------- header ---------------" << std::endl;
-	prtMap(_headers); // TODO check
 	size_t	i = 0;
 	for (it = _headers.begin(); it != _headers.end(); it++)
 		headerMsg += it->first + ":" + it->second + CRLF;
@@ -81,9 +78,10 @@ std::string	HttpResponse::_createHeader(void) {
 }
 
 void	HttpResponse::prtResponse(void) {
+	std::cout << CYAN;
 	prtMap(_headers);
 	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << _body;
+	std::cout << _body << RESET << std::endl;
 }
 
 // ************************************************************************** //

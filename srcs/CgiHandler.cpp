@@ -38,7 +38,9 @@ short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
 		close(_pipeOutFd[1]);
 
 		// Server Section
-		write(_pipeInFd[1], req.body.c_str(), req.body.size());
+		std::cout << YELLOW << "size of body request -- " << req.body.size() << RESET << std::endl;
+		std::cout << YELLOW << "body : " << req.body << RESET;
+		write(_pipeInFd[1], req.body.c_str(), req.body.size() + 1);	// add null terminate
 		close(_pipeInFd[1]);
 
 		// Read Output

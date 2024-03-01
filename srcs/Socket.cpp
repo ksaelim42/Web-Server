@@ -82,23 +82,27 @@ httpReq	genRequest(std::string str) {
 	req.version = strCutTo(str, CRLF);
 	while (str.compare(0, 2, CRLF) != 0) {
 		std::string key = strCutTo(str, ": ");
-		std::string value = strCutTo(str, CRLF);;
+		std::string value = strCutTo(str, CRLF);
 		// std::cout << "key: " << key << std::endl;
 		// std::cout << "value: " << value << std::endl;
 		req.headers[key] = value;
 		// sleep(1);
 	}
-	req.body = "";
+	strCutTo(str, CRLF);
+	req.body = str;
 	return req;
 }
 
-void	prtRequest(httpReq request) {
-	std::cout <<  "--- HTTP Request ---" << std::endl;
-	std::cout << "method: " << request.method << std::endl;
-	std::cout << "path: " << request.srcPath << std::endl;
-	std::cout << "version: " << request.version << std::endl;
+void	prtRequest(httpReq & request) {
+
+	std::cout << BLUE <<  "--- HTTP Request ---" << std::endl;
+	std::cout << "method: " << request.method;
+	std::cout << ", path: " << request.srcPath;
+	std::cout << ", version: " << request.version << std::endl;
 	prtMap(request.headers);
 	std::cout <<  "--------------------" << std::endl;
+	std::cout << "body: " << request.body << std::endl;
+	std::cout <<  "********************" << RESET << std::endl;
 }
 
 bool	Socket::runServer(std::vector<Server> & servs) {
@@ -111,8 +115,8 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 		if (receiveRequest(client_fd, reqMsg)) {
 			_request = genRequest(reqMsg);
 			// _request = storeReq(reqMsg);
-			std::cerr << "Header Line: " << _request.srcPath << std::endl;
-			// prtRequest(_request);
+			// std::cerr << "Header Line: " << _request.srcPath << std::endl;
+			prtRequest(_request);
 			try {
 				HttpResponse	response(server, _request);
 				// response.prtParsedReq();
