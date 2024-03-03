@@ -23,6 +23,8 @@ HttpResponse::HttpResponse(Server & serv, httpReq & req) {
 		return ;
 	}
 	_req.body = req.body; // TODO must be read in post method
+	_body = "";
+	_cgiHeader = "";
 }
 
 std::string	HttpResponse::createResponse(void) {
@@ -351,8 +353,6 @@ short int	HttpResponse::_findFile(void) {
 	std::string	path;
 
 	path = _req.serv.getRoot() + _req.path;
-	std::cout << "path : " << path << std::endl;
-	std::cout << "reqpath : " << _req.path << std::endl;
 	if (path.back() == '/') {
 		std::vector<std::string>	index = _req.serv.getIndex();
 		std::string	filePath;
@@ -360,14 +360,14 @@ short int	HttpResponse::_findFile(void) {
 			filePath = path + index[i];
 			if (stat(filePath.c_str(), &_fileInfo) == 0) {
 				_req.pathSrc = filePath;
-				std::cout << "Find path success, path: " << PURPLE << _req.pathSrc << RESET << std::endl;
+				std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
 				return 200;
 			}
 		}
 	}
 	if (stat(path.c_str(), &_fileInfo) == 0) {
 		_req.pathSrc = path;
-		std::cout << "Find path success, path: " << PURPLE << _req.pathSrc << RESET << std::endl;
+		std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
 		return 200;
 	}
 	std::cout << RED << "Not found file in stat" << RESET << std::endl;
@@ -392,17 +392,17 @@ short int	HttpResponse::_findType(void) {
 
 void	HttpResponse::prtParsedReq(void) {
 	std::cout <<  "--- Parsed Request ---" << std::endl;
-	std::cout << "cliIPaddr: " << PURPLE << _req.cliIPaddr << RESET << std::endl;
-	std::cout << "method: " << PURPLE << _req.method << RESET << std::endl;
-	std::cout << "uri: " << PURPLE << _req.uri << RESET << std::endl;
-	std::cout << "version: " << PURPLE << _req.version << RESET << std::endl;
-	std::cout << "contentLengt: " << PURPLE << _req.contentLength << RESET << std::endl;
-	std::cout << "contentType: " << PURPLE << _req.contentType << RESET << std::endl;
-	std::cout << "path: " << PURPLE << _req.path << RESET << std::endl;
-	std::cout << "pathInfo: " << PURPLE << _req.pathInfo << RESET << std::endl;
-	std::cout << "queryStr: " << PURPLE << _req.queryStr << RESET << std::endl;
-	std::cout << "fragment: " << PURPLE << _req.fragment << RESET << std::endl;
-	std::cout << "body: " << PURPLE << _req.body << RESET << std::endl;
+	std::cout << "cliIPaddr: " << MAG << _req.cliIPaddr << RESET << std::endl;
+	std::cout << "method: " << MAG << _req.method << RESET << std::endl;
+	std::cout << "uri: " << MAG << _req.uri << RESET << std::endl;
+	std::cout << "version: " << MAG << _req.version << RESET << std::endl;
+	std::cout << "contentLengt: " << MAG << _req.contentLength << RESET << std::endl;
+	std::cout << "contentType: " << MAG << _req.contentType << RESET << std::endl;
+	std::cout << "path: " << MAG << _req.path << RESET << std::endl;
+	std::cout << "pathInfo: " << MAG << _req.pathInfo << RESET << std::endl;
+	std::cout << "queryStr: " << MAG << _req.queryStr << RESET << std::endl;
+	std::cout << "fragment: " << MAG << _req.fragment << RESET << std::endl;
+	std::cout << "body: " << MAG << _req.body << RESET << std::endl;
 	prtMap(_req.headers);
 	std::cout <<  "--- Parsed Server ---" << std::endl;
 	_req.serv.prtServer();

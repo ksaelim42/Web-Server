@@ -3,12 +3,15 @@
 
 # define RED			"\e[0;31m"
 # define GREEN			"\e[0;32m"
-# define YELLOW			"\e[0;33m"
-# define BLUE			"\e[0;34m"
-# define PURPLE			"\e[0;35m"
+# define YEL			"\e[0;33m"
+# define BLU			"\e[0;34m"
+# define MAG			"\e[0;35m"
 # define CYAN			"\e[0;36m"
 # define RESET			"\e[0m"
 # define CRLF			"\r\n"
+
+# define BBLU           "\e[1;34m"
+# define BYEL           "\e[1;33m"
 
 #include <cctype>
 #include <string>

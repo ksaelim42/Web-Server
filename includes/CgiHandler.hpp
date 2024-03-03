@@ -35,16 +35,20 @@ struct parsedReq {
 class CgiHandler
 {
 	private:
-		pid_t	_pid;
-		int		_pipeInFd[2];
-		int		_pipeOutFd[2];
+		pid_t		_pid;
+		int			_pipeInFd[2];
+		int			_pipeOutFd[2];
 		short int	_status;
+		bool		_isPost;
 		std::map<std::string, std::string>	_env;
 
 		// char**	_args; // store CGI script path to execute
 		bool	_initEnv(parsedReq &);
-		bool	_checkCgiScript(std::string path);
-		bool	_createPipe(void);
+		bool	_checkCgiScript(parsedReq &);
+		bool	_createPipe(parsedReq &);
+		bool	_forkChild(parsedReq &);
+		void _childProcess(parsedReq &);
+		void _parentProcess(parsedReq &, std::string &);
 	public:
 		CgiHandler(void);
 		// ~Cgi(void);

@@ -3,92 +3,113 @@
 CgiHandler::CgiHandler() {
 	_env["GATEWAY_INTERFACE"] = CGI_VERS;	// version of CGI
 	_env["SERVER_SOFTWARE"] = PROGRAM_NAME;	// name of Webserv/version Ex: nginx/1.18.0
+	_isPost = 0;
 }
 
 short int	CgiHandler::execCgiScript(parsedReq & req, std::string & message) {
-	std::cout << "Start handler CGI" << std::endl;
-	if (_checkCgiScript(req.pathSrc) == 0)
+	std::cout << BYEL << "Start handler CGI" << RESET << std::endl;
+	if (_checkCgiScript(req) == 0)
 		return _status;
 	if (_initEnv(req) == 0)
 		return _status;
-	if (_createPipe() == 0)
+	if (_createPipe(req) == 0)
 		return 500;
-	_pid = fork();
-	if (_pid == -1)
+	if (_forkChild(req) == 0)
 		return 500;
-	else if (_pid == 0) { // Child Process
-		// close unnecessary pipe
-		close(_pipeInFd[1]);
-		close(_pipeOutFd[0]);
-		// redirect stdard in and out
-		dup2(_pipeInFd[0], STDIN_FILENO);
-		dup2(_pipeOutFd[1], STDOUT_FILENO);
-		close(_pipeInFd[0]);
-		close(_pipeOutFd[1]);
-		char	*args[2];
-		args[0] = strdup(req.pathSrc);
-		args[1] = NULL;
-		char	**env = aopEnv(_env);
-		if (execve(args[0], args, env) == -1)
-			exit(errno);
-	}
-	else { // Parent Process
-		// close unnecessary pipe
-		close(_pipeInFd[0]);
-		close(_pipeOutFd[1]);
-
-		// Server Section
-		std::cout << YELLOW << "size of body request -- " << req.body.size() << RESET << std::endl;
-		std::cout << YELLOW << "body : " << req.body << RESET;
-		write(_pipeInFd[1], req.body.c_str(), req.body.size() + 1);	// add null terminate
-		close(_pipeInFd[1]);
-
-		// Read Output
-		char	buffer[10000];
-		size_t	bytesRead;
-		// size_t	i = 0;
-		sleep(2);
-		bytesRead = read(_pipeOutFd[0], buffer, 10000);
-		// while (i < HEADBUFSIZE) {
-		// 	bytesRead = read(_pipeOutFd[0], &buffer[i], 1);
-		// 	if (buffer[i] == '\n' && i && buffer[i - 1] == '\n') {
-		// 		i
-		// 	}
-		// }
-		close(_pipeOutFd[0]);
-		std::cout << "bytes read: " << bytesRead << std::endl;
-		std::cout << YELLOW << buffer << RESET;
-		message = buffer;
-	}
+	if (_pid == 0) // Child Process
+		_childProcess(req);
+	else // Parent Process
+		_parentProcess(req, message);
 	return 200;
 }
 
-bool	CgiHandler::_createPipe(void) {
-	if (pipe(_pipeInFd) == -1) { // Sent input from Parent to Child
-		return false;
+bool	CgiHandler::_createPipe(parsedReq & req) {
+	if (_isPost) {
+		if (pipe(_pipeInFd) == -1) { // Sent input from Parent to Child
+			return false;
+		}
 	}
 	if (pipe(_pipeOutFd) == -1) { // Sent output from Child to Parent
+		close(_pipeInFd[0]);
+		close(_pipeInFd[1]);
 		return false;
 	}
 	return true;
 }
 
-bool	CgiHandler::_checkCgiScript(std::string path) {
+bool	CgiHandler::_checkCgiScript(parsedReq & req) {
 	// check file is exist
-	if (access(path.c_str(), F_OK) != 0) {
+	if (access(req.pathSrc.c_str(), F_OK) != 0) {
 		std::cerr << RED << "No such file or directory" << RESET << std::endl;
 		// _status = ;
 		return false;
 	}
 	// check permission
-	if (access(path.c_str(), X_OK) != 0) {
+	if (access(req.pathSrc.c_str(), X_OK) != 0) {
 		std::cerr << RED << "Permission denied" << RESET << std::endl;
 		// _status = ;
 		return false;
 	}
+	if (req.method == "POST")
+		_isPost = 1;
 	// Check extension file must be sh for mandatory
 	// Check allow method ? still don't know why have to check
 	return true;
+}
+
+bool	CgiHandler::_forkChild(parsedReq & req) {
+	_pid = fork();
+	if (_pid == -1) {
+		close(_pipeInFd[0]);
+		close(_pipeInFd[1]);
+		close(_pipeOutFd[0]);
+		close(_pipeOutFd[1]);
+		return false;
+	}
+	return true;
+}
+
+void CgiHandler::_childProcess(parsedReq & req) {
+	if (_isPost) { // if post method will take input from std::in
+		dup2(_pipeInFd[0], STDIN_FILENO);
+		close(_pipeInFd[1]);
+		close(_pipeInFd[0]);
+	}
+	dup2(_pipeOutFd[1], STDOUT_FILENO);
+	close(_pipeOutFd[0]);
+	close(_pipeOutFd[1]);
+	char *args[2];
+	args[0] = strdup(req.pathSrc);
+	args[1] = NULL;
+	char **env = aopEnv(_env);
+	if (execve(args[0], args, env) == -1)
+		exit(errno);
+}
+
+void CgiHandler::_parentProcess(parsedReq & req, std::string & message) {
+	if (_isPost) {
+		close(_pipeInFd[0]);
+		std::cout << BYEL << " --- Body Request ---size : " << req.body.size() << RESET << std::endl;
+		write(_pipeInFd[1], req.body.c_str(), req.body.size() + 1);	// add null terminate
+		close(_pipeInFd[1]);
+	}
+	char	buffer[10000];
+	memset(buffer, 0, 10000);
+	size_t	bytesRead;
+	// size_t	i = 0;
+	sleep(2);
+	bytesRead = read(_pipeOutFd[0], buffer, 10000);
+	close(_pipeOutFd[1]);
+	close(_pipeOutFd[0]);
+	// while (i < HEADBUFSIZE) {
+	// 	bytesRead = read(_pipeOutFd[0], &buffer[i], 1);
+	// 	if (buffer[i] == '\n' && i && buffer[i - 1] == '\n') {
+	// 		i
+	// 	}
+	// }
+	std::cout << "bytes read: " << bytesRead << std::endl;
+	std::cout << YEL << buffer << RESET;
+	message = buffer;
 }
 
 bool	CgiHandler::_initEnv(parsedReq & req) {

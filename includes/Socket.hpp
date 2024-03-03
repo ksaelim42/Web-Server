@@ -29,8 +29,6 @@ class Socket
 	private:
 		struct addrinfo	*_sockAddr;
 		std::string	_name;
-		httpReq		_request;
-		std::string	_resMsg;
 		// int		_matchLocation(httpReq & req, std::vector<Server> & servs);
 		// int		_matchServer(httpReq &, std::vector<Server> &);
 		// int		_matchPath(httpReq & req, Server & serv);

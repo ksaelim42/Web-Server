@@ -2,7 +2,6 @@
 
 TARGET_DIR="../upload"
 
-
 echo "content-type: text/html"
 echo ""
 
@@ -14,16 +13,18 @@ echo "</head>"
 echo "<body>"
 
 if [ "$REQUEST_METHOD" = "POST" ]; then
-	read -n $(CONTENT_LENGTH) BUFFER
+	read -n "$CONTENT_LENGTH" BUFFER
 
 	FILE_NAME="HelloMama"
 	FILE_PATH="$TARGET_DIR/$FILE_NAME"
+	echo "--- From CGI script --- size: ${CONTENT_LENGTH}" 1>&2
+	echo -e "${BUFFER}" 1>&2
 
-	echo $BUFFER > "FILE_PATH"
+	echo $BUFFER >"FILE_PATH"
 
 	echo "<h2>File uploaded successfully: $FILE_NAME</h2>"
 
-else	
+else
 	echo "<h2>File uploaded fail</h2>"
 fi
 

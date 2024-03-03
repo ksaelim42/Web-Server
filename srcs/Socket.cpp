@@ -27,6 +27,7 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 	char	buffer[4098];
 
 	// Receive data from client
+    memset(buffer, 0, 4098);
 	ssize_t	bytes_received =  recv(client_fd, buffer, 4098 - 1, 0);
 	if (bytes_received < 0) {
 		std::cerr << "Error receiving data" << std::endl;
@@ -36,11 +37,11 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 		return false;
 	}
 	request = buffer;
-	std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl;
-	// std::cout << "-----------------------------------------" << std::endl;
-	// std::cout << buffer << std::endl;
-	// std::cout << "-----------------------------------------" << std::endl;
-	// exit(0);
+	/* std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl; */
+	/* std::cout << "-----------------------------------------" << std::endl; */
+	/* std::cout << buffer << std::endl; */
+	/* std::cout << "-----------------------------------------" << std::endl; */
+	/* exit(0); */
 	return true;
 }
 
@@ -65,10 +66,10 @@ bool	Socket::initServer(std::vector<Server> & servs) {
 			throw SocketException("Listen socket fail");
 		std::cout << GREEN << "Success to create server" << RESET << std::endl;
 		if (!servs[i].getName().empty())
-			std::cout << "Domain name: "<< PURPLE << servs[i].getName() << RESET;
+			std::cout << "Domain name: "<< MAG << servs[i].getName() << RESET;
 		else
-			std::cout << "Domain name: "<< PURPLE << "localhost" << RESET;
-		std::cout << ", port: "<< PURPLE << servs[i].getPort() << RESET << std::endl;
+			std::cout << "Domain name: "<< MAG << "localhost" << RESET;
+		std::cout << ", port: "<< MAG << servs[i].getPort() << RESET << std::endl;
 		// freeaddrinfo(_sockAddr);
 	}
 	return true;
@@ -90,19 +91,18 @@ httpReq	genRequest(std::string str) {
 	}
 	strCutTo(str, CRLF);
 	req.body = str;
+    str.clear();
 	return req;
 }
-
 void	prtRequest(httpReq & request) {
-
-	std::cout << BLUE <<  "--- HTTP Request ---" << std::endl;
+	std::cout << BBLU <<  "--- HTTP Header ---" << BLU << std::endl;
 	std::cout << "method: " << request.method;
 	std::cout << ", path: " << request.srcPath;
 	std::cout << ", version: " << request.version << std::endl;
 	prtMap(request.headers);
-	std::cout <<  "--------------------" << std::endl;
-	std::cout << "body: " << request.body << std::endl;
-	std::cout <<  "********************" << RESET << std::endl;
+	std::cout << BBLU <<  "--- HTTP Body---" << BLU << std::endl;
+    std::cout << request.body << std::endl;
+	std::cout << BBLU <<  "********************" << RESET << std::endl;
 }
 
 bool	Socket::runServer(std::vector<Server> & servs) {
@@ -113,15 +113,15 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 	while (1) {
 		client_fd = acceptConnection(server.sockFd);
 		if (receiveRequest(client_fd, reqMsg)) {
-			_request = genRequest(reqMsg);
+			httpReq request = genRequest(reqMsg);
 			// _request = storeReq(reqMsg);
 			// std::cerr << "Header Line: " << _request.srcPath << std::endl;
-			prtRequest(_request);
+			prtRequest(request);
+            HttpResponse	response(server, request);
 			try {
-				HttpResponse	response(server, _request);
 				// response.prtParsedReq();
-				_resMsg = response.createResponse();
-				sendResponse(client_fd, _resMsg);
+              std::string   resMsg = response.createResponse();
+				sendResponse(client_fd, resMsg);
 			}
 			catch (std::exception &e) {
 				std::cerr << e.what() << std::endl;

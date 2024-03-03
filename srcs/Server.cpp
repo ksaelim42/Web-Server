@@ -18,28 +18,28 @@ Server::Server(void) {
 }
 
 void	Server::prtServer(void) {
-	std::cout << "server_name : " << PURPLE << _name << RESET << std::endl;
-	std::cout << "IP address  : " << PURPLE << _ipAddr << RESET << std::endl;
-	std::cout << "Port        : " << PURPLE << _port << RESET << std::endl;
-	std::cout << "Root        : " << PURPLE << _root << RESET << std::endl;
+	std::cout << "server_name : " << MAG << _name << RESET << std::endl;
+	std::cout << "IP address  : " << MAG << _ipAddr << RESET << std::endl;
+	std::cout << "Port        : " << MAG << _port << RESET << std::endl;
+	std::cout << "Root        : " << MAG << _root << RESET << std::endl;
 	std::cout << "index       : ";
 	for (int i = 0; i < _index.size(); i++)
-		std::cout << PURPLE << _index[i] << ", ";
+		std::cout << MAG << _index[i] << ", ";
 	std::cout << RESET << std::endl;
-	std::cout << "CliBodySize : " << PURPLE << cliBodySize << RESET << std::endl;
+	std::cout << "CliBodySize : " << MAG << cliBodySize << RESET << std::endl;
 	for (int i = 0; i < _location.size(); i++) {
 		std::cout << "*** Location[" << i << "] ***" << std::endl;
-		std::cout << "path        : " << PURPLE << _location[i].path << RESET << std::endl;
-		std::cout << "Root        : " << PURPLE << _location[i].root << RESET << std::endl;
+		std::cout << "path        : " << MAG << _location[i].path << RESET << std::endl;
+		std::cout << "Root        : " << MAG << _location[i].root << RESET << std::endl;
 		std::cout << "index       : ";
 		for (int j = 0; j < _location[i].index.size(); j++)
-			std::cout << PURPLE << _location[i].index[j] << ", ";
+			std::cout << MAG << _location[i].index[j] << ", ";
 		std::cout << RESET << std::endl;
-		std::cout << "allowMethod : " << PURPLE << _location[i].allowMethod << RESET << std::endl;
-		std::cout << "autoIndex   : " << PURPLE << _location[i].autoIndex << RESET << std::endl;
-		std::cout << "cliBodySize : " << PURPLE << _location[i].cliBodySize << RESET << std::endl;
-		std::cout << "return      : " << PURPLE << _location[i].retur.have << ", " << _location[i].retur.code << ", " << _location[i].retur.text << RESET << std::endl;
-		std::cout << "cgiPass     : " << PURPLE << _location[i].cgiPass << RESET << std::endl;
+		std::cout << "allowMethod : " << MAG << _location[i].allowMethod << RESET << std::endl;
+		std::cout << "autoIndex   : " << MAG << _location[i].autoIndex << RESET << std::endl;
+		std::cout << "cliBodySize : " << MAG << _location[i].cliBodySize << RESET << std::endl;
+		std::cout << "return      : " << MAG << _location[i].retur.have << ", " << _location[i].retur.code << ", " << _location[i].retur.text << RESET << std::endl;
+		std::cout << "cgiPass     : " << MAG << _location[i].cgiPass << RESET << std::endl;
 	}
 	// TODO : MimeType
 }
