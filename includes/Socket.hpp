@@ -8,6 +8,7 @@
 #include <new>
 #include <exception>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 
 #define HTML_FILE "./content/static/index.html"
@@ -32,7 +33,8 @@ class Socket
 		// int		_matchLocation(httpReq & req, std::vector<Server> & servs);
 		// int		_matchServer(httpReq &, std::vector<Server> &);
 		// int		_matchPath(httpReq & req, Server & serv);
-		bool	_setSockAddr(Server & serv);
+		bool	_setSockAddr(Server &);
+		bool	_setOptSock(int &);
 	public:
 		std::map<std::string, std::string>	mimeType;
 		Socket(void) {}

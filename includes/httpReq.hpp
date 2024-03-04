@@ -36,4 +36,14 @@ struct httpReq
 
 httpReq	storeReq(std::string rawReq);
 
+// #include <iostream>
+// #include <map>
+// #include <string.h>
+
+// struct httpReq
+// {
+// 	std::map<std::string, std::string> startLine;
+// 	std::map<std::string, std::string> headers;
+// };
+
 #endif

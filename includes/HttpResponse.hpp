@@ -2,6 +2,7 @@
 # define HTTPRESPONSE_HPP
 
 # define HTTP_VERS		"HTTP/1.1"
+# define CONNETION	"keep-alive"
 # define PORT			8080
 
 #include <ctime>
@@ -9,6 +10,7 @@
 #include <dirent.h>		// opendir
 #include <sstream>		// ostringstream
 #include <iomanip>		// setw
+#include <fcntl.h>		// open file
 
 #include "Utils.hpp"
 #include "httpReq.hpp"

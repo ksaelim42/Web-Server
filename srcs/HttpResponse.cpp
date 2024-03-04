@@ -73,6 +73,7 @@ std::string	HttpResponse::_createHeader(void) {
 		if (_headers.count("Location") == 0)
 		_headers["Location"] = _getLocation(_req.path);
 	}
+	_headers["Connection"] = CONNETION;
 	size_t	i = 0;
 	for (it = _headers.begin(); it != _headers.end(); it++)
 		headerMsg += it->first + ":" + it->second + CRLF;
@@ -111,7 +112,10 @@ bool	HttpResponse::_checkMethod(std::string method) {
 }
 
 bool	HttpResponse::_checkVersion(std::string version) {
+	// HTTP/1.1 and HTTP/1.0 are most used, and HTTP/1.1 can support HTTP/1.0
 	if (version.compare(HTTP_VERS) == 0)
+		return true;
+	else if (version.compare("HTTP/1.0") == 0)
 		return true;
 	return false;
 }
@@ -190,28 +194,48 @@ std::string	HttpResponse::_getLocation(std::string & url) {
 // ----------------------------- Body Messages ------------------------------ //
 // ************************************************************************** //
 
-short int	HttpResponse::_readFile(std::string & fileName, std::string & body) {
-	std::ifstream	inFile;
-	int				length;
+// short int	HttpResponse::_readFile(std::string & fileName, std::string & body) {
+// 	std::ifstream	inFile;
+// 	int				length;
 
-	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
-	if (!inFile.is_open()) {
-		std::cout << "What wrong :" << fileName << std::endl;
+// 	inFile.open(fileName.c_str());		// Convert string to char* by c_str() function
+// 	if (!inFile.is_open()) {
+// 		if (errno == ENOENT)	// 2 No such file or directory : 404
+// 			return 404;
+// 		if (errno == EACCES)	// 13 Permission denied : 403
+// 			return 403;
+// 		// EMFILE, ENFILE : Too many open file, File table overflow
+// 		// Server Error, May reach the limit of file descriptors : 500
+// 		return 500;
+// 	}
+// 	inFile.seekg(0, inFile.end);		// Set position to end of the stream
+// 	length = inFile.tellg();			// Get current position
+// 	inFile.seekg(0, inFile.beg);		// Set position back to begining of the stream
+// 	body.resize(length);
+// 	inFile.read(&body[0], length);	// Read all data in inFile to Buffer
+// 	inFile.close();						// Close inFile
+// 	return 200;
+// }
+
+short int	HttpResponse::_readFile(std::string & fileName, std::string & body) {
+	int			fd;
+	int			length;
+	uint64_t	bodySize;
+
+	fd = open(fileName.c_str(), O_RDONLY);
+	if (fd < 0) {
 		if (errno == ENOENT)	// 2 No such file or directory : 404
 			return 404;
 		if (errno == EACCES)	// 13 Permission denied : 403
 			return 403;
 		// EMFILE, ENFILE : Too many open file, File table overflow
 		// Server Error, May reach the limit of file descriptors : 500
-		// std::cerr << "Internal Server Error" << std::endl;
 		return 500;
-	} // : TODO Check it is a file not a dir if dir are there autoindex
-	inFile.seekg(0, inFile.end);		// Set position to end of the stream
-	length = inFile.tellg();			// Get current position
-	inFile.seekg(0, inFile.beg);		// Set position back to begining of the stream
-	body.resize(length);
-	inFile.read(&body[0], length);	// Read all data in inFile to Buffer
-	inFile.close();						// Close inFile
+	}
+	bodySize = _fileInfo.st_size; // TODO have to fix read in chuck later
+	body.resize(bodySize);
+	read(fd, &body[0], bodySize);	// Read all data in inFile to Buffer
+	close(fd);
 	return 200;
 }
 
