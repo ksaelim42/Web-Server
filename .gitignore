@@ -1,2 +1,7 @@
+*.vscode
+objs
 *.o
-.vscode
+a.out
+webserv
+test*
+try.c

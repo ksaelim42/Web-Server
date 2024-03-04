@@ -1,28 +1,14 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   httpReq.hpp                                        :+:      :+:    :+:   */
+/*   validateRequest.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/02/11 11:10:04 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/04 19:07:09 by prachman         ###   ########.fr       */
+/*   Created: 2024/03/04 12:58:06 by prachman          #+#    #+#             */
+/*   Updated: 2024/03/04 20:35:57 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef HTTP_REQUEST
-#define HTTP_REQUEST
+#include "HttpRequest.hpp"
 
-#include <iostream>
-#include <map>
-#include <string.h>
-
-struct httpReq
-{
-	std::string method;
-	std::string srcPath;
-	std::string version;
-	std::map<std::string, std::string> headers;
-};
-
-#endif

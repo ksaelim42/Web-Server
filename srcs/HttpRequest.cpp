@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/04 19:11:58 by prachman         ###   ########.fr       */
+/*   Updated: 2024/03/04 20:55:04 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "httpReq.hpp"
+#include "HttpRequest.hpp"
 
 httpReq	storeReq(std::string rawReq)
 {
@@ -51,11 +51,13 @@ httpReq	storeReq(std::string rawReq)
 			i++;
 		}
 	}
-	if (headVec.size() != tailVec.size())
-	{
-		std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
-		exit(1);
-	}
+	// std::cout << "HEAD: " << headVec.size() << std::endl;
+	// std::cout << "TAIL: " << tailVec.size() << std::endl;
+	// if (headVec.size() != tailVec.size())
+	// {
+	// 	std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
+	// 	exit(1);
+	// }
 	for (int i = 0; i < headVec.size(); i++) 
 		reqData.headers[headVec[i]] = tailVec[i];
 	
@@ -79,21 +81,21 @@ int	scanStartLine(httpReq reqData)
 	return 0;
 }
 
-int	main()
-{
-	httpReq		reqData;
-	int			status;
+// int	main()
+// {
+// 	httpReq		reqData;
+	// int			status;
 
-	std::string	rawReq = "GET /favicon.ico HTTP/1.1\r\nHost: localhost:8080\r\nConnection: keep-alive\r\nsec-ch-ua: ""Not A(Brand"";v=""99"", ""Google Chrome"";v=""121"", ""Chromium"";v=""121""\r\nsec-ch-ua-mobile: ?0\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\r\nsec-ch-ua-platform: ""Windows""\r\nAccept: image/avif,image/webp,image/apng,image/svg+xml,image/,/*;q=0.8\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: no-cors\r\nSec-Fetch-Dest: image\r\nReferer: http://localhost:8080/\r\nAccept-Encoding: gzip, deflate, br\r\nAccept-Language: en-US,en;q=0.9,th;q=0.8\r\n";
-	reqData= storeReq(rawReq);
-	status = scanStartLine(reqData);
-	// if (!status)
-	// 	std::cout << "ok!" << std::endl;
-	// else
-	// 	std::cout << status << std::endl;
-	// std::cout << reqData.method << std::endl;
-	// std::cout << reqData.srcPath << std::endl;
-	// std::cout << reqData.version << std::endl;
-	// for (std::map<std::string, std::string>::iterator it = reqData.headers.begin(); it != reqData.headers.end(); it++)
-	// 	std::cout << it->first << " => " << it->second << std::endl;
-}
+	// std::string	rawReq = "GET /favicon.ico HTTP/1.1\r\nHost: localhost:8080\r\nConnection: keep-alive\r\nsec-ch-ua: ""Not A(Brand"";v=""99"", ""Google Chrome"";v=""121"", ""Chromium"";v=""121""\r\nsec-ch-ua-mobile: ?0\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\r\nsec-ch-ua-platform: ""Windows""\r\nAccept: image/avif,image/webp,image/apng,image/svg+xml,image/,/*;q=0.8\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: no-cors\r\nSec-Fetch-Dest: image\r\nReferer: http://localhost:8080/\r\nAccept-Encoding: gzip, deflate, br\r\nAccept-Language: en-US,en;q=0.9,th;q=0.8\r\n\r\n";
+// 	reqData= storeReq(rawReq);
+// 	status = scanStartLine(reqData);
+// 	// if (!status)
+// 	// 	std::cout << "ok!" << std::endl;
+// 	// else
+// 	// 	std::cout << status << std::endl;
+// 	// std::cout << reqData.method << std::endl;
+// 	// std::cout << reqData.srcPath << std::endl;
+// 	// std::cout << reqData.version << std::endl;
+// 	// for (std::map<std::string, std::string>::iterator it = reqData.headers.begin(); it != reqData.headers.end(); it++)
+// 	// 	std::cout << it->first << " => " << it->second << std::endl;
+// }
