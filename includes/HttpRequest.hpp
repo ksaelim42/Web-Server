@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:04 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/04 20:35:16 by prachman         ###   ########.fr       */
+/*   Updated: 2024/03/04 21:20:59 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 #include <string.h>
 
 struct httpReq
