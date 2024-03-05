@@ -1,62 +1,9 @@
-#include <unistd.h>
-#include <iostream>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <fstream>
-#include <cstring>
-#include <sys/select.h>	// for select
-#define BLK		"\e[0;30m"
-#define RED		"\e[0;31m"
-#define GRN		"\e[0;32m"
-#define YEL		"\e[0;33m"
-#define BLU		"\e[0;34m"
-#define MAG		"\e[0;35m"
-#define CYN		"\e[0;36m"
-#define WHT		"\e[0;37m"
-#define RESET	"\e[0m"
-# define ADDR	"127.0.0.1"
-# define PORT	"1600"
+#include "ServerTool.hpp"
 
-fd_set	readFds;
-fd_set	writeFd;
-int		fdMax;
-bool	prtErr(std::string msg);
-bool	initServer(int &sockFd);
-int		acceptConnection(int &serverSock);
-bool	receiveRequest(int &client_fd, std::string &request);
-// FD_set
-void	fdSet(int &fd, fd_set &set);
-void	fdClear(int &fd, fd_set &set);
-
-int	main (void) {
-	int		client_fd;
-	int		server_fd;
-	fd_set	readfds;
-	std::string	reqMsg;
-	if (initServer(server_fd) == 0)
-		return 1;
-	while (1) {
-		if (select(fdMax + 1, &readFds, NULL, NULL, NULL) == -1)
-			return (perror("select"), 4);
-		for (int i = 0; i <= fdMax; i++) {
-			if (FD_ISSET(i, &readFds)) {
-				std::cout << "fd is set" << std::endl;
-				if (i == server_fd) { // handle new connection
-					client_fd = acceptConnection(server_fd);
-					fdSet(client_fd, readFds);
-				}
-				else { // handle data from client
-					receiveRequest(client_fd, reqMsg);
-					fdClear(client_fd, readFds);
-					std::cout << GRN << "Close connection" << RESET << std::endl;
-				}
-			}
-		}
-		sleep(1);
-		std::cout << "Waiting for connection..." << std::endl;
-	}
-	return 0;
+bool prtErr(std::string msg)
+{
+	std::cerr << RED << msg << RESET << std::endl;
+	return false;
 }
 
 bool _setSockAddr(struct addrinfo *&sockAddr)
@@ -88,7 +35,6 @@ bool _setOptSock(int &sockFd)
 bool initServer(int &sockFd)
 {
 	struct addrinfo *sockAddr;
-	FD_ZERO(&readFds);
 	// Creating socket file descriptor
 	if (_setSockAddr(sockAddr) == 0)
 		prtErr("Setup socket fail");
@@ -104,7 +50,6 @@ bool initServer(int &sockFd)
 	std::cout << "Domain name: " << MAG << "localhost" << RESET;
 	std::cout << ", port: " << MAG << PORT << RESET << std::endl;
 	freeaddrinfo(sockAddr);
-	fdSet(sockFd, readFds);
 	return true;
 }
 
@@ -130,6 +75,7 @@ bool receiveRequest(int &client_fd, std::string &request)
 {
 	char buffer[4098];
 	memset(buffer, 0, 4098);
+	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
 	size_t bytes_received = recv(client_fd, buffer, 4098 - 1, 0);
 	if (bytes_received < 0)
 		prtErr("Error receiving data");
@@ -143,8 +89,26 @@ bool receiveRequest(int &client_fd, std::string &request)
 	return true;
 }
 
-bool prtErr(std::string msg)
+bool readFile(std::string name, std::string &str)
 {
-	std::cerr << RED << msg << RESET << std::endl;
-	return false;
+	int		fd;
+	int		length;
+	char	buffer[4098];
+	memset(buffer, 0, 4098);
+	fd = open(name.c_str(), O_RDONLY);
+	if (fd < 0)
+		prtErr(name + " : Can not open.");
+	length = read(fd, buffer, 4048);
+	str = buffer;
+	close(fd);
+	return (true);
+}
+
+bool sendReponse(int client_fd, std::string & content)
+{
+	if (send(client_fd, content.c_str(), content.length(), 0) < 0)
+		prtErr("Error to response data");
+	else
+		std::cout << GRN << "Sent data success" << RESET << std::endl;
+	return true;
 }
