@@ -9,8 +9,7 @@
 #include <unistd.h>		// read file
 #include <cstring>		// memset
 #include <sys/select.h>	// select
-#include <vector>
-#include <algorithm>	// count
+#include <fcntl.h>		// fcntl
 
 #define BLK		"\e[0;30m"
 #define RED		"\e[0;31m"
@@ -22,8 +21,9 @@
 #define WHT		"\e[0;37m"
 #define RESET	"\e[0m"
 
-# define ADDR	"127.0.0.1"
-# define PORT	"1600"
+# define ADDR			"127.0.0.1"
+# define PORT			"1600"
+# define BUFFER_SIZE	5
 
 void	prtErr(std::string msg);
 int		initServer(char* port);

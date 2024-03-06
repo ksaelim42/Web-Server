@@ -76,20 +76,19 @@ int acceptConnection(int &serverSock)
 
 bool receiveRequest(int &client_fd, std::string &request)
 {
-	char buffer[4098];
-	memset(buffer, 0, 4098);
+	char buffer[BUFFER_SIZE];
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
-	size_t bytes_received = recv(client_fd, buffer, 4098 - 1, 0);
+	size_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	std::cout << GRN << "bytes_received: " << bytes_received << RESET << std::endl; // test
 	if (bytes_received < 0)
 		return (prtErr("Error receiving data"), false);
 	else if (bytes_received == 0)
 		return (prtErr("Client disconnected"), false);
 	request = buffer;
 	std::cout << BLU << "Receive Data: " << bytes_received << " bytes" << std::endl;
-	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << buffer << std::endl;
+	std::cout << CYN << buffer << std::endl;
 	std::cout << "-----------------------------------------" << RESET << std::endl;
-	return true;
+	return false; // not reach EOF
 }
 
 bool readFile(std::string name, std::string &str)
@@ -129,3 +128,10 @@ void fdClear(int &fd, fd_set &set)
 	if (fd == fdMax)
 		fdMax--;
 }
+
+// void fdClear(int &fd, fd_set &set)
+// {
+// 	FD_CLR(fd, &set);
+// 	if (fd == fdMax)
+// 		fdMax--;
+// }
