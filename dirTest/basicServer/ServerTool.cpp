@@ -1,12 +1,13 @@
 #include "ServerTool.hpp"
 
-bool prtErr(std::string msg)
+int	fdMax = 0;
+
+void prtErr(std::string msg)
 {
 	std::cerr << RED << msg << RESET << std::endl;
-	return false;
 }
 
-bool _setSockAddr(struct addrinfo *&sockAddr)
+bool _setSockAddr(struct addrinfo *&sockAddr, char* port)
 {
 	int status;
 	struct addrinfo hints;
@@ -16,7 +17,7 @@ bool _setSockAddr(struct addrinfo *&sockAddr)
 	hints.ai_addr = NULL;
 	hints.ai_canonname = NULL;
 	hints.ai_next = NULL;
-	status = getaddrinfo(ADDR, PORT, &hints, &sockAddr);
+	status = getaddrinfo(ADDR, port, &hints, &sockAddr);
 	if (status != 0)
 		return false;
 	return true;
@@ -32,25 +33,27 @@ bool _setOptSock(int &sockFd)
 	return true;
 }
 
-bool initServer(int &sockFd)
+int initServer(char* port)
 {
+	int	sockFd;
+
 	struct addrinfo *sockAddr;
 	// Creating socket file descriptor
-	if (_setSockAddr(sockAddr) == 0)
-		prtErr("Setup socket fail");
+	if (_setSockAddr(sockAddr, port) == 0)
+		return (prtErr("Setup socket fail"), -1);
 	sockFd = socket(sockAddr->ai_family, sockAddr->ai_socktype, sockAddr->ai_protocol);
 	if (sockFd < 0)
-		prtErr("Create socket fail");
+		return (prtErr("Create socket fail"), -1);
 	if (_setOptSock(sockFd) == 0)
-		prtErr("Setup socket fail");
+		return (prtErr("Setup socket fail"), -1);
 	if (bind(sockFd, sockAddr->ai_addr, sockAddr->ai_addrlen) < 0)
-		prtErr("Bind socket fail");
+		return (prtErr("Bind socket fail"), -1);
 	if (listen(sockFd, 10) < 0)
-		prtErr("Listen socket fail");
+		return (prtErr("Listen socket fail"), -1);
 	std::cout << "Domain name: " << MAG << "localhost" << RESET;
-	std::cout << ", port: " << MAG << PORT << RESET << std::endl;
+	std::cout << ", port: " << MAG << port << RESET << std::endl;
 	freeaddrinfo(sockAddr);
-	return true;
+	return sockFd;
 }
 
 int acceptConnection(int &serverSock)
@@ -62,7 +65,7 @@ int acceptConnection(int &serverSock)
 	std::cout << GRN << "Waiting for client.." << RESET << std::endl;
 	client_fd = accept(serverSock, (struct sockaddr *)&clientAddr, &clientAddrLen);
 	if (client_fd < 0)
-		prtErr("Accept fail");
+		return (prtErr("Accept fail"), -1);
 	else
 	{
 		std::cout << GRN << "connection accepted from: " << RESET;
@@ -78,9 +81,9 @@ bool receiveRequest(int &client_fd, std::string &request)
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
 	size_t bytes_received = recv(client_fd, buffer, 4098 - 1, 0);
 	if (bytes_received < 0)
-		prtErr("Error receiving data");
+		return (prtErr("Error receiving data"), false);
 	else if (bytes_received == 0)
-		prtErr("Client disconnected");
+		return (prtErr("Client disconnected"), false);
 	request = buffer;
 	std::cout << BLU << "Receive Data: " << bytes_received << " bytes" << std::endl;
 	std::cout << "-----------------------------------------" << std::endl;
@@ -97,7 +100,7 @@ bool readFile(std::string name, std::string &str)
 	memset(buffer, 0, 4098);
 	fd = open(name.c_str(), O_RDONLY);
 	if (fd < 0)
-		prtErr(name + " : Can not open.");
+		return (prtErr(name + " : Can not open."), false);
 	length = read(fd, buffer, 4048);
 	str = buffer;
 	close(fd);
@@ -107,8 +110,22 @@ bool readFile(std::string name, std::string &str)
 bool sendReponse(int client_fd, std::string & content)
 {
 	if (send(client_fd, content.c_str(), content.length(), 0) < 0)
-		prtErr("Error to response data");
+		return (prtErr("Error to response data"), false);
 	else
 		std::cout << GRN << "Sent data success" << RESET << std::endl;
 	return true;
+}
+
+void fdSet(int &fd, fd_set &set)
+{
+	FD_SET(fd, &set);
+	if (fd > fdMax)
+		fdMax = fd;
+}
+
+void fdClear(int &fd, fd_set &set)
+{
+	FD_CLR(fd, &set);
+	if (fd == fdMax)
+		fdMax--;
 }

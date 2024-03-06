@@ -11,11 +11,14 @@ all:
 	@echo "1 : basic server"
 	@echo "2 : select server"
 
-1: $(NAME_CLIENT)
+1: $(NAME_CLIENT) # basic Server can send & recv between Server - Client
 	$(CC) basicServe.cpp ServerTool.cpp -o $(NAME_SERVER)
 
-2: $(NAME_CLIENT)
-	$(CC) selectServe.cpp ServerTool.cpp -o $(NAME_SERVER)
+2: $(NAME_CLIENT) # select function for only recv 
+	$(CC) selectReadServe.cpp ServerTool.cpp -o $(NAME_SERVER)
+
+3: $(NAME_CLIENT) # select function for recv & send
+	$(CC) selectRWServe.cpp ServerTool.cpp -o $(NAME_SERVER)
 
 $(NAME_CLIENT):
 	$(CC) client.cpp -o $(NAME_CLIENT)

@@ -9,6 +9,8 @@
 #include <unistd.h>		// read file
 #include <cstring>		// memset
 #include <sys/select.h>	// select
+#include <vector>
+#include <algorithm>	// count
 
 #define BLK		"\e[0;30m"
 #define RED		"\e[0;31m"
@@ -23,11 +25,14 @@
 # define ADDR	"127.0.0.1"
 # define PORT	"1600"
 
-bool	prtErr(std::string msg);
-bool	initServer(int & sockFd);
+void	prtErr(std::string msg);
+int		initServer(char* port);
 int		acceptConnection(int & serverSock);
 bool	receiveRequest(int & client_fd, std::string & request);
 bool	readFile(std::string name, std::string &str);
 bool	sendReponse(int client_fd, std::string & content);
+// fd set manipulate
+void fdSet(int &fd, fd_set &set);
+void fdClear(int &fd, fd_set &set);
 
 #endif // !SERVERTOOL_HPP

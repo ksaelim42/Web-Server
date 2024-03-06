@@ -2,11 +2,14 @@
 
 int main(void)
 {
+	char	port[] = "1600";
 	int client_fd;
 	int server_fd;
 	fd_set readfds;
 	std::string reqMsg;
-	if (initServer(server_fd) == 0)
+
+	server_fd = initServer(port);
+	if (server_fd < 0)
 		return 1;
 	while (1)
 	{
@@ -15,11 +18,11 @@ int main(void)
 			continue;
 		if (receiveRequest(client_fd, reqMsg))
 		{
-			std::string	content;
-			if (readFile("text.txt", content)) {
+			reqMsg.clear();
+			if (readFile("text.txt", reqMsg)) {
 				std::cout << MAG << "Test waiting ..." << RESET << std::endl;
-				sleep(3);
-				sendReponse(client_fd, content);
+				sleep(2);
+				sendReponse(client_fd, reqMsg);
 			}
 		}
 		close(client_fd);
