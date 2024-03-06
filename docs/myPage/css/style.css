@@ -13,3 +13,7 @@ body {
 	font-size: 1.5rem;
 	display: flex;
 }
+
+.box a {
+	font-size: 1.3rem;
+}
