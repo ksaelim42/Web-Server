@@ -115,6 +115,15 @@ bool sendReponse(int client_fd, std::string & content)
 	return true;
 }
 
+// ************************************************************************** //
+// ---------------------------- Select Function ----------------------------- //
+// ************************************************************************** //
+
+// FD_ZERO : memset fd_set
+// FD_SET : set fd in fd_set
+// FD_CLEAR : remove fd in fd_set
+// FD_ISSET : check fd are in fd_set
+
 void fdSet(int &fd, fd_set &set)
 {
 	FD_SET(fd, &set);
@@ -129,9 +138,30 @@ void fdClear(int &fd, fd_set &set)
 		fdMax--;
 }
 
-// void fdClear(int &fd, fd_set &set)
-// {
-// 	FD_CLR(fd, &set);
-// 	if (fd == fdMax)
-// 		fdMax--;
-// }
+// ************************************************************************** //
+// ----------------------------- Poll Function ------------------------------ //
+// ************************************************************************** //
+
+// POLLIN : check ready to read
+// POLLOUT : check read to write
+
+int	fdCount = 0; // count current size of fd.
+
+void fdSet(std::vector<struct pollfd> & pfds, int & fd, short event) {
+	// If we don't have room, add more space in the pfds array
+	if (fdCount == fdMax) {
+		fdMax += 5;
+		pfds.resize(fdMax);
+	}
+	pfds[fdCount].fd = fd;
+	pfds[fdCount].events = event;
+	pfds[fdCount].revents = 0;
+	fdCount++;
+}
+
+void fdClear(std::vector<struct pollfd> & pfds, int & i) {
+	// Copy the one from the end over this one
+	if (i != fdCount - 1)
+		pfds[i] = pfds[fdCount - 1];
+	fdCount--;
+}
