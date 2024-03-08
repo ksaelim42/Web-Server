@@ -16,8 +16,9 @@ all:
 	@echo "2 : basic receive select server"
 	@echo "3 : select server"
 	@echo "4 : poll server"
+	@echo "5 : epoll server"
 
-# @echo "4 : non-blocking i/o server"
+# @echo "6 : non-blocking i/o server"
 
 1: $(NAME_CLIENT)
 	@$(CC) basicServe.cpp ServerTool.cpp -o $(NAME_SERVER)
@@ -34,6 +35,10 @@ all:
 4: $(NAME_CLIENT)
 	@$(CC) poll.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create Poll server\n$(RESET)"
+
+5: $(NAME_CLIENT)
+	@$(CC) epoll.cpp ServerTool.cpp -o $(NAME_SERVER)
+	@printf "$(YEL)Create Epoll server\n$(RESET)"
 
 # 6: $(NAME_CLIENT) # non-blocking i/o for recv & send Server
 # 	@$(CC) nonBlockServe.cpp ServerTool.cpp -o $(NAME_SERVER)

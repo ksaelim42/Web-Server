@@ -74,7 +74,7 @@ int acceptConnection(int &serverSock)
 	return client_fd;
 }
 
-bool receiveRequest(int &client_fd, std::string &request)
+bool receiveRequest(int client_fd, std::string &request)
 {
 	char buffer[BUFFER_SIZE];
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
@@ -164,4 +164,32 @@ void fdClear(std::vector<struct pollfd> & pfds, int & i) {
 	if (i != fdCount - 1)
 		pfds[i] = pfds[fdCount - 1];
 	fdCount--;
+}
+
+// ************************************************************************** //
+// ----------------------------- Epoll Function ----------------------------- //
+// ************************************************************************** //
+
+// EPOLL_CTL_ADD : add new fd and event to poll_fd
+// EPOLL_CTL_MOD : change setting event on fd that are in poll_fd
+// EPOLL_CTL_DEL : remove fd in poll_fd
+
+int fdAdd(int & epoll_fd, int & fd, uint32_t events) {
+	struct epoll_event	ev;
+
+	ev.data.fd = fd;
+	ev.events = events;
+	return epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+}
+
+int fdMod(int & epoll_fd, int fd, uint32_t events) {
+	struct epoll_event	ev;
+
+	ev.data.fd = fd;
+	ev.events = events;
+	return epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev);
+}
+
+int fdDel(int & epoll_fd, int fd) {
+	return epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
