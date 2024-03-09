@@ -24,7 +24,7 @@ Server	createServer(void) {
 	Server	serv;
 	serv.setName("testwebserv1");
 	serv.setPort("8003");
-	serv.setRoot("html/static");
+	serv.setRoot("docs/myPage");
 	std::vector<std::string>	index;
 	return_t	retur;
 	retur.have = 0;
@@ -35,14 +35,14 @@ Server	createServer(void) {
 	retur1.code = 301;
 	retur1.text = "/simple.html";
 	uint16_t	method = -1;
-	serv.setLocation(createLocation("/", "html/static", index, method, 0, BODYBUFSIZE, retur, 0));
-	serv.setLocation(createLocation("/redir", "html/static", index, method, 0, BODYBUFSIZE, retur1, 0));
-	serv.setLocation(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1));
-	serv.setLocation(createLocation("/subdir", "html/static", index, method, 1, BODYBUFSIZE, retur, 0));
+	serv.setLocation(createLocation("/", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 0)); // basic page
+	serv.setLocation(createLocation("/redir", "docs/myPage", index, method, 0, BODYBUFSIZE, retur1, 0)); // redirection path
+	serv.setLocation(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
+	serv.setLocation(createLocation("/blog", "docs/myPage", index, method, 1, BODYBUFSIZE, retur, 0)); // test auto index on /blog path
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
 	index1.push_back("test.png");
-	serv.setLocation(createLocation("/images", "html/static", index1, method, 0, BODYBUFSIZE, retur, 0));
+	serv.setLocation(createLocation("/images", "docs/myPage", index1, method, 0, BODYBUFSIZE, retur, 0));
 	return serv;
 }
 
