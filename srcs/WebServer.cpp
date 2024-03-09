@@ -1,12 +1,12 @@
-#include "Socket.hpp"
+#include "WebServer.hpp"
 
 int	requestNumber = 1;
 
-Socket::~Socket() {
+WebServer::~WebServer() {
 	// freeaddrinfo(_sockAddr);
 }
 
-int	Socket::acceptConnection(int & serverSock) {
+int	WebServer::acceptConnection(int & serverSock) {
 	int					client_fd;
 	struct sockaddr_in	clientAddr;
 	socklen_t			clientAddrLen = sizeof(clientAddr);
@@ -15,7 +15,7 @@ int	Socket::acceptConnection(int & serverSock) {
 	std::cout << GREEN << "Waiting for client request..." << RESET << std::endl;
 	client_fd	= accept(serverSock, (struct sockaddr *)&clientAddr, &clientAddrLen);
 	if (client_fd < 0)
-		throw SocketException("Accept fail");
+		throw WebServerException("Accept fail");
 	else {
 		std::cout << GREEN << requestNumber++ << " : connection accepted from: " << RESET;
 		std::cout << "client fd: " << client_fd << ", addr: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
@@ -23,7 +23,7 @@ int	Socket::acceptConnection(int & serverSock) {
 	return client_fd;
 }
 
-bool	Socket::receiveRequest(int & client_fd, std::string & request) {
+bool	WebServer::receiveRequest(int & client_fd, std::string & request) {
 	char	buffer[4098];
 
 	// Receive data from client
@@ -45,23 +45,23 @@ bool	Socket::receiveRequest(int & client_fd, std::string & request) {
 	return true;
 }
 
-bool	Socket::initServer(std::vector<Server> & servs) {
+bool	WebServer::initServer(std::vector<Server> & servs) {
 	for (int i = 0; i < servs.size(); i++) {
 		// Creating socket file descriptor
 		if (_setSockAddr(servs[i]) == 0)
-			throw SocketException("Setup socket fail");
+			throw WebServerException("Setup socket fail");
 		servs[i].sockFd = socket(_sockAddr->ai_family, _sockAddr->ai_socktype, _sockAddr->ai_protocol); // TODO : fix domain later
 		if (servs[i].sockFd < 0)
-			throw SocketException("Create socket fail");
+			throw WebServerException("Create socket fail");
 		// To manipulate option for socket and check address is used
 		if (_setOptSock(servs[i].sockFd) == 0)
-			throw SocketException("Setup socket fail");
+			throw WebServerException("Setup socket fail");
 		// Bind the socket to the specified address and port
 		if (bind(servs[i].sockFd, _sockAddr->ai_addr, _sockAddr->ai_addrlen) < 0)
-			throw SocketException("Bind socket fail");
+			throw WebServerException("Bind socket fail");
 		// Prepare socket for incoming connection
 		if (listen(servs[i].sockFd, 10) < 0) // TODO : edit max client request
-			throw SocketException("Listen socket fail");
+			throw WebServerException("Listen socket fail");
 		std::cout << GREEN << "Success to create server" << RESET << std::endl;
 		if (!servs[i].getName().empty())
 			std::cout << "Domain name: "<< MAG << servs[i].getName() << RESET;
@@ -103,7 +103,7 @@ void	prtRequest(httpReq & request) {
 	std::cout << BBLU <<  "********************" << RESET << std::endl;
 }
 
-bool	Socket::runServer(std::vector<Server> & servs) {
+bool	WebServer::runServer(std::vector<Server> & servs) {
 	int			client_fd;
 	std::string	reqMsg;
 
@@ -138,14 +138,14 @@ bool	Socket::runServer(std::vector<Server> & servs) {
 	return true;
 }
 
-bool	Socket::downServer(std::vector<Server> & servs) {
+bool	WebServer::downServer(std::vector<Server> & servs) {
 	for (int i = 0; i < servs.size(); i++)
 		close(servs[i].sockFd);
 	std::cout << "Server are closed" << std::endl;
 	return true;
 }
 
-void	Socket::sendResponse(int & client_fd, std::string & resMsg) {
+void	WebServer::sendResponse(int & client_fd, std::string & resMsg) {
 	int	status;
 
 	status = send(client_fd, resMsg.c_str(), resMsg.length(), 0);
@@ -157,7 +157,7 @@ void	Socket::sendResponse(int & client_fd, std::string & resMsg) {
 	return ;
 }
 
-bool	Socket::_setSockAddr(Server & serv) {
+bool	WebServer::_setSockAddr(Server & serv) {
 	int	status;
 	struct addrinfo	hints;
 
@@ -175,7 +175,7 @@ bool	Socket::_setSockAddr(Server & serv) {
 	return true;
 }
 
-bool	Socket::_setOptSock(int & sockFd) {
+bool	WebServer::_setOptSock(int & sockFd) {
 	int	optval = 1;
 	// Allows binding the same address and port without waiting for the operating system to release the bound address and port
 	if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)

@@ -1,5 +1,5 @@
-#ifndef SOCKET_HPP
-# define SOCKET_HPP
+#ifndef WEBSERVER_HPP
+# define WEBSERVER_HPP
 
 #include "Utils.hpp"
 #include "Server.hpp"
@@ -25,7 +25,7 @@ ETag: \"65b61d4c-11bd4\"\r\n\
 Accept-Ranges: bytes\r\n\r\n\
 "
 
-class Socket
+class WebServer
 {
 	private:
 		struct addrinfo	*_sockAddr;
@@ -37,8 +37,8 @@ class Socket
 		bool	_setOptSock(int &);
 	public:
 		std::map<std::string, std::string>	mimeType;
-		Socket(void) {}
-		~Socket();
+		WebServer(void) {}
+		~WebServer();
 
 		bool	initServer(std::vector<Server> &);
 		bool	runServer(std::vector<Server> &);
@@ -46,17 +46,17 @@ class Socket
 		int		acceptConnection(int & serverSock);
 		bool	receiveRequest(int &, std::string &);
 		void	sendResponse(int &, std::string &);
-		class	SocketException : public std::exception {
+		class	WebServerException : public std::exception {
 			private:
 				std::string	_ErrMsg;
 			public:
-				SocketException(std::string ErrMsg) {
+				WebServerException(std::string ErrMsg) {
 					_ErrMsg = RED + ErrMsg + RESET;
 				}
 				virtual const char*	what() const throw() {
 					return _ErrMsg.c_str();
 				}
-				virtual ~SocketException() throw() {}
+				virtual ~WebServerException() throw() {}
 		};
 };
 

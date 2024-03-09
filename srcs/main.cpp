@@ -1,4 +1,4 @@
-#include "Socket.hpp"
+#include "WebServer.hpp"
 #include "Struct.hpp"
 
 bool	matchLocation(std::vector<Server> servers, std::string path) {
@@ -52,14 +52,14 @@ int	main(int argc, char**argv)
 	(void)argc;
 	(void)argv;
 	try {
-		Socket		socket;
+		WebServer		webserv;
 		std::vector<Server>		servs;
 
 		servs.push_back(createServer());
-		socket.initServer(servs);
+		webserv.initServer(servs);
 		servs[0].prtServer();
-		socket.runServer(servs);
-		socket.downServer(servs);
+		webserv.runServer(servs);
+		webserv.downServer(servs);
 		// HttpResponse	response(server, request);
 		// response.createResponse();
 		// response.prtResponse();
