@@ -1,51 +1,47 @@
 #ifndef WEBSERVER_HPP
 # define WEBSERVER_HPP
 
-#include "Utils.hpp"
-#include "Server.hpp"
-#include "HttpRequest.hpp"
-#include "HttpResponse.hpp"
 #include <new>
 #include <exception>
-#include <sys/socket.h>
+#include <sys/socket.h>	// Socket Programming
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <sys/select.h>
 
-#define HTML_FILE "./content/static/index.html"
-#define IMAGE_FILE "./content/static/images/Cat03.jpg"
-#define IMAGE_HEADER "\
-HTTP/1.1 200 OK\r\n\
-Server: nginx/1.22.1\r\n\
-Date: Fri, 02 Feb 2024 07:39:12 GMT\r\n\
-Content-Type: text/plain\r\n\
-Content-Length: 72660\r\n\
-Last-Modified: Sun, 28 Jan 2024 09:24:28 GMT\r\n\
-Connection: keep-alive\r\n\
-ETag: \"65b61d4c-11bd4\"\r\n\
-Accept-Ranges: bytes\r\n\r\n\
-"
+#include "Utils.hpp"
+#include "Client.hpp"
+
+#define BUFFERSIZE 1024
 
 class WebServer
 {
 	private:
-		struct addrinfo	*_sockAddr;
+		std::vector<Server>		_servs;
+		std::map<int, Client>	_clients;
+		int						_fdMax;
+		fd_set					_readFds;
+		fd_set					_writeFds;
+		char					_buffer[BUFFERSIZE];
+		std::string				_resMsg;
+
 		std::string	_name;
-		// int		_matchLocation(httpReq & req, std::vector<Server> & servs);
-		// int		_matchServer(httpReq &, std::vector<Server> &);
-		// int		_matchPath(httpReq & req, Server & serv);
-		bool	_setSockAddr(Server &);
+		void	_fdSet(int &, fd_set &);
+		void	_fdClear(int &, fd_set &);
+		bool	_setSockAddr(struct addrinfo * &, Server &);
 		bool	_setOptSock(int &);
+		bool	_matchServer(int &);
+		int		_acceptConnection(int &);
+		bool	_receiveRequest(int &);
+		void	_sendResponse(int &, std::string &);
+		Server*	_getServer(int &);
 	public:
 		std::map<std::string, std::string>	mimeType;
-		WebServer(void) {}
+		WebServer(std::vector<Server> &);
 		~WebServer();
 
-		bool	initServer(std::vector<Server> &);
-		bool	runServer(std::vector<Server> &);
-		bool	downServer(std::vector<Server> &);
-		int		acceptConnection(int & serverSock);
-		bool	receiveRequest(int &, std::string &);
-		void	sendResponse(int &, std::string &);
+		bool	initServer(void);
+		bool	runServer(void);
+		bool	downServer(void);
 		class	WebServerException : public std::exception {
 			private:
 				std::string	_ErrMsg;

@@ -78,7 +78,7 @@ int receiveRequest(int client_fd, std::string &request)
 {
 	char buffer[BUFFER_SIZE];
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
-	ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, MSG_WAITALL);
+	ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
 	std::cout << GRN << "bytes_received: " << bytes_received << RESET << std::endl; // test
 	if (bytes_received < 0)
 		return (prtErr("Error receiving data"), -1);

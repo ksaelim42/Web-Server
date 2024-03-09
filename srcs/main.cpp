@@ -52,14 +52,14 @@ int	main(int argc, char**argv)
 	(void)argc;
 	(void)argv;
 	try {
-		WebServer		webserv;
 		std::vector<Server>		servs;
-
 		servs.push_back(createServer());
-		webserv.initServer(servs);
+
+		WebServer		webserv(servs);
+		webserv.initServer();
 		servs[0].prtServer();
-		webserv.runServer(servs);
-		webserv.downServer(servs);
+		webserv.runServer();
+		webserv.downServer();
 		// HttpResponse	response(server, request);
 		// response.createResponse();
 		// response.prtResponse();
