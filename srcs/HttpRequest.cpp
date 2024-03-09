@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/04 20:55:04 by prachman         ###   ########.fr       */
+/*   Updated: 2024/03/07 12:31:24 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,15 @@ httpReq	storeReq(std::string rawReq)
 		std::string headTmp;
 		if (rawReq[i - 1] == '\n')
 		{
-			while (rawReq[i] != ':')
-				headTmp += rawReq[i++];
-			headVec.push_back(headTmp);
+			// if this line is not present
+			// the program will also store the unrelated data 
+			// and result in unequal of field and value of headers
+			if (rawReq[i + 1] != '\n')
+			{
+				while (rawReq[i] != ':')
+					headTmp += rawReq[i++];
+				headVec.push_back(headTmp);
+			}
 		}
 		std::string tailTmp;
 		if (rawReq[i] == ':' && rawReq[i + 1] == ' ')
@@ -51,13 +57,11 @@ httpReq	storeReq(std::string rawReq)
 			i++;
 		}
 	}
-	// std::cout << "HEAD: " << headVec.size() << std::endl;
-	// std::cout << "TAIL: " << tailVec.size() << std::endl;
-	// if (headVec.size() != tailVec.size())
-	// {
-	// 	std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
-	// 	exit(1);
-	// }
+	if (headVec.size() != tailVec.size())
+	{
+		std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
+		exit(1); //should not be exit but return 400
+	}
 	for (int i = 0; i < headVec.size(); i++) 
 		reqData.headers[headVec[i]] = tailVec[i];
 	
