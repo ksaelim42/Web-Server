@@ -3,5 +3,5 @@ objs
 *.o
 a.out
 webserv
-test*
+test.cpp
 try.c

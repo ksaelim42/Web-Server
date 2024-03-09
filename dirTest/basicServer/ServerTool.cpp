@@ -74,21 +74,21 @@ int acceptConnection(int &serverSock)
 	return client_fd;
 }
 
-bool receiveRequest(int client_fd, std::string &request)
+int receiveRequest(int client_fd, std::string &request)
 {
 	char buffer[BUFFER_SIZE];
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
-	size_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
+	ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, MSG_WAITALL);
 	std::cout << GRN << "bytes_received: " << bytes_received << RESET << std::endl; // test
 	if (bytes_received < 0)
-		return (prtErr("Error receiving data"), false);
+		return (prtErr("Error receiving data"), -1);
 	else if (bytes_received == 0)
-		return (prtErr("Client disconnected"), false);
+		return (prtErr("Client disconnected"), 0); // re
 	request = buffer;
 	std::cout << BLU << "Receive Data: " << bytes_received << " bytes" << std::endl;
 	std::cout << CYN << buffer << std::endl;
 	std::cout << "-----------------------------------------" << RESET << std::endl;
-	return false; // not reach EOF
+	return bytes_received; // not reach EOF
 }
 
 bool readFile(std::string name, std::string &str)

@@ -40,9 +40,9 @@ all:
 	@$(CC) epoll.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create Epoll server\n$(RESET)"
 
-# 6: $(NAME_CLIENT) # non-blocking i/o for recv & send Server
-# 	@$(CC) nonBlockServe.cpp ServerTool.cpp -o $(NAME_SERVER)
-# 	@printf "$(YEL)Create non-blocing i/o server\n$(RESET)"
+6: $(NAME_CLIENT) # non-blocking i/o for recv & send Server
+	@$(CC) nonBlockServe.cpp ServerTool.cpp -o $(NAME_SERVER)
+	@printf "$(YEL)Create non-blocing i/o server\n$(RESET)"
 
 $(NAME_CLIENT):
 	@$(CC) client.cpp -o $(NAME_CLIENT)

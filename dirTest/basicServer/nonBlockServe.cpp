@@ -8,6 +8,9 @@ int	main (void) {
 	int		server_fd;
 	fd_set	readFds, writeFds, tmpReadFds, tmpWriteFds;
 	std::string	reqMsg;
+	struct timeval	timeOut;
+	timeOut.tv_sec = 1;
+	timeOut.tv_usec = 0;
 
 	server_fd = initServer(port);
 	fcntl(server_fd, F_SETFL, O_NONBLOCK);
@@ -21,7 +24,7 @@ int	main (void) {
 		tmpWriteFds = writeFds;	// because select will modified fd_set
 		std::cout << GRN << "Start select..." << RESET << std::endl;
 		// select will make system motoring three set, block until some fd ready
-		if (select(fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL) == -1)
+		if (select(fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut) == -1)
 			return (perror("select"), 4);
 		for (int fd = 0; fd <= fdMax; fd++) {
 			// after using select modified fd set, Now can use FD_ISSET to test if fd still present in sets
@@ -34,13 +37,10 @@ int	main (void) {
 					fdSet(client_fd, readFds);
 				}
 				else { // handle data from client
-					if (receiveRequest(fd, reqMsg) == 0) {
-						if (FD_ISSET(fd, &tmpReadFds))
-							continue;
-					}
+					receiveRequest(fd, reqMsg);
 					std::cout << GRN << "reach EOF" << RESET << std::endl;
 					fdClear(fd, readFds);
-					fdSet(fd, writeFds);
+					fdSet(client_fd, writeFds);
 				}
 			}
 			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client

@@ -27,12 +27,12 @@
 
 # define ADDR			"127.0.0.1"
 # define PORT			"1600"
-# define BUFFER_SIZE	200
+# define BUFFER_SIZE	5
 
 void	prtErr(std::string msg);
 int		initServer(char* port);
 int		acceptConnection(int & serverSock);
-bool	receiveRequest(int client_fd, std::string & request);
+int		receiveRequest(int client_fd, std::string & request);
 bool	readFile(std::string name, std::string &str);
 bool	sendReponse(int client_fd, std::string & content);
 // fd set manipulate

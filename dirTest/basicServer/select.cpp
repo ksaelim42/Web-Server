@@ -32,7 +32,8 @@ int	main (void) {
 					fdSet(client_fd, readFds);
 				}
 				else { // handle data from client
-					receiveRequest(fd, reqMsg);
+					if (receiveRequest(fd, reqMsg))
+						continue;
 					fdClear(fd, readFds);
 					fdSet(fd, writeFds);
 				}
