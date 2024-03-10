@@ -2,11 +2,11 @@
 # define UTILS_HPP
 
 # define RED			"\e[0;31m"
-# define GREEN			"\e[0;32m"
+# define GRN			"\e[0;32m"
 # define YEL			"\e[0;33m"
 # define BLU			"\e[0;34m"
 # define MAG			"\e[0;35m"
-# define CYAN			"\e[0;36m"
+# define CYN			"\e[0;36m"
 # define RESET			"\e[0m"
 # define CRLF			"\r\n"
 

@@ -247,7 +247,7 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 // }
 
 void	HttpResponse::prtResponse(void) {
-	std::cout << CYAN;
+	std::cout << CYN;
 	prtMap(_headers);
 	std::cout << "-----------------------------------------" << std::endl;
 	std::cout << _body << RESET << std::endl;

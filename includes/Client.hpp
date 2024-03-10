@@ -29,7 +29,6 @@ class Client
 	public:
 		int					sockFd;
 		Server *			serv;
-		short int			status;
 		struct sockaddr_in	addr;
 		socklen_t			addrLen;
 		std::string			body;

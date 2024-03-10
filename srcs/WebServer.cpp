@@ -2,82 +2,87 @@
 
 int	requestNumber = 1;
 
-Client	client;
+// Client	client;
 
 WebServer::WebServer(std::vector<Server> & servs) {
 	_fdMax = 0;
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
 	_servs = servs;
+	_timeOut.tv_sec = 3;
+	_timeOut.tv_usec = 0;
 }
 
 WebServer::~WebServer() {
 }
 
 bool	WebServer::runServer(void) {
-	int			client_fd;
-	std::string	reqMsg;
-	fd_set		rmpReadFds;
-	fd_set		rmpWriteFds;
+	fd_set	tmpReadFds;
+	fd_set	tmpWriteFds;
 
 	Server	server = _servs[0]; // TODO improve for multi server later
 	while (true) {
-		// tmpReadFds = _readFds; // because select will modified fd_set
-		// tmpWriteFds = _writeFds; // because select will modified fd_set
-		// // select will make system motoring three set, block until some fd ready
-		// if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL) == -1)
-		// 	perror("select error"); // TODO
-		// for (int fd = 0; fd <= _fdMax; fd++) {
-		// 	if (FD_ISSET(fd, &tmpReadFds)) {
-		// 		if (_matchServer(fd)) { // if match any servers => new connection
-		// 			if (_acceptConnection(fd) == 0) // can't accept connection
-		// 				continue;
-		// 		}
-		// 		else { // handle data from client
-		// 			if (receiveRequest(fd, reqMsg))
-		// 				continue;
-		// 			fdClear(fd, readFds);
-		// 			fdSet(fd, writeFds);
-		// 		}
-		// 	}
-		// 	else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
-		// 		std::string	resMsg;
-		// 		readFile("text.txt", resMsg);
-		// 		sendReponse(fd, resMsg);
-		// 		fdClear(fd, writeFds);
-		// 		close(fd);
-		// 		std::cout << GRN << "Close connection" << RESET << std::endl;
-		// 	}
-
+		tmpReadFds = _readFds; // because select will modified fd_set
+		tmpWriteFds = _writeFds; // because select will modified fd_set
+		// select will make system motoring three set, block until some fd ready
+		if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &_timeOut) == -1)
+			perror("select error"); // TODO
+		for (int fd = 0; fd <= _fdMax; fd++) {
+			// std::cout << CYN << "fd: " << fd << RESET << std::endl;
+			if (FD_ISSET(fd, &tmpReadFds)) {
+				// std::cout << MAG << "fd: " << fd << RESET << std::endl;
+				if (_matchServer(fd)) { // if match any servers => new connection
+					if (_acceptConnection(fd) == 0) // can't accept connection
+						continue;
+				}
+				else { // handle data from client
+					if (_receiveRequest(fd) == 0)
+						continue;
+					fcntl(fd, F_SETFL, SO_KEEPALIVE); // TODO : should check header first
+					_reqMsg = _buffer;
+					_clients[fd].parseRequest(_reqMsg);
+					_fdClear(fd, _readFds);
+					_fdSet(fd, _writeFds);
+				}
+			}
+			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
+				_clients[fd].genResponse(_resMsg);
+				_sendResponse(fd, _resMsg);
+				// sendReponse(fd, _resMsg);
+				_fdClear(fd, _writeFds);
+				_fdSet(fd, _readFds);
+				// close(fd);
+				// std::cout << GRN << "Close connection" << RESET << std::endl;
+			}
 			// Old code
-			_acceptConnection(server.sockFd);
-			_receiveRequest(client.sockFd);
-			std::string	str(_buffer); // TODO : insert private var in class
-			client.parseRequest(str);
-			// client.prtParsedReq(); // debug
-			client.genResponse(_resMsg);
-			_sendResponse(client.sockFd, _resMsg);
-			close(client.sockFd);
+			// _acceptConnection(server.sockFd);
+			// _receiveRequest(client.sockFd);
+			// _reqMsg(_buffer);
+			// client.parseRequest(str);
+			// // client.prtParsedReq(); // debug
+			// client.genResponse(_resMsg);
+			// _sendResponse(client.sockFd, _resMsg);
+			// close(client.sockFd);
 		}
+	}
 	return true;
 }
 
 int	WebServer::_acceptConnection(int & serverSock) {
-	int	client_fd;
-	// Client	client;
+	Client	client;
 
 	// Accept connection
-	std::cout << GREEN << "Waiting for client request..." << RESET << std::endl;
-	client_fd = accept(serverSock, (struct sockaddr *)&client.addr, &client.addrLen);
-	if (client_fd < 0)
+	std::cout << GRN << "Waiting client connection..." << RESET << std::endl;
+	client.sockFd = accept(serverSock, (struct sockaddr *)&client.addr, &client.addrLen);
+	if (client.sockFd < 0)
 		return (perror("Accept fail"), false);
 	else {
-		client.sockFd = client_fd;
+		std::cout << GRN << requestNumber++ << " : connection accepted from: " << RESET;
+		std::cout << "client fd: " << client.sockFd << ", addr: " << inet_ntoa(client.addr.sin_addr) << std::endl;
+		fcntl(client.sockFd, F_SETFL, O_NONBLOCK); // TODO : for test
 		client.serv = _getServer(serverSock); // TODO : set as select
-		// fdSet(client.sockFd, _readFds);
-		// std::cout << GREEN << requestNumber++ << " : connection accepted from: " << RESET;
-		// std::cout << "client fd: " << client_fd << ", addr: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
-		// _clients[client.sockFd] = client;
+		_fdSet(client.sockFd, _readFds);
+		_clients[client.sockFd] = client;
 	}
 	return true;
 }
@@ -87,15 +92,20 @@ bool	WebServer::_receiveRequest(int & client_fd) {
 	memset(_buffer, 0, BUFFERSIZE);
 	// ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, MSG_DONTWAIT);
 	ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, 0);
-	std::cout << _buffer << std::endl;
-	std::cout << bytes_received << std::endl;
 	if (bytes_received < 0) {
 		std::cerr << "Error receiving data" << std::endl;
 		return false;
 	} else if (bytes_received == 0) {
-		std::cerr << "Client disconnected" << std::endl;
+		if (_clients.count(client_fd)) {
+			_fdClear(client_fd, _readFds);
+			_fdClear(client_fd, _writeFds);
+			close(client_fd);
+			_clients.erase(client_fd);
+			std::cerr << "Client disconnected" << std::endl;
+		}
 		return false;
 	}
+	// it->socond.
 	/* std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl; */
 	/* std::cout << "-----------------------------------------" << std::endl; */
 	/* std::cout << buffer << std::endl; */
@@ -122,13 +132,14 @@ bool	WebServer::initServer(void) {
 		// Prepare socket for incoming connection
 		if (listen(_servs[i].sockFd, 10) < 0) // TODO : edit max client request
 			throw WebServerException("Listen socket fail");
-		std::cout << GREEN << "Success to create server" << RESET << std::endl;
+		std::cout << GRN << "Success to create server" << RESET << std::endl;
 		if (!_servs[i].getName().empty())
 			std::cout << "Domain name: "<< MAG << _servs[i].getName() << RESET;
 		else
 			std::cout << "Domain name: "<< MAG << "localhost" << RESET;
 		std::cout << ", port: "<< MAG << _servs[i].getPort() << RESET << std::endl;
 		freeaddrinfo(sockAddr);
+		fcntl(_servs[i].sockFd, F_SETFL, O_NONBLOCK); // TODO : for test
 		_fdSet(_servs[i].sockFd, _readFds);
 	}
 	return true;
@@ -197,8 +208,8 @@ bool	WebServer::_setOptSock(int &sockFd) {
 	if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
 		return false;
 	// Enables sending of keep-alive messages on the TCP socket
-	if (setsockopt(sockFd, IPPROTO_TCP, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
-		return false;
+	// if (setsockopt(sockFd, IPPROTO_TCP, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
+	// 	return false;
 	// //Adjusts the size of the receive and send buffers for the socket
 	// int buffer_size = 8192;
 	// if (setsockopt(sockFd, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) < 0)

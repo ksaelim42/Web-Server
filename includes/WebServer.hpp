@@ -22,7 +22,9 @@ class WebServer
 		fd_set					_readFds;
 		fd_set					_writeFds;
 		char					_buffer[BUFFERSIZE];
+		std::string				_reqMsg;
 		std::string				_resMsg;
+		struct timeval			_timeOut;
 
 		std::string	_name;
 		void	_fdSet(int &, fd_set &);

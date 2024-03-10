@@ -57,7 +57,7 @@ int	main(int argc, char**argv)
 
 		WebServer		webserv(servs);
 		webserv.initServer();
-		servs[0].prtServer();
+		// servs[0].prtServer();
 		webserv.runServer();
 		webserv.downServer();
 		// HttpResponse	response(server, request);
