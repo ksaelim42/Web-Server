@@ -15,10 +15,11 @@
 class CgiHandler
 {
 	private:
-		pid_t	_pid;
-		int		_pipeInFd[2];
-		int		_pipeOutFd[2];
-		bool	_isPost;
+		pid_t		_pid;
+		int			_pipeInFd[2];
+		int			_pipeOutFd[2];
+		bool		_isPost;
+		uint64_t	_contentSize;
 		std::map<std::string, std::string>	_env;
 
 		bool	_initEnv(parsedReq &);

@@ -126,6 +126,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 			return "Not Found";
 		case 405:
 			return "Method Not Allowed";
+		case 413:
+			return "Request Entity Too Large";
 		case 502:
 			return "Bad Gateway";
 		case 505:

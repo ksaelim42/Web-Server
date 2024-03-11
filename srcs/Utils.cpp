@@ -36,8 +36,8 @@ std::string	numToStr(size_t num) {
 	return ss.str();
 }
 
-size_t	strToNum(std::string str) {
-	size_t				num;
+uint64_t	strToNum(std::string str) {
+	uint64_t			num;
 	std::stringstream	ss(str);
 	ss >> num;
 	return num;

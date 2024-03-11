@@ -106,8 +106,14 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 	}
 	if (req.method == "POST") {
 		_isPost = 1;
-		// if (req.contentLength)
-
+		std::string	length;
+		length = findHeaderValue(req.headers, "Content-Length"); // TODO : can be chuck
+		if (length.length())
+			_contentSize = strToNum(length);
+		if (_contentSize > req.serv.cliBodySize) {
+			status = 413;
+			return false;
+		}
 	}
 	else
 		_isPost = 0;
