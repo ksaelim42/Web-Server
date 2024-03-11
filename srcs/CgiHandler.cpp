@@ -56,8 +56,11 @@ void CgiHandler::_childProcess(parsedReq & req) {
 	args[0] = strdup(req.pathSrc);
 	args[1] = NULL;
 	char **env = aopEnv(_env);
-	if (execve(args[0], args, env) == -1)
+	if (execve(args[0], args, env) == -1) {
+		free2Dstr(env);
+		delete[] args[0];
 		exit(errno);
+	}
 }
 
 bool	CgiHandler::_initEnv(parsedReq & req) {

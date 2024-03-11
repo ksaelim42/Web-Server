@@ -63,6 +63,13 @@ char**	aopEnv(std::map<std::string, std::string> & set) {
 	return aop;
 }
 
+void	free2Dstr(char** & ptr) {
+	for (int i = 0; ptr[i]; i++)
+		delete ptr[i];
+	delete[] ptr;
+	ptr = NULL;
+}
+
 char**	aopArgs(std::vector<std::string> & set) {
 	if (set.empty())
 		return NULL;

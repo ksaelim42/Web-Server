@@ -30,6 +30,7 @@ char*		strdup(std::string);
 char**		aopArgs(std::vector<std::string> &);
 char**		aopEnv(std::map<std::string, std::string> &);
 
+void		free2Dstr(char** &);
 void		prtMap(std::map<std::string, std::string> &);
 
 #endif
