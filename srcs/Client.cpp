@@ -9,6 +9,7 @@ void	Client::parseRequest(std::string reqMsg) {
 	short int	status;
 	httpReq	reqHeader;
 
+	_res.clear();
 	reqHeader = storeReq(reqMsg);
 	// status = scanStartLine(reqHeader);
 	// if (status != 0)
@@ -37,20 +38,26 @@ void	Client::parseRequest(std::string reqMsg) {
 		return;
 	_findType();
 	// cgi passs
-	// if (_req.serv.cgiPass)
+	if (_req.serv.cgiPass)
+		_cgi.request(_status, _req);
 	return;
 }
 
 void	Client::genResponse(std::string & resMsg) {
-	if (_req.serv.retur.have || (_status >= 300 && _status < 400)) // redirection
+	if (_req.serv.retur.have || (_status >= 300 && _status < 400))
 		resMsg = _res.redirection(_req.serv.retur.code, _req);
+	else if (_status == 200 && _req.serv.cgiPass) {
+		std::string	cgiMsg;
+		_status = _cgi.response(cgiMsg);
+		if (_status == 200)
+			resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);
 	else if (_status == 200)
 		resMsg = _res.staticContent(_status, _req);
 	if ((_status >= 400 && _status < 600))
 		resMsg = _res.errorPage(_status, _req);
-	_res.clear();
 	return;
 }
 

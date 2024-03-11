@@ -18,6 +18,18 @@ std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	return ("");
 }
 
+std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
+	std::string	cgiHeader;
+
+	status = _parseCgiHeader(cgiMsg, cgiHeader);
+	if (status != 200)
+		return "";
+	status = _inspectCgiHeaders(cgiHeader);
+	if (status != 200)
+		return "";
+	return _createHeader(status , req) + CRLF + cgiMsg;
+}
+
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 	req.pathSrc = req.serv.getErrPage(status);
 	if (req.pathSrc.empty())
@@ -48,6 +60,10 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 
 	headerMsg.reserve(HEADBUFSIZE);
 	headerMsg = _getStatusLine(status);
+	if (_headers.count("Accept-Ranges") == 0) // TODO : must be check first
+		_headers["Accept-Ranges"] = "bytes";
+	if (_headers.count("Connection") == 0) // TODO : must be check first
+		_headers["Connection"] = "keep-alive";
 	if (_headers.count("Content-Length") == 0)
 		_headers["Content-Length"] = _getContentLength();
 	if (_headers.count("Content-Type") == 0)
@@ -219,32 +235,31 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 // --------------------------- Inspect CGI script --------------------------- //
 // ************************************************************************** //
 
-// short int	HttpResponse::_parseCgiHeader(std::string & cgiMsg) {
-// 	std::cout << cgiMsg << std::endl; // debug
-// 	std::size_t	found  = cgiMsg.find("\n\n");
-// 	if (found == std::string::npos)
-// 		return 502;
-// 	_cgiHeader = cgiMsg.substr(0, found + 1);	// Cut the second '\n' out
-// 	cgiMsg.erase(0, found + 2);					// Kept only body Message
-// 	return 200;
-// }
+short int	HttpResponse::_parseCgiHeader(std::string & cgiMsg, std::string	& cgiHeadMsg) {
+	// std::cout << cgiMsg << std::endl; // debug
+	std::size_t	found  = cgiMsg.find("\n\n");
+	if (found == std::string::npos)
+		return 502;
+	cgiHeadMsg = cgiMsg.substr(0, found + 1);	// Cut the second '\n' out
+	cgiMsg.erase(0, found + 2);					// Kept only body Message
+	return 200;
+}
 
-// short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeader) {
-// 	std::size_t	found  = cgiHeader.find_first_of("\n");
+short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeadMsg) {
+	std::size_t	found  = cgiHeadMsg.find_first_of("\n");
 
-// 	while (found != std::string::npos) {
-// 		std::string	header(strCutTo(cgiHeader, "\n"));
-// 		std::string	key(strCutTo(header, ":"));
-// 		if (key.find(" ") != std::string::npos)
-// 			return 502;
-// 		_headers[toProperCase(key)] = header;
-// 		found = cgiHeader.find_first_of("\n");
-// 	}
-// 	std::cout << "Inspect CGI heasers success" << std::endl;
-// 	std::cout << "header size: " << _headers.size() << std::endl;
-// 	// prtMap(_headers);
-// 	return 200;
-// }
+	while (found != std::string::npos) {
+		std::string	header(strCutTo(cgiHeadMsg, "\n"));
+		std::string	key(strCutTo(header, ":"));
+		if (key.find(" ") != std::string::npos)
+			return 502;
+		_headers[toProperCase(key)] = header;
+		found = cgiHeadMsg.find_first_of("\n");
+	}
+	std::cout << "Inspect CGI heasers success" << std::endl;
+	std::cout << "header size: " << _headers.size() << std::endl;
+	return 200;
+}
 
 void	HttpResponse::prtResponse(void) {
 	std::cout << CYN;

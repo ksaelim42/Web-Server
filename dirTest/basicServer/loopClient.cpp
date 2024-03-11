@@ -1,20 +1,4 @@
-#include <unistd.h>
-#include <iostream>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include  <string.h>
-
-#define BLK		"\e[0;30m"
-#define RED		"\e[0;31m"
-#define GRN		"\e[0;32m"
-#define YEL		"\e[0;33m"
-#define BLU		"\e[0;34m"
-#define MAG		"\e[0;35m"
-#define CYN		"\e[0;36m"
-#define WHT		"\e[0;37m"
-#define RESET	"\e[0m"
-
-# define PORT	1600
+#include "ServerTool.hpp"
 
 int	main(void)
 {
@@ -35,28 +19,32 @@ int	main(void)
 
 	// Set address and port of server that need to connect to
 	server_addr.sin_family = AF_INET; // set for IPv4
-	server_addr.sin_port = htons(PORT); // convert host byte order to network byte order
+	server_addr.sin_port = htons(8003); // convert host byte order to network byte order
 
 	// inet_addr is function for convert string form standard IPv4 dotted decimal notation
 	// to interger value that suitable for internet address.
-	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // IP address of server
+	server_addr.sin_addr.s_addr = inet_addr(ADDR); // IP address of server
 
 	// Connect
 	status = connect(client_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-	std::cout << "connect to server..." << std::endl;
+	std::cout << "connect to server..." << "port 8003" << std::endl;
 	if (status < 0) {
 		std::cout << RED << "failed" << RESET << std::endl;
 		exit(1);
 	}
 	std::cout << GRN << "success, connected to server Type data for send" << RESET << std::endl;
-	std::cout << "> ";
 	std::string	str;
-	getline(std::cin, str);
 	// Sent data to server
-	send(client_fd, str.c_str(), str.length(), 0);
 	char	resMsg[1024];
-	read(client_fd, resMsg, 1024);
-	std::cout << YEL << resMsg << RESET << std::endl;
+	while (true) {
+		std::cout << "> ";
+		getline(std::cin, str);
+		memset(resMsg, 0, 1024);
+		send(client_fd, str.c_str(), str.length(), 0);
+		// read data from server
+		read(client_fd, resMsg, 1024);
+		std::cout << YEL << resMsg << RESET << std::endl;
+	}
 	close(client_fd);
 	return 0;
 }

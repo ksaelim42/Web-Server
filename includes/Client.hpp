@@ -2,7 +2,7 @@
 # define CLIENT_HPP
 
 #include "Utils.hpp"
-#include "Server.hpp"
+#include "Struct.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
 #include "CgiHandler.hpp"
@@ -10,10 +10,11 @@
 class Client
 {
 	private:
+		short int		_status;
+		struct stat		_fileInfo;
 		parsedReq		_req;
 		HttpResponse	_res;
-		struct stat		_fileInfo;
-		short int		_status;
+		CgiHandler		_cgi;
 
 		// Parsing Request
 		bool		_parsePath(std::string);
@@ -31,7 +32,6 @@ class Client
 		Server *			serv;
 		struct sockaddr_in	addr;
 		socklen_t			addrLen;
-		std::string			body;
 
 		Client(void);
 		~Client(void) {}

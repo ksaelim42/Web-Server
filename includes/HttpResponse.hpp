@@ -3,28 +3,23 @@
 
 # define HTTP_VERS		"HTTP/1.1"
 # define CONNETION		"keep-alive"
-# define PORT			8080
 
-#include <ctime>
-#include <exception>
+#include <ctime>		// time
 #include <dirent.h>		// opendir
+#include <fcntl.h>		// open file
+#include <sys/stat.h>	// stat
+#include <unistd.h>		// read, write
 #include <sstream>		// ostringstream
 #include <iomanip>		// setw
-#include <fcntl.h>		// open file
 
 #include "Utils.hpp"
-#include "HttpRequest.hpp"
-#include "Server.hpp"
-#include "CgiHandler.hpp"
+#include "Struct.hpp"
 
 class HttpResponse
 {
 	private:
 		std::map<std::string, std::string>	_headers;
 		std::string							_body;
-		// CgiHandler		_cgi;
-
-		std::string	_cgiHeader;
 
 		// Header Field
 		std::string	_createHeader(short int &, parsedReq &);
@@ -38,8 +33,8 @@ class HttpResponse
 		short int	_readFile(std::string &, std::string &);
 		short int	_listFile(parsedReq &, std::string &);
 		// Check CGI Response
-		// short int	_parseCgiHeader(std::string &);
-		// short int	_inspectCgiHeaders(std::string &);
+		short int	_parseCgiHeader(std::string &, std::string	&);
+		short int	_inspectCgiHeaders(std::string &);
 	public:
 		HttpResponse() {}
 		~HttpResponse() {}
@@ -47,6 +42,7 @@ class HttpResponse
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);
 		std::string	staticContent(short int &, parsedReq &);
+		std::string	cgiResponse(short int &,  parsedReq &, std::string &);
 		std::string	errorPage(short int &, parsedReq &);
 		void		clear(void);
 		void		prtResponse(void);

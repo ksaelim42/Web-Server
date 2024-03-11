@@ -1,17 +1,18 @@
 #ifndef WEBSERVER_HPP
 # define WEBSERVER_HPP
 
-#include <new>
-#include <exception>
+#include <new>			// exception on memory
+#include <exception>	// exception class
 #include <sys/socket.h>	// Socket Programming
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
+#include <arpa/inet.h>	// inet_ntoa TODO : not allow to use
+#include <sys/select.h>	// select function
 
 #include "Utils.hpp"
 #include "Client.hpp"
 
-#define BUFFERSIZE 1024
+// #define BUFFERSIZE 1024		// Buffer size of HTTP request in Bytes.
+#define BUFFERSIZE 50000		// Buffer size of HTTP request in Bytes.
+#define CONNECTIONSIZE 50	// Numbers of connection from client that server can handle
 
 class WebServer
 {
@@ -33,11 +34,11 @@ class WebServer
 		bool	_setOptSock(int &);
 		bool	_matchServer(int &);
 		int		_acceptConnection(int &);
-		bool	_receiveRequest(int &);
+		int		_receiveRequest(int &);
 		void	_sendResponse(int &, std::string &);
 		Server*	_getServer(int &);
+		bool	_connectedClient(fd_set &); // TODO : for test
 	public:
-		std::map<std::string, std::string>	mimeType;
 		WebServer(std::vector<Server> &);
 		~WebServer();
 
@@ -56,6 +57,8 @@ class WebServer
 				}
 				virtual ~WebServerException() throw() {}
 		};
+
+		void	testPersist(Server & server); // TODO : delete it later
 };
 
 #endif

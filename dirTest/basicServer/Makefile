@@ -1,6 +1,7 @@
 ### Executablem###
 NAME_SERVER	= server
 NAME_CLIENT	= client
+LOOP_CLIENT	= loopClient
 
 ### Colors ###
 YEL		= \e[0;33m
@@ -44,10 +45,17 @@ all:
 	@$(CC) nonBlockServe.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create non-blocing i/o server\n$(RESET)"
 
+7: $(LOOP_CLIENT)
+	@$(CC) epollPersisCon.cpp ServerTool.cpp -o $(NAME_SERVER)
+	@printf "$(YEL)Create persist-connection server\n$(RESET)"
+
 $(NAME_CLIENT):
-	@$(CC) client.cpp -o $(NAME_CLIENT)
+	@$(CC) basicClient.cpp -o $(NAME_CLIENT)
+
+$(LOOP_CLIENT):
+	@$(CC) loopClient.cpp -o $(LOOP_CLIENT)
 
 clean:
-	$(RM) $(NAME_CLIENT) $(NAME_SERVER)
+	$(RM) $(NAME_CLIENT) $(LOOP_CLIENT) $(NAME_SERVER)
 
 .PHONY: all clean

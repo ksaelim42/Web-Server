@@ -1,9 +1,4 @@
 #include "WebServer.hpp"
-#include "Struct.hpp"
-
-bool	matchLocation(std::vector<Server> servers, std::string path) {
-	return true;
-}
 
 Location	createLocation(std::string path, std::string root, \
 std::vector<std::string> index, uint16_t method, bool autoIndex, \
@@ -57,6 +52,7 @@ int	main(int argc, char**argv)
 
 		WebServer		webserv(servs);
 		webserv.initServer();
+
 		// servs[0].prtServer();
 		webserv.runServer();
 		webserv.downServer();

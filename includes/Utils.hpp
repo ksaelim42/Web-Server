@@ -10,8 +10,8 @@
 # define RESET			"\e[0m"
 # define CRLF			"\r\n"
 
-# define BBLU           "\e[1;34m"
-# define BYEL           "\e[1;33m"
+# define BBLU			"\e[1;34m"
+# define BYEL			"\e[1;33m"
 
 #include <cctype>
 #include <string>
