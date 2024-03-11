@@ -6,7 +6,6 @@ Client::Client(void) {
 }
 
 void	Client::parseRequest(std::string reqMsg) {
-	short int	status;
 	httpReq	reqHeader;
 
 	_res.clear();
@@ -16,28 +15,25 @@ void	Client::parseRequest(std::string reqMsg) {
 	// 	return status;
 	// Request Field
 	_status = 200;
+	_req.pathSrc = "";
 	_req.cliIPaddr = "";		// Can't find way
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
-	_req.contentLength = _findContent(_req.headers, "Content-Length");
-	_req.contentType = _findContent(_req.headers, "Content-Type");
 	_parsePath(_req.uri);
 	if (_urlEncoding(_req.path) == 0)
 		return;
 	_req.serv = *serv;
 	_matchLocation(serv->getLocation());
-	_req.serv.clearLocation();
-	_req.pathSrc = "";
 	if (_req.serv.retur.have) // redirection
 		return;
 	if (_checkRequest() == 0)
 		return;
 	if (_findFile() == 0)
 		return;
-	_findType();
-	// cgi passs
+	if (_findType() == 0)
+		return;
 	if (_req.serv.cgiPass)
 		_cgi.request(_status, _req);
 	return;
@@ -64,19 +60,6 @@ void	Client::genResponse(std::string & resMsg) {
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
-
-// Finding special header in map headers
-std::string	Client::_findContent(std::map<std::string, std::string> & map, std::string const & content) {
-	std::map<std::string, std::string>::const_iterator	it;
-	std::string	value = "";
-
-	it = map.find(content);
-	if (it != map.end()) {
-		value = it->second;
-		map.erase(it);
-	}
-	return value;
-}
 
 // Percent encode
 bool	Client::_urlEncoding(std::string & path) {
@@ -163,10 +146,9 @@ bool	Client::_matchLocation(std::vector<Location> loc) {
 		_req.serv.autoIndex = matchLoc.autoIndex;
 		_req.serv.cliBodySize = matchLoc.cliBodySize;
 		_req.serv.cgiPass = matchLoc.cgiPass;
-		return true;
 	}
-	else
-		return false;
+	_req.serv.clearLocation();
+	return true;
 }
 
 // ************************************************************************** //
@@ -253,8 +235,6 @@ void	Client::prtParsedReq(void) {
 	std::cout << "method: " << _req.method << std::endl;
 	std::cout << "uri: " << _req.uri << std::endl;
 	std::cout << "version: " << _req.version << std::endl;
-	std::cout << "contentLengt: " << _req.contentLength << std::endl;
-	std::cout << "contentType: " << _req.contentType << std::endl;
 	std::cout << "pathSrc: " << _req.pathSrc << std::endl;
 	std::cout << "path: " << _req.path << std::endl;
 	std::cout << "pathInfo: " << _req.pathInfo << std::endl;

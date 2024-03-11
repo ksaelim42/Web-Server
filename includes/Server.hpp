@@ -31,7 +31,7 @@ struct Location
 	std::vector<std::string>	index;
 	uint16_t					allowMethod;
 	bool						autoIndex;
-	size_t						cliBodySize;
+	uint64_t					cliBodySize;
 	return_t					retur;
 	bool						cgiPass;
 };
@@ -48,7 +48,7 @@ class Server
 		std::map<std::string, std::string>	_mimeType;
 	public:
 		int									sockFd;
-		size_t								cliBodySize;
+		uint64_t							cliBodySize;
 		bool								autoIndex;
 		bool								cgiPass;
 		uint16_t							allowMethod;

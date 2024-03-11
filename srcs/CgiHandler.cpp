@@ -68,8 +68,8 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env["REQUEST_METHOD"] = req.method;		// HTTP method Ex: GET
 	_env["REQUEST_URI"] = req.uri;				// URI (not encode URL)
 	_env["SERVER_PROTOCOL"] = req.version;		// HTTP version that get from request (Server must check that support) Ex : HTTP/1.1
-	_env["CONTENT_LENGTH"] = req.contentLength;	// Must specify on POST method for read body content
-	_env["CONTENT_TYPE"] = req.contentType;		// get from request
+	_env["CONTENT_LENGTH"] = findHeaderValue(req.headers, "Content-Length");	// Must specify on POST method for read body content
+	_env["CONTENT_TYPE"] = findHeaderValue(req.headers, "Content-Type");		// get from request
 	// Parsing
 	_env["SCRIPT_NAME"] = req.pathSrc;			// path of script (exclude Query string & path info) Ex: /script.sh
 	_env["QUERY_STRING"] = req.queryStr;		// on URL after ? Ex: www.test.com/script.sh?a=10&b=20 , query string = a=10&b=20
@@ -104,8 +104,11 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 		status = 403;
 		return false;
 	}
-	if (req.method == "POST")
+	if (req.method == "POST") {
 		_isPost = 1;
+		// if (req.contentLength)
+
+	}
 	else
 		_isPost = 0;
 	return true;

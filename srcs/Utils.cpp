@@ -88,6 +88,19 @@ std::string	strCutTo(std::string & str, std::string lim) {
 	return word;
 }
 
+// Finding special header in map headers
+std::string	findHeaderValue(std::map<std::string, std::string> & map, std::string const & content) {
+	std::map<std::string, std::string>::const_iterator	it;
+	std::string	value = "";
+
+	it = map.find(content);
+	if (it != map.end()) {
+		value = it->second;
+		map.erase(it);
+	}
+	return value;
+}
+
 void	prtMap(std::map<std::string, std::string> & set) {
 	std::map<std::string, std::string>::const_iterator	it;
 	size_t	i = 0;

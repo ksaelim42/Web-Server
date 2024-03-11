@@ -20,7 +20,6 @@ class Client
 		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);
 		bool		_matchLocation(std::vector<Location>);
-		std::string	_findContent(std::map<std::string, std::string> &, std::string const &);
 		bool		_findFile(void);
 		bool		_findType(void);
 		// Check Header
