@@ -77,10 +77,10 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env["SCRIPT_NAME"] = req.pathSrc;			// path of script (exclude Query string & path info) Ex: /script.sh
 	_env["QUERY_STRING"] = req.queryStr;		// on URL after ? Ex: www.test.com/script.sh?a=10&b=20 , query string = a=10&b=20
 	_env["PATH_INFO"] = req.pathInfo;			// sub-resource path that come after script name
-	_env["PATH_TRANSLATED"] = req.serv.getRoot() + req.pathInfo;	// --
+	_env["PATH_TRANSLATED"] = req.serv.root + req.pathInfo;	// --
 	// for Server
-	_env["SERVER_NAME"] = req.serv.getName();	// name of server.
-	_env["SERVER_PORT"] = req.serv.getPort();	// Port of server Ex: 8080
+	_env["SERVER_NAME"] = req.serv.name;		// name of server.
+	_env["SERVER_PORT"] = req.serv.port;		// Port of server Ex: 8080
 	// Special
 	_env["AUTH_TYPE"] = "";						// Use for identify user
 	_env["REMOTE_ADDR"] = "";					// IP address of client that request Ex: 127.0.0.1

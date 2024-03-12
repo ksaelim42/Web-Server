@@ -17,9 +17,9 @@ size_t cliSize, return_t retur, bool cgiPass) {
 
 Server	createServer(void) {
 	Server	serv;
-	serv.setName("testwebserv1");
-	serv.setPort("8003");
-	serv.setRoot("docs/myPage");
+	serv.name = "testwebserv1";
+	serv.port = "8003";
+	serv.root = "docs/myPage";
 	std::vector<std::string>	index;
 	return_t	retur;
 	retur.have = 0;
@@ -30,14 +30,14 @@ Server	createServer(void) {
 	retur1.code = 301;
 	retur1.text = "/simple.html";
 	uint16_t	method = -1;
-	serv.setLocation(createLocation("/", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 0)); // basic page
-	serv.setLocation(createLocation("/redir", "docs/myPage", index, method, 0, BODYBUFSIZE, retur1, 0)); // redirection path
-	serv.setLocation(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
-	serv.setLocation(createLocation("/blog", "docs/myPage", index, method, 1, BODYBUFSIZE, retur, 0)); // test auto index on /blog path
+	serv.location.push_back(createLocation("/", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 0)); // basic page
+	serv.location.push_back(createLocation("/redir", "docs/myPage", index, method, 0, BODYBUFSIZE, retur1, 0)); // redirection path
+	serv.location.push_back(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
+	serv.location.push_back(createLocation("/blog", "docs/myPage", index, method, 1, BODYBUFSIZE, retur, 0)); // test auto index on /blog path
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
 	index1.push_back("test.png");
-	serv.setLocation(createLocation("/images", "docs/myPage", index1, method, 0, BODYBUFSIZE, retur, 0));
+	serv.location.push_back(createLocation("/images", "docs/myPage", index1, method, 0, BODYBUFSIZE, retur, 0));
 	return serv;
 }
 

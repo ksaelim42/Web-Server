@@ -3,11 +3,11 @@
 Server::Server(void) {
 	_initMineTypeDefault();
 	_initErrPage();
-	_name = "";						// default : null
-	_ipAddr = "0.0.0.0";			// default : any addr
-	_port = "80";					// default : 80
-	_root = "html";					// default : html directory
-	_index.push_back("index.html");	// default : index.html
+	name = "";						// default : null
+	ipAddr = "0.0.0.0";			// default : any addr
+	port = "80";					// default : 80
+	root = "html";					// default : html directory
+	index.push_back("index.html");	// default : index.html
 	cliBodySize = BODYBUFSIZE;		// dafault : 1m byte
 	INIT_METHOD(allowMethod);		// default : allow all method
 	autoIndex = 0;					// defualt : off
@@ -18,28 +18,28 @@ Server::Server(void) {
 }
 
 void	Server::prtServer(void) {
-	std::cout << "server_name : " << MAG << _name << RESET << std::endl;
-	std::cout << "IP address  : " << MAG << _ipAddr << RESET << std::endl;
-	std::cout << "Port        : " << MAG << _port << RESET << std::endl;
-	std::cout << "Root        : " << MAG << _root << RESET << std::endl;
+	std::cout << "server_name : " << MAG << name << RESET << std::endl;
+	std::cout << "IP address  : " << MAG << ipAddr << RESET << std::endl;
+	std::cout << "Port        : " << MAG << port << RESET << std::endl;
+	std::cout << "Root        : " << MAG << root << RESET << std::endl;
 	std::cout << "index       : ";
-	for (int i = 0; i < _index.size(); i++)
-		std::cout << MAG << _index[i] << ", ";
+	for (int i = 0; i < index.size(); i++)
+		std::cout << MAG << index[i] << ", ";
 	std::cout << RESET << std::endl;
 	std::cout << "CliBodySize : " << MAG << cliBodySize << RESET << std::endl;
-	for (int i = 0; i < _location.size(); i++) {
+	for (int i = 0; i < location.size(); i++) {
 		std::cout << "*** Location[" << i << "] ***" << std::endl;
-		std::cout << "path        : " << MAG << _location[i].path << RESET << std::endl;
-		std::cout << "Root        : " << MAG << _location[i].root << RESET << std::endl;
+		std::cout << "path        : " << MAG << location[i].path << RESET << std::endl;
+		std::cout << "Root        : " << MAG << location[i].root << RESET << std::endl;
 		std::cout << "index       : ";
-		for (int j = 0; j < _location[i].index.size(); j++)
-			std::cout << MAG << _location[i].index[j] << ", ";
+		for (int j = 0; j < location[i].index.size(); j++)
+			std::cout << MAG << location[i].index[j] << ", ";
 		std::cout << RESET << std::endl;
-		std::cout << "allowMethod : " << MAG << _location[i].allowMethod << RESET << std::endl;
-		std::cout << "autoIndex   : " << MAG << _location[i].autoIndex << RESET << std::endl;
-		std::cout << "cliBodySize : " << MAG << _location[i].cliBodySize << RESET << std::endl;
-		std::cout << "return      : " << MAG << _location[i].retur.have << ", " << _location[i].retur.code << ", " << _location[i].retur.text << RESET << std::endl;
-		std::cout << "cgiPass     : " << MAG << _location[i].cgiPass << RESET << std::endl;
+		std::cout << "allowMethod : " << MAG << location[i].allowMethod << RESET << std::endl;
+		std::cout << "autoIndex   : " << MAG << location[i].autoIndex << RESET << std::endl;
+		std::cout << "cliBodySize : " << MAG << location[i].cliBodySize << RESET << std::endl;
+		std::cout << "return      : " << MAG << location[i].retur.have << ", " << location[i].retur.code << ", " << location[i].retur.text << RESET << std::endl;
+		std::cout << "cgiPass     : " << MAG << location[i].cgiPass << RESET << std::endl;
 	}
 	// TODO : MimeType
 }
@@ -47,33 +47,6 @@ void	Server::prtServer(void) {
 // ************************************************************************** //
 // --------------------------------- Setter --------------------------------- //
 // ************************************************************************** //
-
-void	Server::setName(std::string name) {
-	_name = name;
-}
-
-void	Server::setIPaddr(std::string ipAddr) {
-
-	_ipAddr = ipAddr;
-}
-
-void	Server::setPort(std::string port) {
-	// TODO : between 0 - 65535
-	// _port = strToNum(port);
-	_port = port;
-}
-
-void	Server::setRoot(std::string root) {
-	_root = root;
-}
-
-void	Server::setIndex(std::vector<std::string> index) {
-	_index = index;
-}
-
-void	Server::setLocation(Location location) {
-	_location.push_back(location);
-}
 
 void	Server::setMimeType(std::string key, std::string value) {
 	// if there are have key, They will be over write
@@ -84,18 +57,6 @@ void	Server::setMimeType(std::string key, std::string value) {
 // ************************************************************************** //
 // --------------------------------- Getter --------------------------------- //
 // ************************************************************************** //
-
-std::string	Server::getName(void) const {return _name;}
-
-std::string	Server::getIPaddr(void) const {return _ipAddr;}
-
-std::string	Server::getPort(void) const {return _port;}
-
-std::string	Server::getRoot(void) const {return _root;}
-
-std::vector<std::string>	Server::getIndex(void) const {return _index;}
-
-std::vector<Location>	Server::getLocation(void) const {return _location;}
 
 std::string	Server::getMimeType(const std::string & extension) const {
 	std::map<std::string, std::string>::const_iterator	it;
@@ -122,7 +83,7 @@ struct sockaddr	Server::getSockAddr(void) const {
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;		// Allow IPv4 or IPv6
 	hints.ai_socktype = SOCK_STREAM;	// Stream socket = TCP
-	status = getaddrinfo(_ipAddr.c_str(), _port.c_str(), &hints, &result); // TODO : not sure name is right
+	status = getaddrinfo(ipAddr.c_str(), port.c_str(), &hints, &result); // TODO : not sure name is right
 	if (status != 0) {
 		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
 		// return false;
@@ -133,7 +94,7 @@ struct sockaddr	Server::getSockAddr(void) const {
 }
 
 void	Server::clearLocation(void) {
-	_location.clear();
+	location.clear();
 }
 
 // ************************************************************************** //

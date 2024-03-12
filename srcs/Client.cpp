@@ -25,7 +25,7 @@ void	Client::parseRequest(std::string reqMsg) {
 	if (_urlEncoding(_req.path) == 0)
 		return;
 	_req.serv = *serv;
-	_matchLocation(serv->getLocation());
+	_matchLocation(serv->location);
 	if (_req.serv.retur.have) // redirection
 		return;
 	if (_checkRequest() == 0)
@@ -137,9 +137,9 @@ bool	Client::_matchLocation(std::vector<Location> loc) {
 	// if Match location use Location
 	if (matchLoc.path.size()) {
 		if (!matchLoc.root.empty())
-			_req.serv.setRoot(matchLoc.root);
+			_req.serv.root = matchLoc.root;
 		if (!matchLoc.index.empty())
-			_req.serv.setIndex(matchLoc.index);
+			_req.serv.index = matchLoc.index;
 		if (matchLoc.retur.have)
 			_req.serv.retur = matchLoc.retur;
 		_req.serv.allowMethod = matchLoc.allowMethod;
@@ -190,9 +190,9 @@ bool	Client::_checkVersion(std::string version) {
 
 bool	Client::_findFile(void) {
 	std::string	path;
-	path = _req.serv.getRoot() + _req.path;
+	path = _req.serv.root + _req.path;
 	if (path.back() == '/') {
-		std::vector<std::string>	index = _req.serv.getIndex();
+		std::vector<std::string>	index = _req.serv.index;
 		std::string	filePath;
 		for (size_t	i = 0; i < index.size(); i++) {
 			filePath = path + index[i];

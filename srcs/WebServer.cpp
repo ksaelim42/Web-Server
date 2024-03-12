@@ -49,11 +49,11 @@ bool	WebServer::initServer(void) {
 		if (listen(_servs[i].sockFd, CONNECTIONSIZE) < 0)
 			throw WebServerException("Listen socket fail");
 		std::cout << GRN << "Success to create server" << RESET << std::endl;
-		if (!_servs[i].getName().empty())
-			std::cout << "Server URL: "<< MAG << _servs[i].getName();
+		if (!_servs[i].name.empty())
+			std::cout << "Server URL: "<< MAG << _servs[i].name;
 		else
 			std::cout << "Server URL: "<< MAG << "localhost";
-		std::cout << ":" << _servs[i].getPort() << RESET << std::endl;
+		std::cout << ":" << _servs[i].port << RESET << std::endl;
 		freeaddrinfo(sockAddr);
 		_fdSet(_servs[i].sockFd, _readFds);
 		prtLocal(_servs[i].sockFd);
@@ -193,7 +193,7 @@ bool	WebServer::_setSockAddr(struct addrinfo * & sockAddr, Server & serv) {
 	hints.ai_addr = NULL;
 	hints.ai_canonname = NULL;
 	hints.ai_next = NULL;
-	status = getaddrinfo(serv.getIPaddr().c_str(), serv.getPort().c_str(), &hints, &sockAddr);
+	status = getaddrinfo(serv.ipAddr.c_str(), serv.port.c_str(), &hints, &sockAddr);
 	if (status != 0) {
 		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
 		return false;
