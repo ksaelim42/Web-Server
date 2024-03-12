@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/07 12:31:24 by prachman         ###   ########.fr       */
+/*   Updated: 2024/03/07 12:35:15 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 httpReq	storeReq(std::string rawReq)
 {
-	// // // the string has 14 newline characters
 	std::vector<std::string>	headVec;
 	std::vector<std::string>	tailVec;
 	std::vector<std::string>	vecStartLine;
