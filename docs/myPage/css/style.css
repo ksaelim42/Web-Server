@@ -1,0 +1,19 @@
+body {
+	background-color: #202020;
+	color: whitesmoke;
+}
+
+#headline {
+	flex-direction: column;
+	justify-content: center;
+	text-align: center;
+}
+
+.navbar {
+	font-size: 1.5rem;
+	display: flex;
+}
+
+.box a {
+	font-size: 1.3rem;
+}

@@ -14,12 +14,27 @@
 #define CLR_METHOD(BF, N) BF &= ~N
 #define IS_METHOD_SET(BF, N) BF & N
 
-#include <sys/socket.h>
-#include <netdb.h>	// for getaddrinfo
+#include <netdb.h>		// for getaddrinfo
 #include <cstring>		// for memset
-
 #include "Utils.hpp"
-#include "Struct.hpp"
+
+struct return_t {
+	bool		have;
+	short int	code;	// Status Code
+	std::string	text;	// Option
+};
+
+struct Location
+{
+	std::string					path;	// path
+	std::string					root;
+	std::vector<std::string>	index;
+	uint16_t					allowMethod;
+	bool						autoIndex;
+	uint64_t					cliBodySize;
+	return_t					retur;
+	bool						cgiPass;
+};
 
 class Server
 {
@@ -33,7 +48,7 @@ class Server
 		std::map<std::string, std::string>	_mimeType;
 	public:
 		int									sockFd;
-		size_t								cliBodySize;
+		uint64_t							cliBodySize;
 		bool								autoIndex;
 		bool								cgiPass;
 		uint16_t							allowMethod;

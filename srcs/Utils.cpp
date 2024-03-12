@@ -36,8 +36,8 @@ std::string	numToStr(size_t num) {
 	return ss.str();
 }
 
-size_t	strToNum(std::string str) {
-	size_t				num;
+uint64_t	strToNum(std::string str) {
+	uint64_t			num;
 	std::stringstream	ss(str);
 	ss >> num;
 	return num;
@@ -63,6 +63,13 @@ char**	aopEnv(std::map<std::string, std::string> & set) {
 	return aop;
 }
 
+void	free2Dstr(char** & ptr) {
+	for (int i = 0; ptr[i]; i++)
+		delete ptr[i];
+	delete[] ptr;
+	ptr = NULL;
+}
+
 char**	aopArgs(std::vector<std::string> & set) {
 	if (set.empty())
 		return NULL;
@@ -86,6 +93,19 @@ std::string	strCutTo(std::string & str, std::string lim) {
 		str.clear();
 	}
 	return word;
+}
+
+// Finding special header in map headers
+std::string	findHeaderValue(std::map<std::string, std::string> & map, std::string const & content) {
+	std::map<std::string, std::string>::const_iterator	it;
+	std::string	value = "";
+
+	it = map.find(content);
+	if (it != map.end()) {
+		value = it->second;
+		map.erase(it);
+	}
+	return value;
 }
 
 void	prtMap(std::map<std::string, std::string> & set) {

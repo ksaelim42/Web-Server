@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" href="./css/style.css">
+	<title>Document</title>
+</head>
+<body>
+	<h1 id="headline">Welcome to My cat website</h1>
+	<nav class="navbar">
+		<ul>
+			<li><a href="./index.html">Home</a></li>
+			<li><a href="./form.html">Form</a></li>
+			<li><a href="./cgi.html">Test CGI</a></li>
+			<li><a href="./blog">AutoIndex</a></li>
+			<li><a href="./blog/subdir/findme.html">Redirection</a></li>
+		</ul>
+	</nav>
+	<div>
+		<h1>Text Fields GET method & POST method</h1>
+		<p>You can see the different on url request</p>
+		<form action="/cgi-bin/shell/text.sh" method="get">
+			<h2>GET method</h2>
+			<label for="fname">First name:</label><br>
+			<input type="text" id="fname" name="fname"><br>
+			<label for="lname">Last name:</label><br>
+			<input type="text" id="lname" name="lname"><br><br>
+			<input type="submit" value="Submit">
+		</form>
+		<form action="/cgi-bin/shell/text.sh" method="post">
+			<h2>POST method</h2>
+			<label for="fname">First name:</label><br>
+			<input type="text" id="fname" name="fname"><br>
+			<label for="lname">Last name:</label><br>
+			<input type="text" id="lname" name="lname"><br><br>
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+</body>
+</html>

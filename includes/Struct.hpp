@@ -3,24 +3,21 @@
 
 #include <string>
 #include <vector>
+#include "Server.hpp"
 
-struct return_t {
-	bool		have;
-	short int	code;	// Status Code
-	std::string	text;	// Option
+struct parsedReq {
+	std::string							cliIPaddr;
+	std::string							method;
+	std::string							uri;		// original path that get from request
+	std::string							version;
+	std::map<std::string, std::string>	headers;
+	std::string							path;		// path that not include pathinfo, query string, fragment
+	std::string							pathInfo;	// path info (come after cgi-script name)
+	std::string							queryStr;	// query string (come after `?`)
+	std::string							fragment;	// fragment (come after `#`)
+	std::string							pathSrc;	// path of source files in Server side
+	std::string							body;
+	Server								serv;
 };
-
-struct Location
-{
-	std::string					path;	// path
-	std::string					root;
-	std::vector<std::string>	index;
-	uint16_t					allowMethod;
-	bool						autoIndex;
-	size_t						cliBodySize;
-	return_t					retur;
-	bool						cgiPass;
-};
-
 
 #endif
