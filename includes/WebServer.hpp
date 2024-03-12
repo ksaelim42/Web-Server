@@ -25,7 +25,7 @@ class WebServer
 		char					_buffer[BUFFERSIZE];
 		std::string				_reqMsg;
 		std::string				_resMsg;
-		struct timeval			_timeOut;
+		const struct timeval	_timeOut; // use const for make select not modify value
 
 		std::string	_name;
 		void	_fdSet(int &, fd_set &);

@@ -18,8 +18,8 @@ all:
 	@echo "3 : select server"
 	@echo "4 : poll server"
 	@echo "5 : epoll server"
-
-# @echo "6 : non-blocking i/o server"
+	@echo "6 : non-blocking i/o server"
+	@echo "9 : persistent connection server"
 
 1: $(NAME_CLIENT)
 	@$(CC) basicServe.cpp ServerTool.cpp -o $(NAME_SERVER)
@@ -41,11 +41,11 @@ all:
 	@$(CC) epoll.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create Epoll server\n$(RESET)"
 
-6: $(NAME_CLIENT) # non-blocking i/o for recv & send Server
-	@$(CC) nonBlockServe.cpp ServerTool.cpp -o $(NAME_SERVER)
+6: $(LOOP_CLIENT) # non-blocking i/o for recv & send Server
+	@$(CC) nonblocking.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create non-blocing i/o server\n$(RESET)"
 
-7: $(LOOP_CLIENT)
+9: $(LOOP_CLIENT)
 	@$(CC) epollPersisCon.cpp ServerTool.cpp -o $(NAME_SERVER)
 	@printf "$(YEL)Create persist-connection server\n$(RESET)"
 

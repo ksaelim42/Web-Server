@@ -64,8 +64,14 @@ int acceptConnection(int &serverSock)
 
 	std::cout << GRN << "Waiting for client.." << RESET << std::endl;
 	client_fd = accept(serverSock, (struct sockaddr *)&clientAddr, &clientAddrLen);
-	if (client_fd < 0)
-		return (prtErr("Accept fail"), -1);
+	if (client_fd < 0) {
+		if (errno & EWOULDBLOCK || errno & EAGAIN)
+			std::cerr << "There is no connection" << std::endl;
+		else
+			prtErr("Accept fail");
+		sleep(2);
+		return (-1);
+	}
 	else
 	{
 		std::cout << GRN << "connection accepted from: " << RESET;
@@ -80,10 +86,16 @@ int receiveRequest(int client_fd, std::string &request)
 	std::cout << GRN << "Waiting for client request.." << RESET << std::endl;
 	ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
 	std::cout << GRN << "bytes_received: " << bytes_received << RESET << std::endl; // test
-	if (bytes_received < 0)
-		return (prtErr("Error receiving data"), -1);
+	if (bytes_received < 0) {
+		if (errno & EWOULDBLOCK || errno & EAGAIN)
+			std::cerr << "There is no data" << std::endl;
+		else
+			prtErr("Error receiving data");
+		sleep(2);
+		return (-1);
+	}
 	else if (bytes_received == 0)
-		return (prtErr("Client disconnected"), 0); // re
+		return (prtErr("Client disconnected"), 0);
 	request = buffer;
 	std::cout << BLU << "Receive Data: " << bytes_received << " bytes" << std::endl;
 	std::cout << CYN << buffer << std::endl;

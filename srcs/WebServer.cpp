@@ -2,16 +2,30 @@
 
 int	requestNumber = 1;
 
-WebServer::WebServer(std::vector<Server> & servs) {
+WebServer::WebServer(std::vector<Server> & servs) : _timeOut({3, 0})
+{
 	_fdMax = 0;
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
 	_servs = servs;
-	_timeOut.tv_sec = 3;
-	_timeOut.tv_usec = 0;
 }
 
 WebServer::~WebServer() {
+}
+
+void	prtLocal(int sockfd) {
+	struct sockaddr_in local_addr;
+	socklen_t addrlen = sizeof(local_addr);
+
+	// Retrieve the local address and port
+	if (getsockname(sockfd, (struct sockaddr *)&local_addr, &addrlen) == -1) {
+		perror("Error getting socket name");
+		close(sockfd);
+	}
+
+	// Display the local address and port
+	std::cout << "Local address: " << inet_ntoa(local_addr.sin_addr) << std::endl;
+	std::cout << "Local port: " << ntohs(local_addr.sin_port) << std::endl;
 }
 
 bool	WebServer::initServer(void) {
@@ -42,6 +56,7 @@ bool	WebServer::initServer(void) {
 		std::cout << ":" << _servs[i].getPort() << RESET << std::endl;
 		freeaddrinfo(sockAddr);
 		_fdSet(_servs[i].sockFd, _readFds);
+		prtLocal(_servs[i].sockFd);
 	}
 	return true;
 }
@@ -49,17 +64,15 @@ bool	WebServer::initServer(void) {
 bool	WebServer::runServer(void) {
 	fd_set	tmpReadFds;
 	fd_set	tmpWriteFds;
-	struct timeval	timeOut;
 
 	Server	server = _servs[0]; // TODO improve for multi server later
 	testPersist(server);
 	while (true) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
-		timeOut = _timeOut;
 		// select will make system motoring three set, block until some fd ready
 		std::cout << BLU << "Loop Server..." << RESET << std::endl;
-		// if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut) == -1)
+		// if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &_timeOut) == -1)
 		if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL) == -1)
 			perror("select error"); // TODO
 		for (int fd = 0; fd <= _fdMax; fd++) {
@@ -139,7 +152,11 @@ int	WebServer::_receiveRequest(int & client_fd) {
 		}
 		return 0;
 	}
-	std::cout << CYN << "received data from client" << RESET << std::endl;
+	if (_clients.count(client_fd)) {
+		_reqMsg = _buffer;
+		_clients[client_fd].parseRequest(_reqMsg);
+		std::cout << CYN << "received data from client" << RESET << std::endl;
+	}
 	// it->socond.
 	/* std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl; */
 	/* std::cout << "-----------------------------------------" << std::endl; */
@@ -152,13 +169,16 @@ int	WebServer::_receiveRequest(int & client_fd) {
 void	WebServer::_sendResponse(int & client_fd, std::string & resMsg) {
 	// std::cout << BLU << resMsg.length() << " Bytes : Sent data success" << RESET << std::endl; // debug
 	// std::cout << YEL << resMsg << RESET << std::endl; // debug
-	int	bytes = send(client_fd, resMsg.c_str(), resMsg.length(), 0);
-	_resMsg.clear();
-	if (bytes < 0) {
-		std::cerr << "Error to response data" << std::endl;
-		return ;
+	if (_clients.count(client_fd)) {
+		_clients[client_fd].genResponse(_resMsg);
+		int	bytes = send(client_fd, resMsg.c_str(), resMsg.length(), 0);
+		_resMsg.clear();
+		if (bytes < 0) {
+			std::cerr << "Error to response data" << std::endl;
+			return ;
+		}
+		std::cout << BLU << bytes << " Bytes : Sent data success" << RESET << std::endl;
 	}
-	std::cout << BLU << bytes << " Bytes : Sent data success" << RESET << std::endl;
 	return ;
 }
 
@@ -167,8 +187,9 @@ bool	WebServer::_setSockAddr(struct addrinfo * & sockAddr, Server & serv) {
 	struct addrinfo	hints;
 
 	memset(&hints, 0, sizeof(hints));	// Set all member to empty
-	hints.ai_family = AF_UNSPEC;		// Allow IPv4 or IPv6
-	hints.ai_socktype = SOCK_STREAM;	// Stream socket = TCP
+	hints.ai_family = AF_INET;			// Allow IPv4 Protocol
+	hints.ai_socktype = SOCK_STREAM;	// Stream socket are socket type for support TCP or SCTP
+	hints.ai_protocol = IPPROTO_TCP;	// TCP Protocol
 	hints.ai_addr = NULL;
 	hints.ai_canonname = NULL;
 	hints.ai_next = NULL;
@@ -274,11 +295,6 @@ void	WebServer::testPersist(Server & server) {
 			continue;
 		else if (status == 0)
 			exit(0);
-		// std::cout << _buffer << std::endl;
-		_reqMsg = _buffer;
-		_clients[fd].parseRequest(_reqMsg);
-		// client.prtParsedReq(); // debug
-		_clients[fd].genResponse(_resMsg);
 		_sendResponse(fd, _resMsg);
 	}
 }
