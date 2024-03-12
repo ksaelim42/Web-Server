@@ -48,7 +48,6 @@ class Server // don't forget to create vector to store this class as it may have
 		int									sockFd; //! Pmos only
 		uint64_t							cliBodySize; //?client_max_body_size
 		bool								autoIndex; //?autoindex
-		bool								cgiPass; //? cgi_pass
 		uint16_t							allowMethod; //? limit_except (use SET_METHOD to store this one)
 		return_t							retur; //? return
 		std::vector<std::string>			index; //? index
