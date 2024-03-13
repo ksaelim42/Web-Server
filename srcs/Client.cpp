@@ -48,6 +48,8 @@ void	Client::genResponse(std::string & resMsg) {
 		std::string	cgiMsg;
 		_cgi.receiveResponse(_status, cgiMsg);
 		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+		if (_status == 200)
+			std::cout << YEL << resMsg << RESET << std::endl;
 	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);

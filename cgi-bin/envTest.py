@@ -2,7 +2,7 @@
 
 import os
 
-print("Content-Type: text/html")
+print("Content-Type:text/html")
 
 print("")
 

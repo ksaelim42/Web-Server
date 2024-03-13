@@ -32,7 +32,8 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std:
 	status = _inspectCgiHeaders(cgiHeader);
 	if (status != 200)
 		return "";
-	return _createHeader(status , req) + CRLF + cgiMsg;
+	_body = cgiMsg;
+	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
