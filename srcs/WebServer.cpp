@@ -1,12 +1,13 @@
 #include "WebServer.hpp"
 
-int	requestNumber = 1;
+int		requestNumber = 1;
 
-WebServer::WebServer(std::vector<Server> & servs) : _timeOut({3, 0})
-{
+WebServer::WebServer(std::vector<Server> & servs) {
 	_fdMax = 0;
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
+	_timeOut.tv_sec = 3;
+	_timeOut.tv_usec = 0;
 	_servs = servs;
 }
 
@@ -62,19 +63,29 @@ bool	WebServer::initServer(void) {
 }
 
 bool	WebServer::runServer(void) {
-	fd_set	tmpReadFds;
-	fd_set	tmpWriteFds;
+	fd_set			tmpReadFds;
+	fd_set			tmpWriteFds;
+	int				status;
+	struct timeval	timeOut;
 
 	Server	server = _servs[0]; // TODO improve for multi server later
-	testPersist(server);
+	// testPersist(server);
 	while (true) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
+		timeOut = _timeOut;
 		// select will make system motoring three set, block until some fd ready
 		std::cout << BLU << "Loop Server..." << RESET << std::endl;
 		// if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &_timeOut) == -1)
-		if (select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL) == -1)
+		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		if (status == 0) {
+			std::cout << "Time out" << std::endl;
+			_disconnectAllClient();
+			continue;
+		} else if (status == -1) {
 			perror("select error"); // TODO
+			continue;
+		}
 		for (int fd = 0; fd <= _fdMax; fd++) {
 			// std::cout << CYN << "fd: " << fd << RESET << std::endl;
 			if (FD_ISSET(fd, &tmpReadFds)) {
@@ -86,17 +97,12 @@ bool	WebServer::runServer(void) {
 				else { // handle data from client
 					if (_receiveRequest(fd) <= 0)
 						continue;
-					std::cout << BLU << "fd: " << fd << " Read data" << RESET << std::endl;
-					_reqMsg = _buffer;
-					_clients[fd].parseRequest(_reqMsg);
 					_fdClear(fd, _readFds);
 					_fdSet(fd, _writeFds);
 				}
 			}
 			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
-				std::cout << BLU << "fd: " << fd << " Write data" << RESET << std::endl;
-				_clients[fd].genResponse(_resMsg);
-				_sendResponse(fd, _resMsg);
+				_sendResponse(fd);
 				_fdClear(fd, _writeFds);
 				_fdSet(fd, _readFds);
 				// close(fd);
@@ -120,9 +126,10 @@ int	WebServer::_acceptConnection(int & serverSock) {
 	// Accept connection
 	std::cout << GRN << "Waiting client connection..." << RESET << std::endl;
 	client.sockFd = accept(serverSock, (struct sockaddr *)&client.addr, &client.addrLen);
-	if (client.sockFd < 0)
-		return (perror("Accept fail"), -1);
-	else {
+	if (client.sockFd < 0) {
+		std::cout << RED << "Accept fail" << RESET << std::endl;
+		return -1;
+	} else {
 		std::cout << GRN << requestNumber++ << " : connection accepted from: " << RESET;
 		std::cout << "client fd: " << client.sockFd << ", addr: " << inet_ntoa(client.addr.sin_addr) << std::endl;
 		// fcntl(fd, F_SETFL, SO_KEEPALIVE); // TODO : should check header first
@@ -137,41 +144,36 @@ int	WebServer::_acceptConnection(int & serverSock) {
 int	WebServer::_receiveRequest(int & client_fd) {
 	// Receive data from client
 	memset(_buffer, 0, BUFFERSIZE);
-	// ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, MSG_DONTWAIT);
-	ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, 0);
+	std::cout << BLU << "fd: " << client_fd << " Read data" << RESET << std::endl;
+	ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, MSG_DONTWAIT);
+	// ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, 0);
 	if (bytes_received == -1) {
-		perror("error: ");
-		std::cerr << RED << "Error receiving data" << RESET << std::endl;
+		std::cout << RED << "Error receiving data" << RESET << std::endl;
 		return -1;
-	} else if (bytes_received == 0) {
-		if (_clients.count(client_fd)) {
-			_fdClear(client_fd, _readFds);
-			close(client_fd);
-			_clients.erase(client_fd);
-			std::cerr << RED << "fd: " << client_fd << " Client disconnected" << RESET << std::endl;
-		}
+	}
+	else if (bytes_received == 0) {
+		_disconnectClient(client_fd);
 		return 0;
 	}
+	std::cout << CYN << "received data from client" << RESET << std::endl;
 	if (_clients.count(client_fd)) {
 		_reqMsg = _buffer;
 		_clients[client_fd].parseRequest(_reqMsg);
-		std::cout << CYN << "received data from client" << RESET << std::endl;
+		// std::cout << "-----------------------------------------" << std::endl;
+		// std::cout << _buffer << std::endl;
+		// std::cout << "-----------------------------------------" << std::endl;
 	}
-	// it->socond.
-	/* std::cout << "Receive Data: " << bytes_received << " bytes" << std::endl; */
-	/* std::cout << "-----------------------------------------" << std::endl; */
-	/* std::cout << buffer << std::endl; */
-	/* std::cout << "-----------------------------------------" << std::endl; */
-	/* exit(0); */
-	return bytes_received;
+	return 1;
 }
 
-void	WebServer::_sendResponse(int & client_fd, std::string & resMsg) {
+void	WebServer::_sendResponse(int & client_fd) {
 	// std::cout << BLU << resMsg.length() << " Bytes : Sent data success" << RESET << std::endl; // debug
 	// std::cout << YEL << resMsg << RESET << std::endl; // debug
+	std::cout << BLU << "fd: " << client_fd << " Write data" << RESET << std::endl;
 	if (_clients.count(client_fd)) {
 		_clients[client_fd].genResponse(_resMsg);
-		int	bytes = send(client_fd, resMsg.c_str(), resMsg.length(), 0);
+		// std::cout << _resMsg << std::endl;
+		ssize_t	bytes = send(client_fd, _resMsg.c_str(), _resMsg.length(), 0);
 		_resMsg.clear();
 		if (bytes < 0) {
 			std::cerr << "Error to response data" << std::endl;
@@ -266,6 +268,27 @@ bool	WebServer::_connectedClient(fd_set & set) {
 	return true;
 }
 
+void	WebServer::_disconnectClient(int & client_fd) {
+	if (_clients.count(client_fd)) {
+		_fdClear(client_fd, _readFds);
+		_fdClear(client_fd, _writeFds);
+		close(client_fd);
+		_clients.erase(client_fd);
+		std::cerr << RED << "fd: " << client_fd << " Client disconnected" << RESET << std::endl;
+	}
+}
+
+void	WebServer::_disconnectAllClient(void) {
+	std::map<int, Client>::iterator	it;
+	for (it = _clients.begin(); it != _clients.end(); it++) {
+		_fdClear(it->second.sockFd, _readFds);
+		_fdClear(it->second.sockFd, _writeFds);
+		close(it->second.sockFd);
+		std::cerr << RED << "fd: " << it->second.sockFd << " Client disconnected" << RESET << std::endl;
+	}
+	_clients.clear();
+}
+
 // httpReq	genRequest(std::string str) {
 // 	httpReq	req;
 
@@ -289,12 +312,17 @@ bool	WebServer::_connectedClient(fd_set & set) {
 void	WebServer::testPersist(Server & server) {
 	int fd = _acceptConnection(server.sockFd);
 	int	status;
+	std::cout << MAG << "fd: " << fd << RESET << std::endl;
 	while (true) {
+		std::cout << YEL << "client: " << _clients.size() << ",fd: " << _clients[fd].sockFd << RESET << std::endl;
 		status = _receiveRequest(fd);
-		if (status == -1)
+		if (status == -1) {
+			sleep(2);
 			continue;
+		}
 		else if (status == 0)
 			exit(0);
-		_sendResponse(fd, _resMsg);
+		_sendResponse(fd);
+		sleep(1);
 	}
 }

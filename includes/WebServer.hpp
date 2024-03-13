@@ -17,15 +17,15 @@
 class WebServer
 {
 	private:
-		std::vector<Server>		_servs;
-		std::map<int, Client>	_clients;
 		int						_fdMax;
 		fd_set					_readFds;
 		fd_set					_writeFds;
 		char					_buffer[BUFFERSIZE];
 		std::string				_reqMsg;
 		std::string				_resMsg;
-		const struct timeval	_timeOut; // use const for make select not modify value
+		std::vector<Server>		_servs;
+		std::map<int, Client>	_clients;
+		struct timeval			_timeOut;
 
 		std::string	_name;
 		void	_fdSet(int &, fd_set &);
@@ -35,9 +35,11 @@ class WebServer
 		bool	_matchServer(int &);
 		int		_acceptConnection(int &);
 		int		_receiveRequest(int &);
-		void	_sendResponse(int &, std::string &);
+		void	_sendResponse(int &);
 		Server*	_getServer(int &);
 		bool	_connectedClient(fd_set &); // TODO : for test
+		void	_disconnectClient(int &);
+		void	_disconnectAllClient(void);
 	public:
 		WebServer(std::vector<Server> &);
 		~WebServer();

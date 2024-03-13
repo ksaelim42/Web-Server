@@ -26,8 +26,10 @@ void	Client::parseRequest(std::string reqMsg) {
 		return;
 	_req.serv = *serv;
 	_matchLocation(serv->location);
-	if (_req.serv.retur.have) // redirection
+	if (_req.serv.retur.have) { // redirection
+		_status = _req.serv.retur.code;
 		return;
+	}
 	if (_checkRequest() == 0)
 		return;
 	if (_findFile() == 0)
@@ -35,18 +37,17 @@ void	Client::parseRequest(std::string reqMsg) {
 	if (_findType() == 0)
 		return;
 	if (_req.serv.cgiPass)
-		_cgi.request(_status, _req);
+		_cgi.sendRequest(_status, _req);
 	return;
 }
 
 void	Client::genResponse(std::string & resMsg) {
 	if (_req.serv.retur.have || (_status >= 300 && _status < 400))
-		resMsg = _res.redirection(_req.serv.retur.code, _req);
+		resMsg = _res.redirection(_status, _req);
 	else if (_status == 200 && _req.serv.cgiPass) {
 		std::string	cgiMsg;
-		_status = _cgi.response(cgiMsg);
-		if (_status == 200)
-			resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+		_cgi.receiveResponse(_status, cgiMsg);
+		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
 	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);

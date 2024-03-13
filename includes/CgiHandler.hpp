@@ -28,8 +28,8 @@ class CgiHandler
 		void	_closePipe(void);
 		void	_childProcess(parsedReq &);
 	public:
-		bool		request(short int &, parsedReq &);
-		short int	response(std::string &);
+		bool	sendRequest(short int &, parsedReq &);
+		bool	receiveResponse(short int &, std::string &);
 };
 
 #endif

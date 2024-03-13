@@ -1,17 +1,20 @@
 #include "HttpResponse.hpp"
 
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
+	std::cout << MAG << "---------------------- redir -----------------------" << RESET << std::endl;
 	_body = req.serv.retur.text;
 	req.pathSrc = req.serv.retur.text;
 	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
+	std::cout << MAG << "---------------------- Auto index -----------------------" << RESET << std::endl;
 	_listFile(req, _body);
 	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
+	std::cout << MAG << "---------------------- Tat Tic -----------------------" << RESET << std::endl;
 	status = _readFile(req.pathSrc, _body);
 	if (status == 200)
 		return _createHeader(status, req) + CRLF + _body;
@@ -21,6 +24,8 @@ std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
 	std::string	cgiHeader;
 
+	if (status != 200)
+		return "";
 	status = _parseCgiHeader(cgiMsg, cgiHeader);
 	if (status != 200)
 		return "";
@@ -31,6 +36,7 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std:
 }
 
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
+	std::cout << MAG << "---------------------- Error Page -----------------------" << RESET << std::endl;
 	req.pathSrc = req.serv.getErrPage(status);
 	if (req.pathSrc.empty())
 		_body = "Something went wrong";
@@ -175,11 +181,13 @@ short int	HttpResponse::_readFile(std::string & path, std::string & body) {
 }
 
 short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
-	DIR					*dir;
-	struct dirent		*entry;
-	struct stat			fileStat;
-	struct tm			*gmTime;
-	char				buffer[20];
+	DIR				*dir;
+	char			buffer[20];
+	struct dirent	*entry;
+	struct stat		fileStat;
+	struct tm		*gmTime;
+	std::string		files;
+	std::string		directories;
 
 	body += "<!DOCTYPE html>\n";
 	body += "<html>\n";
@@ -221,9 +229,13 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 			else
 				ss << std::setw(20) << std::right << fileStat.st_size << std::endl;
 			line += ss.str();
-			body += line;
+			if (S_ISDIR(fileStat.st_mode))
+				directories += line;
+			else
+				files += line;
 		}
 	}
+	body += directories + files;
 	closedir(dir);
 	body += "</pre>\n";
 	body += "<hr>\n";

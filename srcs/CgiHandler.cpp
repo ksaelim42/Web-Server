@@ -1,6 +1,6 @@
 #include "CgiHandler.hpp"
 
-bool	CgiHandler::request(short int & status, parsedReq & req) {
+bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 	std::cout << BYEL << "Start handler CGI" << RESET << std::endl;
 	if (_checkCgiScript(status, req) == 0)
 		return false;
@@ -25,12 +25,12 @@ bool	CgiHandler::request(short int & status, parsedReq & req) {
 	return true;
 }
 
-short int	CgiHandler::response(std::string & cgiMsg) {
-	int	status;
-	waitpid(_pid, &status, 0);
+bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
+	int	WaitStat;
+	waitpid(_pid, &WaitStat, 0);
 	std::cout << YEL << "wait status: " << status << RESET << std::endl;
 	if (status != 0)
-		return 500;
+		return (status = 500, false);
 	char	buffer[10000];
 	size_t	bytesRead;
 	memset(buffer, 0, 10000);
@@ -40,7 +40,7 @@ short int	CgiHandler::response(std::string & cgiMsg) {
 	std::cout << "bytes read: " << bytesRead << std::endl;
 	cgiMsg = buffer;
 	// std::cout << YEL << cgiMsg << RESET << std::endl; // debug
-	return 200;
+	return (status = 200, true);
 }
 
 void CgiHandler::_childProcess(parsedReq & req) {

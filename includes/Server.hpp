@@ -26,29 +26,33 @@ struct return_t {
 
 struct Location
 {
+	bool						cgiPass;
+	bool						autoIndex;
+	uint16_t					allowMethod;
+	uint64_t					cliBodySize;
 	std::string					path;	// path
 	std::string					root;
 	std::vector<std::string>	index;
-	uint16_t					allowMethod;
-	bool						autoIndex;
-	uint64_t					cliBodySize;
 	return_t					retur;
-	bool						cgiPass;
 };
 
 class Server // don't forget to create vector to store this class as it may have more than one server in the file.
 {
 	private:
 		std::map<std::string, std::string>	_mimeType; //! no need
+
+		void	_initErrPage(void);
+		void	_initMineTypeDefault(void);
 	public:
+		int									sockFd; //! Pmos only
+		bool								cgiPass; //? cgi_pass
+		bool								autoIndex; //?autoindex
+		uint16_t							allowMethod; //? limit_except (use SET_METHOD to store this one)
+		uint64_t							cliBodySize; //?client_max_body_size
 		std::string							name; //? server_name
 		std::string							ipAddr; //? listen could be ip address or port
 		std::string							port; //? listen
 		std::string							root; //? root
-		int									sockFd; //! Pmos only
-		uint64_t							cliBodySize; //?client_max_body_size
-		bool								autoIndex; //?autoindex
-		uint16_t							allowMethod; //? limit_except (use SET_METHOD to store this one)
 		return_t							retur; //? return
 		std::vector<std::string>			index; //? index
 		std::vector<Location>				location; //? location
@@ -56,8 +60,6 @@ class Server // don't forget to create vector to store this class as it may have
 
 		Server(void);
 		~Server(void) {}
-		void	_initErrPage(void);
-		void	_initMineTypeDefault(void);
 		void	setMimeType(std::string key, std::string value);
 		void	clearLocation(void);
 		void	prtServer(void);
