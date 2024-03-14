@@ -3,17 +3,18 @@
 import cgi, os
 import cgitb; cgitb.enable()
 
+import sys # for debug
+
 form = cgi.FieldStorage()
 
 # Get filename
-fileitem = form['fileToUpload']
+fileitem = form['filename']
 
 if fileitem.filename:
-
-	fn = os.path.basename(fileitem.filename)
-	open('upload/' + fn, 'wb').write(fileitem.file.read())
-
-	message = 'The file "' + fn + '" wa uploaded successfully'
+	file_name = os.path.basename(fileitem.filename)
+	f = open("cgi-bin/upload/" + file_name, "wb")
+	f.write(fileitem.file.read())
+	message = 'The file "' + file_name + '" wa uploaded successfully'
 else:
 	message = 'No file was uploaded'
 
