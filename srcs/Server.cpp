@@ -107,6 +107,7 @@ void	Server::_initErrPage(void) {
 	errPage[404] = "html/errorPage/404.html";
 	errPage[405] = "html/errorPage/405.html";
 	errPage[413] = "html/errorPage/413.html";
+	errPage[500] = "html/errorPage/500.html";
 	errPage[502] = "html/errorPage/502.html";
 	errPage[505] = "html/errorPage/505.html";
 }

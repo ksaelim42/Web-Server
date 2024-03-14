@@ -49,16 +49,19 @@ void CgiHandler::_childProcess(parsedReq & req) {
 		close(_pipeInFd[1]);
 		close(_pipeInFd[0]);
 	}
+	_gotoCgiDir(req.pathSrc);
 	dup2(_pipeOutFd[1], STDOUT_FILENO);
 	close(_pipeOutFd[0]);
 	close(_pipeOutFd[1]);
-	char *args[2];
-	args[0] = strdup(req.pathSrc);
-	args[1] = NULL;
+	char *args[3];
+	args[0] = strdup(_cgiProgramPath);
+	args[1] = strdup(_cgiFileName);
+	args[2] = NULL;
 	char **env = aopEnv(_env);
 	if (execve(args[0], args, env) == -1) {
 		free2Dstr(env);
 		delete[] args[0];
+		delete[] args[1];
 		exit(errno);
 	}
 }
@@ -120,7 +123,17 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 	}
 	else
 		_isPost = 0;
-	return true;
+	size_t	found = req.pathSrc.find_last_of(".");
+	if (found != std::string::npos) {
+		std::string	ext = req.pathSrc.substr(found + 1);
+		if (ext == "py") {
+			_cgiProgramPath = PYTHON_PATH;
+			return true;
+		}
+	}
+	status = 500;
+	std::cerr << YEL << "Program doesn't support to run this extension" << RESET << std::endl;
+	return false;
 }
 
 bool	CgiHandler::_createPipe(parsedReq & req) {
@@ -143,4 +156,17 @@ void	CgiHandler::_closePipe(void) {
 	}
 	close(_pipeOutFd[0]);
 	close(_pipeOutFd[1]);
+}
+
+bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
+	std::size_t	found = srcPath.find_last_of("/");
+	if (found != std::string::npos) {
+		std::string	path = srcPath.substr(0, found);
+		_cgiFileName = srcPath.substr(found + 1);
+		if (chdir(path.c_str()) == -1)
+			exit(errno);
+	}
+	else
+		_cgiFileName = srcPath;
+	return true;
 }

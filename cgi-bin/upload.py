@@ -3,8 +3,6 @@
 import cgi, os
 import cgitb; cgitb.enable()
 
-import sys # for debug
-
 form = cgi.FieldStorage()
 
 # Get filename
@@ -12,7 +10,7 @@ fileitem = form['filename']
 
 if fileitem.filename:
 	file_name = os.path.basename(fileitem.filename)
-	f = open("cgi-bin/upload/" + file_name, "wb")
+	f = open("./upload/" + file_name, "wb") # 'wb' for write in binary mode
 	f.write(fileitem.file.read())
 	message = 'The file "' + file_name + '" wa uploaded successfully'
 else:

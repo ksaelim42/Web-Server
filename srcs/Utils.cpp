@@ -81,6 +81,8 @@ char**	aopArgs(std::vector<std::string> & set) {
 	return aop;
 }
 
+// Find lim in string if found return word that end before lim and cut string include lim out
+// if not found duplicate string to word and delete string
 std::string	strCutTo(std::string & str, std::string lim) {
 	std::size_t	found = str.find(lim);
 	std::string word;

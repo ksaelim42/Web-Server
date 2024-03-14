@@ -3,6 +3,7 @@
 
 # define CGI_VERS		"CGI/1.0"
 # define PROGRAM_NAME	"MPM/1.0" // Mos Prach Mark
+# define PYTHON_PATH	"/usr/bin/python3"
 
 #include <unistd.h>		// pipe, fork, read, write
 #include <sys/stat.h>	// stat
@@ -20,11 +21,14 @@ class CgiHandler
 		int			_pipeOutFd[2];
 		bool		_isPost;
 		uint64_t	_contentSize;
+		std::string	_cgiFileName;
+		std::string	_cgiProgramPath;
 		std::map<std::string, std::string>	_env;
 
 		bool	_initEnv(parsedReq &);
 		bool	_checkCgiScript(short int &, parsedReq &);
 		bool	_createPipe(parsedReq &);
+		bool	_gotoCgiDir(std::string &);
 		void	_closePipe(void);
 		void	_childProcess(parsedReq &);
 	public:

@@ -138,18 +138,6 @@ bool	Client::_parsePath(std::string url) {
 	return true;
 }
 
-// bool	Client::_isCgi(std::string & path) {
-// 	size_t	index = path.find_last_of(".");
-// 	if (index != std::string::npos) {
-// 		std::string	ext = path.substr(index + 1);
-// 		if (ext == "sh")
-// 			return true;
-// 		else if (ext == "pl")
-// 			return true;
-// 	}
-// 	return false;
-// }
-
 bool	Client::_matchLocation(std::vector<Location> loc) {
 	Location	matchLoc;
 	
@@ -233,7 +221,7 @@ bool	Client::_findFile(void) {
 		std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
 		return (_status = 200, true);
 	}
-	std::cout << RED << "Not found file in stat" << RESET << std::endl;
+	std::cout << RED << path << " :Not found file in stat" << RESET << std::endl;
 	return (_status = 404, false);
 }
 
