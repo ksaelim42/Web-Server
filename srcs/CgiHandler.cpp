@@ -28,9 +28,9 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	int	WaitStat;
 	waitpid(_pid, &WaitStat, 0);
-	std::cout << YEL << "wait status: " << WaitStat << RESET << std::endl;
-	if (WaitStat != 0)
-		return (status = 500, false);
+	std::cout << YEL << "wait status: " << WaitStat << strerror(WaitStat) << RESET << std::endl;
+	if (WIFEXITED(WaitStat) == false)
+		return (status = 502, false);
 	char	buffer[10000];
 	size_t	bytesRead;
 	memset(buffer, 0, 10000);

@@ -6,6 +6,7 @@
 #include "Server.hpp"
 
 struct parsedReq {
+	bool								redir;
 	std::string							cliIPaddr;
 	std::string							method;
 	std::string							uri;		// original path that get from request

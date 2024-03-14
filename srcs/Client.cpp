@@ -6,10 +6,21 @@ Client::Client(void) {
 }
 
 void	Client::parseRequest(std::string reqMsg) {
-	httpReq	reqHeader;
+	std::string	header;
+	std::string	body;
+	httpReq		reqHeader;
 
 	_res.clear();
-	reqHeader = storeReq(reqMsg);
+	_req.redir = 0;
+	_req.serv = *serv;
+	if (_parseHeader(reqMsg, header, body) == 0)
+		return;
+	std::cout << BLU << "---- header size: " << header.length() << " ---" << RESET << std::endl;
+	std::cout << BLU << header << RESET << std::endl;
+	std::cout << YEL << "---- body size: " << body.length() << " ---" << RESET << std::endl;
+	std::cout << YEL << body << RESET << std::endl;
+	std::cout << YEL << "------------------------------" << RESET << std::endl;
+	reqHeader = storeReq(header);
 	// status = scanStartLine(reqHeader);
 	// if (status != 0)
 	// 	return status;
@@ -21,12 +32,13 @@ void	Client::parseRequest(std::string reqMsg) {
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
+	_req.body = body;
 	_parsePath(_req.uri);
 	if (_urlEncoding(_req.path) == 0)
 		return;
-	_req.serv = *serv;
 	_matchLocation(serv->location);
 	if (_req.serv.retur.have) { // redirection
+		_req.redir = 1;
 		_status = _req.serv.retur.code;
 		return;
 	}
@@ -42,7 +54,7 @@ void	Client::parseRequest(std::string reqMsg) {
 }
 
 void	Client::genResponse(std::string & resMsg) {
-	if (_req.serv.retur.have || (_status >= 300 && _status < 400))
+	if (_req.redir || (_status >= 300 && _status < 400))
 		resMsg = _res.redirection(_status, _req);
 	else if (_status == 200 && _req.serv.cgiPass) {
 		std::string	cgiMsg;
@@ -63,6 +75,16 @@ void	Client::genResponse(std::string & resMsg) {
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
+
+bool	Client::_parseHeader(std::string & reqMsg, std::string & header, std::string & body) {
+	std::size_t	found  = reqMsg.find("\r\n\r\n");
+	if (found == std::string::npos)
+		return (_status = 400, false);
+	header = reqMsg.substr(0, found + 2);	// Cut the second '\r\n' out
+	if (reqMsg.length() > found + 4)
+		body = reqMsg.substr(found + 4);	// Kept only body Message
+	return (_status = 200, true);
+}
 
 // Percent encode
 bool	Client::_urlEncoding(std::string & path) {

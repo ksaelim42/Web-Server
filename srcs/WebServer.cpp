@@ -145,23 +145,23 @@ int	WebServer::_receiveRequest(int & client_fd) {
 	// Receive data from client
 	memset(_buffer, 0, BUFFERSIZE);
 	std::cout << BLU << "fd: " << client_fd << " Read data" << RESET << std::endl;
-	ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, MSG_DONTWAIT);
-	// ssize_t	bytes_received =  recv(client_fd, _buffer, BUFFERSIZE, 0);
-	if (bytes_received == -1) {
+	ssize_t	bytes =  recv(client_fd, _buffer, BUFFERSIZE, MSG_DONTWAIT);
+	// ssize_t	bytes =  recv(client_fd, _buffer, BUFFERSIZE, 0);
+	if (bytes == -1) {
 		std::cout << RED << "Error receiving data" << RESET << std::endl;
 		return -1;
 	}
-	else if (bytes_received == 0) {
+	else if (bytes == 0) {
 		_disconnectClient(client_fd);
 		return 0;
 	}
 	std::cout << CYN << "received data from client" << RESET << std::endl;
 	if (_clients.count(client_fd)) {
-		_reqMsg = _buffer;
-		_clients[client_fd].parseRequest(_reqMsg);
 		// std::cout << "-----------------------------------------" << std::endl;
 		// std::cout << _buffer << std::endl;
 		// std::cout << "-----------------------------------------" << std::endl;
+		_reqMsg = _buffer;
+		_clients[client_fd].parseRequest(_reqMsg);
 	}
 	return 1;
 }

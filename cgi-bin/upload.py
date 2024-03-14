@@ -11,7 +11,7 @@ fileitem = form['fileToUpload']
 if fileitem.filename:
 
 	fn = os.path.basename(fileitem.filename)
-	open('./' + fn, 'wb').write(fileitem.file.read())
+	open('upload/' + fn, 'wb').write(fileitem.file.read())
 
 	message = 'The file "' + fn + '" wa uploaded successfully'
 else:

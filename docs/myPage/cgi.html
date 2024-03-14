@@ -24,6 +24,22 @@
 			<h2>Python Scripts</h2>
 			<a href="./cgi-bin/hello.py">Hello</a><br>
 			<a href="./cgi-bin/envTest.py">Environment</a>
+			<form action="/cgi-bin/text.py" method="get">
+				<h2>GET method</h2>
+				<label for="fname">First name:</label><br>
+				<input type="text" id="fname" name="fname"><br>
+				<label for="lname">Last name:</label><br>
+				<input type="text" id="lname" name="lname"><br><br>
+				<input type="submit" value="Submit">
+			</form>
+			<form action="/cgi-bin/text.py" method="post">
+				<h2>POST method</h2>
+				<label for="fname">First name:</label><br>
+				<input type="text" id="fname" name="fname"><br>
+				<label for="lname">Last name:</label><br>
+				<input type="text" id="lname" name="lname"><br><br>
+				<input type="submit" value="Submit">
+			</form>
 			<form action="./cgi-bin/upload.py" method="post" enctype="multipart/form-data">
 				<p>File: <input type="file" id="fileToUpload" name="fileToUpload" /></p>
 				<p><input type="submit" value="Upload" /></p>

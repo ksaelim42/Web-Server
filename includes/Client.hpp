@@ -17,6 +17,7 @@ class Client
 		CgiHandler		_cgi;
 
 		// Parsing Request
+		bool		_parseHeader(std::string &, std::string &, std::string &);
 		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);
 		bool		_matchLocation(std::vector<Location>);
