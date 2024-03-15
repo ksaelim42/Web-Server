@@ -1,19 +1,111 @@
 body {
-	background-color: #202020;
+	background-color: #1a1a1a;
 	color: whitesmoke;
 }
 
-#headline {
-	flex-direction: column;
+h3 {
+	margin: 5px;
+}
+
+.body {
+	margin: 10px 5% 10px 5%;
+	font-size: 1.2rem;
+}
+
+a:link {
+	color:aliceblue;
+	text-decoration: none;
+}
+
+a:visited {
+	color:aliceblue;
+}
+
+a:hover {
+	color:aliceblue;
+}
+
+li.nav-box:hover {
+	background-color: #303030;
+}
+
+.one {
+	display: flex;
 	justify-content: center;
 	text-align: center;
+	width: 100%;
+}
+
+.two {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+.first {
+	display: flex;
+	justify-content: start;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+.second {
+	display: flex;
+	justify-content: end;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+ul {
+	background-color: #3a3a3a;
+	padding: 5px;
+	margin: 0;
 }
 
 .navbar {
-	font-size: 1.5rem;
 	display: flex;
+	flex-direction: column;
+	background-color: #404040;
+	font-size: 1.5rem;
 }
 
-.box a {
-	font-size: 1.3rem;
+li.nav-box {
+	color: #b3b3b3;
+	padding: 10px;
+	list-style: none;
+	border-radius: 7px;
+}
+
+.body-box {
+	background-color: #404040;
+	padding: 15px 15px 15px 15px;
+	border-radius: 7px;
+	margin: 10px 0px 10px 0px;
+}
+
+.fill-box {
+	background-color: #3a3a3a;
+	padding: 2%;
+}
+
+.button {
+	background-color: #8899A6;
+	color: whitesmoke;
+	font-size: 0.9rem;
+	font-weight:bolder;
+	margin-top: 10px;
+	padding: 10px;
+	border-radius: 5px;
+	border: 0px white solid;
+}
+
+.button:hover {
+	background-color: #303030;
+}
+
+#separate {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
 }

@@ -8,41 +8,67 @@
 	<title>Document</title>
 </head>
 <body>
-	<h1 id="headline">Welcome to My cat website</h1>
 	<nav class="navbar">
-		<ul>
-			<li><a href="./index.html">Home</a></li>
-			<li><a href="./form.html">Form</a></li>
-			<li><a href="./cgi.html">Test CGI</a></li>
-			<li><a href="./blog">AutoIndex</a></li>
-			<li><a href="./blog/subdir/findme.html">Redirection</a></li>
-		</ul>
+		<h1 class="one">Welcome to My cat website</h1>
+		<div class="two">
+			<ul class="first">
+				<li class="nav-box"><a href="./index.html">Home</a></li>
+				<li class="nav-box"><a href="./blog">AutoIndex</a></li>
+				<li class="nav-box"><a href="./blog/subdir/findme.html">Redirection</a></li>
+				<li class="nav-box"><a href="./cgi.html">Test CGI</a></li>
+			</ul>
+			<ul class="second">
+				<li class="nav-box"><a href="./cgi-bin/list.py">Files Uploaded</a></li>
+			</ul>
+		</div>
 	</nav>
-	<div class="box">
-		<h1>Test CGI script</h1>
+	<div class="body">
+		<h2 style="text-align: center;">Test CGI script</h2>
 		<div>
-			<h2>Python Scripts</h2>
-			<a href="./cgi-bin/hello.py">Hello</a><br>
-			<a href="./cgi-bin/envTest.py">Environment</a>
-			<form action="/cgi-bin/text.py" method="get">
-				<h2>GET method</h2>
-				<label for="fname">First name:</label><br>
-				<input type="text" id="fname" name="fname"><br>
-				<label for="lname">Last name:</label><br>
-				<input type="text" id="lname" name="lname"><br><br>
-				<input type="submit" value="Submit">
-			</form>
-			<form action="/cgi-bin/text.py" method="post">
-				<h2>POST method</h2>
-				<label for="fname">First name:</label><br>
-				<input type="text" id="fname" name="fname"><br>
-				<label for="lname">Last name:</label><br>
-				<input type="text" id="lname" name="lname"><br><br>
-				<input type="submit" value="Submit">
-			</form>
+			<div class="body-box">
+				<form action="/cgi-bin/text.py" method="get">
+					<h3>Python Scripts</h3><br>
+					<a class="button" href="./cgi-bin/hello.py">Say Hello</a><br>
+					<br>
+					<a class="button" href="./cgi-bin/envTest.py">Display Environment</a>
+				</form>
+			</div>
+			<div id="separate">
+				<div class="body-box">
+					<form action="/cgi-bin/text.py" method="get">
+						<h3>GET method</h3>
+						<div class="fill-box">
+							<label for="fname">First name:</label><br>
+							<input type="text" id="fname" name="fname"><br>
+							<label for="lname">Last name:</label><br>
+							<input type="text" id="lname" name="lname">
+						</div>
+						<input class="button" type="submit" value="Submit">
+					</form>
+				</div>
+				<div class="body-box">
+					<form action="/cgi-bin/text.py" method="post">
+						<h3>POST method</h3>
+						<div class="fill-box">
+							<label for="fname">First name:</label><br>
+							<input type="text" id="fname" name="fname"><br>
+							<label for="lname">Last name:</label><br>
+							<input type="text" id="lname" name="lname">
+						</div>
+						<input class="button" type="submit" value="Submit">
+					</form>
+				</div>
+			</div>
+			<div class="body-box">
+				<form action="/cgi-bin/text.py" method="post">
+					<h3>Upload Files</h3>
+					<div class="fill-box">
+						File: <input type="file" id="filename" name="filename" />
+					</div>
+					<input class="button" type="submit" value="Upload" />
+				</form>
+			</div>
 			<form action="./cgi-bin/upload.py" method="post" enctype="multipart/form-data">
-				<p>File: <input type="file" id="filename" name="filename" /></p>
-				<p><input type="submit" value="Upload" /></p>
 			</form>
 		</div>
 	</div>

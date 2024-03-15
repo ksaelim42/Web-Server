@@ -13,6 +13,7 @@ if fileitem.filename:
 	f = open("./upload/" + file_name, "wb") # 'wb' for write in binary mode
 	f.write(fileitem.file.read())
 	message = 'The file "' + file_name + '" wa uploaded successfully'
+	f.close()
 else:
 	message = 'No file was uploaded'
 
