@@ -60,7 +60,7 @@
 				</div>
 			</div>
 			<div class="body-box">
-				<form action="/cgi-bin/text.py" method="post">
+				<form action="./cgi-bin/upload.py" method="post" enctype="multipart/form-data">
 					<h3>Upload Files</h3>
 					<div class="fill-box">
 						File: <input type="file" id="filename" name="filename" />
@@ -68,8 +68,6 @@
 					<input class="button" type="submit" value="Upload" />
 				</form>
 			</div>
-			<form action="./cgi-bin/upload.py" method="post" enctype="multipart/form-data">
-			</form>
 		</div>
 	</div>
 </body>

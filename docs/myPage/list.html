@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/x-icon" href="favicon.ico">
+	<link rel="stylesheet" href="css/style.css">
+	<title>Document</title>
+	<style>
+	a:link {text-decoration: none;} a:hover {text-decoration: underline;}
+	li {list-style: none;}
+	.list-line > p {margin: 0;}
+	.container-list {display: flex; justify-content: space-between; border-bottom: 1px solid #303030; padding: 8px;}
+	.container-list > .one {flex: 5; justify-content: flex-end; }
+	.container-list > .two {flex: 1; align-content: end;}
+	.container-list > .three {flex: 3; justify-content: flex-end; text-align: end;}
+	.del-but { background-color: #707070; color: whitesmoke; padding: 6px; border-radius: 5px;}
+	.del-but:hover {background-color: red;}
+	</style>
+</head>
+<body>
+	<div class="container-list">
+		<div class="one">
+			<li>
+		<svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-package color-fg-muted">
+		<path fill="#000000" d="m8.878.392 5.25 3.045c.54.314.872.89.872 1.514v6.098a1.75 1.75 0 0 1-.872 1.514l-5.25 3.045a1.75 1.75 0 0 1-1.756 0l-5.25-3.045A1.75 1.75 0 0 1 1
+		11.049V4.951c0-.624.332-1.201.872-1.514L7.122.392a1.75 1.75 0 0 1 1.756 0ZM7.875 1.69l-4.63 2.685L8 7.133l4.755-2.758-4.63-2.685a.248.248 0 0 0-.25 0ZM2.5
+		5.677v5.372c0 .09.047.171.125.216l4.625 2.683V8.432Zm6.25 8.271 4.625-2.683a.25.25 0 0 0 .125-.216V5.677L8.75 8.432Z"></path>
+		</svg>
+			<a href="upload/file1.txt" download="file1.txt">Download File</a>
+			</li>
+		</div>
+		<div class="list-line two"><p>10mb</p></div>
+		<div class="list-line three">
+			<input class="del-but" type="submit" value="Delete">
+		</div>
+	</div>
+</body>
+</html>

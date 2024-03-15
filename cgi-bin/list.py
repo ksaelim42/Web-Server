@@ -2,7 +2,26 @@
 
 import os
 
-directory = "upload"
+def convert_size(size_bytes):
+	if size_bytes == 0:
+		return "0 Bytes"
+	size_name = ("Bytes", "KB", "MB", "GB", "TB")
+	i = size_bytes
+	p = 0
+	while i >= 1024:
+		i = i / 1024
+		p += 1
+	if p == 0:
+		return "{} Bytes".format(i)
+	return "{:.1f} {}".format(i, size_name[p])
+
+directory = "../myPage/upload"
+
+boxIcon = """<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-package color-fg-muted\">
+<path fill=\"#000000\" d=\"m8.878.392 5.25 3.045c.54.314.872.89.872 1.514v6.098a1.75 1.75 0 0 1-.872 1.514l-5.25 3.045a1.75 1.75 0 0 1-1.756 0l-5.25-3.045A1.75 1.75 0 0 1 1
+ 11.049V4.951c0-.624.332-1.201.872-1.514L7.122.392a1.75 1.75 0 0 1 1.756 0ZM7.875 1.69l-4.63 2.685L8 7.133l4.755-2.758-4.63-2.685a.248.248 0 0 0-.25 0ZM2.5
+ 5.677v5.372c0 .09.047.171.125.216l4.625 2.683V8.432Zm6.25 8.271 4.625-2.683a.25.25 0 0 0 .125-.216V5.677L8.75 8.432Z\"></path>
+</svg>"""
 
 mylist = []
 
@@ -10,7 +29,15 @@ found = True
 
 if os.path.exists(directory) and os.path.isdir(directory):
 	for filename in os.listdir(directory):
-		mylist.append("<li>" + filename + "</li>")
+		href = " href=\"/upload/" + filename + "\""
+		dowload = " download=\"" + filename + "\""
+		sublist = []
+		sublist.append("<li>" + boxIcon + "&nbsp<a" + href + dowload + ">" + filename + "</a>" + "</li>")
+		size = os.path.getsize(directory + "/" + filename)
+		sublist.append("<p>" + convert_size(size) + "</p>")
+		sublist.append("<input class=\"del-but\" type=\"submit\" value=\"Delete\">")
+
+		mylist.append(sublist)
 else:
 	found = False
 
@@ -26,6 +53,17 @@ print("<meta charset=\"UTF-8\">")
 print("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
 print("<link rel=\"icon\" type=\"image/x-icon\" href=\"favicon.ico\">")
 print("<link rel=\"stylesheet\" href=\"/css/style.css\">")
+print("<style>")
+print("a:link {text-decoration: none;} a:hover {text-decoration: underline;}")
+print("li {list-style: none;}")
+print(".list-line > p {margin: 0;}")
+print(".container-list {display: flex; justify-content: space-between; border-bottom: 1px solid #303030; padding: 8px;}")
+print(".container-list > .one {flex: 4; justify-content: flex-start; }")
+print(".container-list > .two {flex: 1; justify-content: flex-end; }")
+print(".container-list > .three {flex: 1; justify-content: flex-end; text-align: end; }")
+print(".del-but { background-color: #707070; color: whitesmoke; padding: 5px; border-radius: 5px;}")
+print(".del-but:hover {background-color: red;}")
+print("</style>")
 print("<title>Files Uploaded</title>")
 print("</head>")
 print("<body>")
@@ -50,19 +88,20 @@ if found:
 	if len(mylist):
 		print("<div class=\"fill-box\">")
 		print("<ul>")
-		for x in mylist:
-			print(x)
+		for listItem in mylist:
+			print("<div class=\"container-list\">")
+			print("<div class=\"one\">" + listItem[0] + "</div>")
+			print("<div class=\"list-line two\">" + listItem[1] + "</div>")
+			print("<div class=\"list-line three\">" + listItem[2] + "</div>")
+			print("</div>")
 		print("</ul>")
-		print("</div>")
+		print("</div>") # class fill-box
 	else:
 		print("<p>Directory is empty</p>")
 else:
 	print("<p>Error: Directory not found</p>")
-print("</div>")
-print("</div>")
-print("</form>")
-print("</div>")
-print("</div>")
+print("</div>") # class body-box
+print("</div>") # class body
 print("</body>")
 print("</html>")
 

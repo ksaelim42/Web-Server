@@ -12,16 +12,16 @@ h3 {
 	font-size: 1.2rem;
 }
 
-a:link {
+.navbar a:link {
 	color:aliceblue;
 	text-decoration: none;
 }
 
-a:visited {
+.navbar a:visited {
 	color:aliceblue;
 }
 
-a:hover {
+.navbar a:hover {
 	color:aliceblue;
 }
 
@@ -29,14 +29,14 @@ li.nav-box:hover {
 	background-color: #303030;
 }
 
-.one {
+.navbar > .one {
 	display: flex;
 	justify-content: center;
 	text-align: center;
 	width: 100%;
 }
 
-.two {
+.navbar > .two {
 	display: flex;
 	justify-content: space-between;
 	gap: 10px;
@@ -87,6 +87,7 @@ li.nav-box {
 .fill-box {
 	background-color: #3a3a3a;
 	padding: 2%;
+	margin-bottom: 2%;
 }
 
 .button {
@@ -94,7 +95,6 @@ li.nav-box {
 	color: whitesmoke;
 	font-size: 0.9rem;
 	font-weight:bolder;
-	margin-top: 10px;
 	padding: 10px;
 	border-radius: 5px;
 	border: 0px white solid;
