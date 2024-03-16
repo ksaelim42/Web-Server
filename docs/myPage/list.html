@@ -17,6 +17,21 @@
 	.del-but { background-color: #707070; color: whitesmoke; padding: 6px; border-radius: 5px;}
 	.del-but:hover {background-color: red;}
 	</style>
+	<script>
+		function deleteResource() {
+			var xhr = new XMLHttpRequest();
+			var url = button.getAttribute('data-url');
+			xhr.open('DELETE', url, true);
+			xhr.onload = function() {
+				if (xhr.status === 200) {
+					alert(button.getAttribute('filename') + ' was deleted')
+				} else {
+					alert('Failed to delete resource. Status code: ' + xhr.status);
+				}
+			};
+			shr.send();
+		}
+	</script>
 </head>
 <body>
 	<div class="container-list">
@@ -32,7 +47,8 @@
 		</div>
 		<div class="list-line two"><p>10mb</p></div>
 		<div class="list-line three">
-			<input class="del-but" type="submit" value="Delete">
+			<button class="del-but" onclick="deleteResource()"
+			data-url="" data-filename="">Delete</button>
 		</div>
 	</div>
 </body>

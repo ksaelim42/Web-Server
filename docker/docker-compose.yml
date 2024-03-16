@@ -18,5 +18,5 @@ services:
       - 1420:1420
     volumes:
       - './../cgi-bin:/var/www/html/cgi-bin'
-      - './../docs/myPage:/var/www/html/myPage'
+      - './../docs:/var/www/html/docs'
       - './src/conf/nginx.conf:/etc/nginx/nginx.conf'

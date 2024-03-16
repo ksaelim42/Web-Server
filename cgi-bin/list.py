@@ -15,7 +15,7 @@ def convert_size(size_bytes):
 		return "{} Bytes".format(i)
 	return "{:.1f} {}".format(i, size_name[p])
 
-directory = "../myPage/upload"
+directory = "../docs/myPage/upload"
 
 boxIcon = """<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-package color-fg-muted\">
 <path fill=\"#000000\" d=\"m8.878.392 5.25 3.045c.54.314.872.89.872 1.514v6.098a1.75 1.75 0 0 1-.872 1.514l-5.25 3.045a1.75 1.75 0 0 1-1.756 0l-5.25-3.045A1.75 1.75 0 0 1 1
@@ -31,12 +31,12 @@ if os.path.exists(directory) and os.path.isdir(directory):
 	for filename in os.listdir(directory):
 		href = " href=\"/upload/" + filename + "\""
 		dowload = " download=\"" + filename + "\""
+		dataUrl = "http://" + os.environ["HTTP_HOST"] + "/upload/" + filename
 		sublist = []
 		sublist.append("<li>" + boxIcon + "&nbsp<a" + href + dowload + ">" + filename + "</a>" + "</li>")
 		size = os.path.getsize(directory + "/" + filename)
 		sublist.append("<p>" + convert_size(size) + "</p>")
-		sublist.append("<input class=\"del-but\" type=\"submit\" value=\"Delete\">")
-
+		sublist.append("<button class=\"del-but\" type=\"button\" onclick=\"deleteResource(this)\" data-url=\"" + dataUrl + "\" data-filename=\"" + filename + "\">Delete</button>")
 		mylist.append(sublist)
 else:
 	found = False
@@ -46,12 +46,11 @@ print("Content-Type: text/html")
 print("")
 
 print("<!DOCTYPE html>")
-print("<!DOCTYPE html>")
 print("<html lang=\"en\">")
 print("<head>")
 print("<meta charset=\"UTF-8\">")
 print("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
-print("<link rel=\"icon\" type=\"image/x-icon\" href=\"favicon.ico\">")
+print("<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\">")
 print("<link rel=\"stylesheet\" href=\"/css/style.css\">")
 print("<style>")
 print("a:link {text-decoration: none;} a:hover {text-decoration: underline;}")
@@ -97,11 +96,39 @@ if found:
 		print("</ul>")
 		print("</div>") # class fill-box
 	else:
-		print("<p>Directory is empty</p>")
+		print("<p style=\"color: #505050; text-align: center;\">Directory is empty</p>")
 else:
 	print("<p>Error: Directory not found</p>")
 print("</div>") # class body-box
+# Upload scope
+print("<div class=\"body-box\">")
+print("<form action=\"/cgi-bin/upload.py\" method=\"post\" enctype=\"multipart/form-data\">")
+print("<h3>Upload Files</h3>")
+print("<div class=\"fill-box\" style=\"margin-bottom: 5px;\">")
+print("File: <input type=\"file\" id=\"filename\" name=\"filename\" />")
+print("</div>")
+print("<input class=\"button\" type=\"submit\" value=\"Upload\" />")
+print("</form>")
+print("</div>")
 print("</div>") # class body
+# Javascript for delete files
+print("<script>")
+print("function deleteResource(button) {")
+print("var xhr = new XMLHttpRequest();")
+print("var url = button.getAttribute('data-url');")
+print("xhr.open('DELETE', url, true);")
+print("xhr.onload = function() {")
+print("if (xhr.status >= 200 && xhr.status < 300) {")
+print("alert(button.getAttribute('data-filename') + ' was deleted')")
+print("location.reload();")
+print("} else {")
+print("alert('Failed to delete resource. Status code: ' + xhr.status);")
+print("}")
+print("};")
+print("xhr.send();")
+print("}")
+print("</script>")
+
 print("</body>")
 print("</html>")
 

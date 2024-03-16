@@ -65,7 +65,7 @@ void	Client::genResponse(std::string & resMsg) {
 	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);
-	else if (_status == 200)
+	else if (_status >= 200 && _status < 300)
 		resMsg = _res.staticContent(_status, _req);
 	if ((_status >= 400 && _status < 600))
 		resMsg = _res.errorPage(_status, _req);

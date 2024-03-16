@@ -16,7 +16,7 @@ std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	std::cout << MAG << "---------------------- Tat Tic -----------------------" << RESET << std::endl;
 	status = _readFile(req.pathSrc, _body);
-	if (status == 200)
+	if (status >= 200 && status < 300)
 		return _createHeader(status, req) + CRLF + _body;
 	return ("");
 }
@@ -123,6 +123,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 	switch (statusCode) {
 		case 200:
 			return "OK";
+		case 201:
+			return "Created";
 		case 301:
 			return "Moved Permanently";
 		case 302:
