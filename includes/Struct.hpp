@@ -7,6 +7,7 @@
 
 struct parsedReq {
 	bool								redir;
+	uint64_t							bodySize;
 	std::string							cliIPaddr;
 	std::string							method;
 	std::string							uri;		// original path that get from request

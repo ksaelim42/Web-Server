@@ -15,7 +15,7 @@ def convert_size(size_bytes):
 		return "{} Bytes".format(i)
 	return "{:.1f} {}".format(i, size_name[p])
 
-directory = "../docs/myPage/upload"
+directory = "../upload"
 
 boxIcon = """<svg aria-hidden=\"true\" height=\"16\" viewBox=\"0 0 16 16\" version=\"1.1\" width=\"16\" data-view-component=\"true\" class=\"octicon octicon-package color-fg-muted\">
 <path fill=\"#000000\" d=\"m8.878.392 5.25 3.045c.54.314.872.89.872 1.514v6.098a1.75 1.75 0 0 1-.872 1.514l-5.25 3.045a1.75 1.75 0 0 1-1.756 0l-5.25-3.045A1.75 1.75 0 0 1 1
@@ -52,17 +52,8 @@ print("<meta charset=\"UTF-8\">")
 print("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
 print("<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\">")
 print("<link rel=\"stylesheet\" href=\"/css/style.css\">")
-print("<style>")
-print("a:link {text-decoration: none;} a:hover {text-decoration: underline;}")
-print("li {list-style: none;}")
-print(".list-line > p {margin: 0;}")
-print(".container-list {display: flex; justify-content: space-between; border-bottom: 1px solid #303030; padding: 8px;}")
-print(".container-list > .one {flex: 4; justify-content: flex-start; }")
-print(".container-list > .two {flex: 1; justify-content: flex-end; }")
-print(".container-list > .three {flex: 1; justify-content: flex-end; text-align: end; }")
-print(".del-but { background-color: #707070; color: whitesmoke; padding: 5px; border-radius: 5px;}")
-print(".del-but:hover {background-color: red;}")
-print("</style>")
+print("<link rel=\"stylesheet\" href=\"/css/listStyle.css\">")
+print("<script src=\"/js/deleteResource.js\"></script>")
 print("<title>Files Uploaded</title>")
 print("</head>")
 print("<body>")
@@ -111,24 +102,5 @@ print("<input class=\"button\" type=\"submit\" value=\"Upload\" />")
 print("</form>")
 print("</div>")
 print("</div>") # class body
-# Javascript for delete files
-print("<script>")
-print("function deleteResource(button) {")
-print("var xhr = new XMLHttpRequest();")
-print("var url = button.getAttribute('data-url');")
-print("xhr.open('DELETE', url, true);")
-print("xhr.onload = function() {")
-print("if (xhr.status >= 200 && xhr.status < 300) {")
-print("alert(button.getAttribute('data-filename') + ' was deleted')")
-print("location.reload();")
-print("} else {")
-print("alert('Failed to delete resource. Status code: ' + xhr.status);")
-print("}")
-print("};")
-print("xhr.send();")
-print("}")
-print("</script>")
-
 print("</body>")
 print("</html>")
-

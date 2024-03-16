@@ -23,12 +23,14 @@ class Client
 		bool		_matchLocation(std::vector<Location>);
 		bool		_findFile(void);
 		bool		_findType(void);
+		bool		_findBodySize(void);
 		// Check Header
 		bool		_checkRequest(void);
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
 	public:
 		int					sockFd;
+		bool				isBody;
 		Server *			serv;
 		struct sockaddr_in	addr;
 		socklen_t			addrLen;

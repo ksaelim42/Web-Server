@@ -28,8 +28,9 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	int	WaitStat;
 	waitpid(_pid, &WaitStat, 0);
-	std::cout << YEL << "wait status: " << WaitStat << strerror(WaitStat) << RESET << std::endl;
-	if (WIFEXITED(WaitStat) == false)
+	// std::cout << YEL << "wait status: " << WaitStat << strerror(WaitStat) << RESET << std::endl;
+	// std::cout << YEL << "wait status: " << WIFEXITED(WaitStat) << RESET << std::endl;
+	if (WaitStat != 0)
 		return (status = 502, false);
 	char	buffer[10000];
 	size_t	bytesRead;
@@ -110,17 +111,8 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 		status = 403;
 		return false;
 	}
-	if (req.method == "POST") {
+	if (req.method == "POST")
 		_isPost = 1;
-		std::string	length;
-		length = findHeaderValue(req.headers, "Content-Length"); // TODO : can be chuck
-		if (length.length())
-			_contentSize = strToNum(length);
-		if (_contentSize > req.serv.cliBodySize) {
-			status = 413;
-			return false;
-		}
-	}
 	else
 		_isPost = 0;
 	size_t	found = req.pathSrc.find_last_of(".");

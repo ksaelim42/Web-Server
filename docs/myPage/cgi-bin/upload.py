@@ -7,12 +7,17 @@ form = cgi.FieldStorage()
 # Get filename
 fileitem = form['filename']
 
+dirUpload = "../upload/"
+
 if fileitem.filename:
 	file_name = os.path.basename(fileitem.filename)
-	f = open("../docs/myPage/upload/" + file_name, "wb") # 'wb' for write in binary mode
-	f.write(fileitem.file.read())
-	message = 'The file "' + file_name + '" was uploaded successfully'
-	f.close()
+	if os.path.exists(dirUpload + file_name):
+		message = 'Files is already Exists'
+	else:
+		f = open(dirUpload + file_name, "wb") # 'wb' for write in binary mode
+		f.write(fileitem.file.read())
+		message = 'The file "' + file_name + '" was uploaded successfully'
+		f.close()
 else:
 	message = 'No file was uploaded'
 

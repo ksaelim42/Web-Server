@@ -3,6 +3,7 @@
 Client::Client(void) {
 	addrLen = sizeof(struct sockaddr_in);
 	serv = NULL;
+	isBody = 0;
 }
 
 void	Client::parseRequest(std::string reqMsg) {
@@ -47,6 +48,8 @@ void	Client::parseRequest(std::string reqMsg) {
 	if (_findFile() == 0)
 		return;
 	if (_findType() == 0)
+		return;
+	if (_req.method == "POST" && _findBodySize() == 0)
 		return;
 	if (_req.serv.cgiPass)
 		_cgi.sendRequest(_status, _req);
@@ -270,4 +273,20 @@ void	Client::prtRequest(httpReq & request) {
 	std::cout << BBLU <<  "--- HTTP Body---" << BLU << std::endl;
     std::cout << request.body << std::endl;
 	std::cout << BBLU <<  "********************" << RESET << std::endl;
+}
+
+// on POST method request must have `Transfer-Encoding` or `Content-Length` to specify bodySize
+bool	Client::_findBodySize(void) {
+	if (_req.headers.count("Transfer-Encoding")) {
+		if (findHeaderValue(_req.headers, "Transfer-Encoding") != "chunked")
+			return _status = 501, false;
+		return true;
+	}
+	if (_req.headers.count("Content-Length")) {
+		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
+		if (_req.bodySize > _req.serv.cliBodySize)
+			return _status = 413, false;
+		return true;
+	}
+	return _status = 411, false;
 }

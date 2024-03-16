@@ -32,7 +32,7 @@ Server	createServer(void) {
 	uint16_t	method = -1;
 	serv.location.push_back(createLocation("/", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 0)); // basic page
 	serv.location.push_back(createLocation("/redir", "docs/myPage", index, method, 0, BODYBUFSIZE, retur1, 0)); // redirection path
-	serv.location.push_back(createLocation("/cgi-bin", ".", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
+	serv.location.push_back(createLocation("/cgi-bin", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
 	serv.location.push_back(createLocation("/blog", "docs/myPage", index, method, 1, BODYBUFSIZE, retur, 0)); // test auto index on /blog path
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
