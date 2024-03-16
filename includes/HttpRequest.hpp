@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 #include <string.h>
+#include <cstdio>	// remove()
 
 struct httpReq
 {

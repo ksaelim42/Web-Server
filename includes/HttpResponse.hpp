@@ -39,6 +39,7 @@ class HttpResponse
 		HttpResponse() {}
 		~HttpResponse() {}
 
+		std::string	deleteResource(short int &, parsedReq &);
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);
 		std::string	staticContent(short int &, parsedReq &);

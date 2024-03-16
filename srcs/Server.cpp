@@ -102,14 +102,15 @@ void	Server::clearLocation(void) {
 // ************************************************************************** //
 
 void	Server::_initErrPage(void) {
-	errPage[400] = "html/errorPage/400.html";
-	errPage[403] = "html/errorPage/403.html";
-	errPage[404] = "html/errorPage/404.html";
-	errPage[405] = "html/errorPage/405.html";
-	errPage[413] = "html/errorPage/413.html";
-	errPage[500] = "html/errorPage/500.html";
-	errPage[502] = "html/errorPage/502.html";
-	errPage[505] = "html/errorPage/505.html";
+	errPage[400] = "docs/errorPage/400.html";
+	errPage[403] = "docs/errorPage/403.html";
+	errPage[404] = "docs/errorPage/404.html";
+	errPage[405] = "docs/errorPage/405.html";
+	errPage[413] = "docs/errorPage/413.html";
+	errPage[500] = "docs/errorPage/500.html";
+	errPage[502] = "docs/errorPage/502.html";
+	errPage[503] = "docs/errorPage/503.html";
+	errPage[505] = "docs/errorPage/505.html";
 }
 
 void	Server::_initMineTypeDefault(void) {

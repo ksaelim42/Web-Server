@@ -1,5 +1,18 @@
 #include "HttpResponse.hpp"
 
+std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
+	std::cout << MAG << "---------------------- delete -----------------------" << RESET << std::endl;
+	_body = "";
+	if (access(req.pathSrc.c_str(), F_OK) != 0)
+		return status = 404, "";
+	if (access(req.pathSrc.c_str(), W_OK) != 0)
+		return status = 403, "";
+	if (std::remove(req.pathSrc.c_str()) != 0)
+		return status = 503, "";
+	status = 204;
+	return _createHeader(status , req) + CRLF + _body;
+}
+
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
 	std::cout << MAG << "---------------------- redir -----------------------" << RESET << std::endl;
 	_body = req.serv.retur.text;
@@ -125,6 +138,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 			return "OK";
 		case 201:
 			return "Created";
+		case 204:
+			return "No Content";
 		case 301:
 			return "Moved Permanently";
 		case 302:
@@ -141,6 +156,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 			return "Internal Server Error";
 		case 502:
 			return "Bad Gateway";
+		case 503:
+			return "Service Unavailable";
 		case 505:
 			return "HTTP Version Not Supported";
 		default:

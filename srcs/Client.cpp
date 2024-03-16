@@ -54,7 +54,9 @@ void	Client::parseRequest(std::string reqMsg) {
 }
 
 void	Client::genResponse(std::string & resMsg) {
-	if (_req.redir || (_status >= 300 && _status < 400))
+	if (_status == 200 && _req.method == "DELETE")
+		resMsg = _res.deleteResource(_status, _req);
+	else if (_req.redir || (_status >= 300 && _status < 400))
 		resMsg = _res.redirection(_status, _req);
 	else if (_status == 200 && _req.serv.cgiPass) {
 		std::string	cgiMsg;
@@ -183,7 +185,7 @@ bool	Client::_checkMethod(std::string method) {
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_HEAD);
 	else if (method == "POST")
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_POST);
-	else if (method == "DEL")
+	else if (method == "DELETE")
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_DEL);
 	return false;
 }
