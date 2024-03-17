@@ -6,6 +6,7 @@
 # define PYTHON_PATH	"/usr/bin/python3"
 
 #include <unistd.h>		// pipe, fork, read, write
+#include <fcntl.h>
 #include <sys/stat.h>	// stat
 #include <sys/wait.h>	// waitpid
 
@@ -21,6 +22,7 @@ class CgiHandler
 		int			_pipeOutFd[2];
 		bool		_isPost;
 		uint64_t	_contentSize;
+		size_t		_package;
 		std::string	_cgiFileName;
 		std::string	_cgiProgramPath;
 		std::map<std::string, std::string>	_env;
@@ -33,6 +35,7 @@ class CgiHandler
 		void	_childProcess(parsedReq &);
 	public:
 		bool	sendRequest(short int &, parsedReq &);
+		bool	sendBody(char *, size_t &, parsedReq &);
 		bool	receiveResponse(short int &, std::string &);
 };
 

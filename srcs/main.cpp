@@ -2,7 +2,7 @@
 
 Location	createLocation(std::string path, std::string root, \
 std::vector<std::string> index, uint16_t method, bool autoIndex, \
-size_t cliSize, return_t retur, bool cgiPass) {
+uint64_t cliSize, return_t retur, bool cgiPass) {
 	Location	loc;
 	loc.path = path;
 	loc.root = root;
@@ -18,7 +18,7 @@ size_t cliSize, return_t retur, bool cgiPass) {
 Server	createServer(void) {
 	Server	serv;
 	serv.name = "testwebserv1";
-	serv.port = "8003";
+	serv.port = "8014";
 	serv.root = "docs/myPage";
 	std::vector<std::string>	index;
 	return_t	retur;
@@ -32,7 +32,7 @@ Server	createServer(void) {
 	uint16_t	method = -1;
 	serv.location.push_back(createLocation("/", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 0)); // basic page
 	serv.location.push_back(createLocation("/redir", "docs/myPage", index, method, 0, BODYBUFSIZE, retur1, 0)); // redirection path
-	serv.location.push_back(createLocation("/cgi-bin", "docs/myPage", index, method, 0, BODYBUFSIZE, retur, 1)); // test cgi path
+	serv.location.push_back(createLocation("/cgi-bin", "docs/myPage", index, method, 0, 500000000, retur, 1)); // test cgi path
 	serv.location.push_back(createLocation("/blog", "docs/myPage", index, method, 1, BODYBUFSIZE, retur, 0)); // test auto index on /blog path
 	std::vector<std::string>	index1;
 	index1.push_back("Cat03.jpg");
@@ -43,7 +43,6 @@ Server	createServer(void) {
 
 int	main(int argc, char**argv)
 {
-	// std::cout << "Hello" << std::endl;
 	(void)argc;
 	(void)argv;
 	try {
@@ -64,8 +63,5 @@ int	main(int argc, char**argv)
 		std::cerr << e.what() << std::endl;
 		return 1;
 	}
-	// catch (std::bad_alloc &ba) {
-	// 	std::cerr << ba.what() << "There is not enough free memory to run Webserve" << std::endl;
-	// 	return 1;
-	// }
+	return 0;
 }

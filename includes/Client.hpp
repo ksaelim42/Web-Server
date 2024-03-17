@@ -37,10 +37,11 @@ class Client
 
 		Client(void);
 		~Client(void) {}
-		void	parseRequest(std::string);
-		void	genResponse(std::string &);
-		void	prtParsedReq(void);
-		void	prtRequest(httpReq &);
+		short int	getStatus(void) const;
+		bool		parseRequest(char *, size_t);
+		void		genResponse(std::string &);
+		void		prtParsedReq(void);
+		void		prtRequest(httpReq &);
 };
 
 #endif

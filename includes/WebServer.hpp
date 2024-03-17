@@ -6,12 +6,14 @@
 #include <sys/socket.h>	// Socket Programming
 #include <arpa/inet.h>	// inet_ntoa TODO : not allow to use
 #include <sys/select.h>	// select function
+#include <signal.h>		// signal function
 
 #include "Utils.hpp"
 #include "Client.hpp"
 
-// #define BUFFERSIZE 1024		// Buffer size of HTTP request in Bytes.
-#define BUFFERSIZE 50000		// Buffer size of HTTP request in Bytes.
+#define BUFFERHEAD 1024		// Header buffer size
+#define BUFFERBODY 65483	// Body buffer size
+#define BUFFERSIZE 65484	// Buffer size of HTTP request in Bytes.
 #define CONNECTIONSIZE 50	// Numbers of connection from client that server can handle
 
 class WebServer
@@ -35,7 +37,7 @@ class WebServer
 		bool	_matchServer(int &);
 		int		_acceptConnection(int &);
 		int		_receiveRequest(int &);
-		void	_sendResponse(int &);
+		int		_sendResponse(int &);
 		Server*	_getServer(int &);
 		bool	_connectedClient(fd_set &); // TODO : for test
 		void	_disconnectClient(int &);

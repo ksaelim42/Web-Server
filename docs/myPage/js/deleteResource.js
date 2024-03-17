@@ -5,10 +5,10 @@ function deleteResource(button) {
 	xhr.onload = function () {
 		if (xhr.status >= 200 && xhr.status < 300) {
 			alert(button.getAttribute('data-filename') + ' was deleted')
-			location.reload();
 		} else {
 			alert('Failed to delete resource. Status code: ' + xhr.status);
 		}
+		location.reload();
 	};
 	xhr.send();
 }

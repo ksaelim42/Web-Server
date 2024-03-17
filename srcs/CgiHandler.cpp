@@ -15,14 +15,40 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 		_childProcess(req);
 	else { // Parent Process
 		if (_isPost) {
+			_package = 1;
 			std::cout << BYEL << "---Body Request, size : " << req.body.size() << RESET << std::endl;
+			fcntl(_pipeInFd[1], F_SETFL, O_NONBLOCK); // TODO : for test
 			close(_pipeInFd[0]);
-			write(_pipeInFd[1], req.body.c_str(), req.body.size());
-			close(_pipeInFd[1]);
+			if (req.body.size()) {
+				write(_pipeInFd[1], req.body.c_str(), req.body.size());
+				req.bodySent += req.body.size();
+				std::cout << YEL << "CGI pakage[" << _package++ << "] sent " << req.bodySent << " out of " << req.bodySize << RESET << std::endl;
+			}
+			if (req.bodySent >= req.bodySize) {
+				std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
+				close(_pipeInFd[1]);
+				return 0;
+			}
+			else
+				return 1;
 		}
 	}
 	status = 200;
-	return true;
+	return 0;
+}
+
+bool	CgiHandler::sendBody(char * body, size_t & bufSize, parsedReq & req) {
+	ssize_t	bytes;
+
+	bytes = write(_pipeInFd[1], body, bufSize);
+	req.bodySent += bufSize;
+	std::cout << YEL << "CGI pakage[" << _package++ << "] sent " << req.bodySent << " out of " << req.bodySize << RESET << std::endl;
+	if (req.bodySent >= req.bodySize) {
+		std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
+		close(_pipeInFd[1]);
+		return 0;
+	}
+	return 1;
 }
 
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {

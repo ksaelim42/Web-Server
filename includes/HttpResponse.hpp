@@ -2,7 +2,6 @@
 # define HTTPRESPONSE_HPP
 
 # define HTTP_VERS		"HTTP/1.1"
-# define CONNETION		"keep-alive"
 
 #include <ctime>		// time
 #include <dirent.h>		// opendir

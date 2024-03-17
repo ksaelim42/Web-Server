@@ -55,12 +55,8 @@ std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 	if (req.pathSrc.empty())
 		_body = "Something went wrong";
 	else {
-		if (_readFile(req.pathSrc, _body) != 200) { // TODO : file info size
-			std::cout << "read err file" << std::endl;
+		if (_readFile(req.pathSrc, _body) != 200)
 			_body = "Something went wrong";
-		}
-		else
-			std::cout << "read err file success" << std::endl;
 	}
 	return _createHeader(status , req) + CRLF + _body;
 }
@@ -82,8 +78,12 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 	headerMsg = _getStatusLine(status);
 	if (_headers.count("Accept-Ranges") == 0) // TODO : must be check first
 		_headers["Accept-Ranges"] = "bytes";
-	if (_headers.count("Connection") == 0) // TODO : must be check first
-		_headers["Connection"] = "keep-alive";
+	if (_headers.count("Connection") == 0) {
+		if (status >= 400)
+			_headers["Connection"] = "close";
+		else
+			_headers["Connection"] = "keep-alive";
+	}
 	if (_headers.count("Content-Length") == 0)
 		_headers["Content-Length"] = _getContentLength();
 	if (_headers.count("Content-Type") == 0)
@@ -94,7 +94,6 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 		if (_headers.count("Location") == 0)
 		_headers["Location"] = _getLocation(req);
 	}
-	_headers["Connection"] = CONNETION;
 	for (it = _headers.begin(); it != _headers.end(); it++)
 		headerMsg += it->first + ":" + it->second + CRLF;
 	return headerMsg;

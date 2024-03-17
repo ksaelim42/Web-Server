@@ -6,21 +6,38 @@ Client::Client(void) {
 	isBody = 0;
 }
 
-void	Client::parseRequest(std::string reqMsg) {
+short int	Client::getStatus(void) const {return _status;}
+
+// return true when no another request to read
+bool	Client::parseRequest(char *buffer, size_t bufSize) {
+	if (isBody) {
+		if (_cgi.sendBody(buffer, bufSize, _req) == 0)
+			return isBody = 0, true;
+		return false;
+	}
+	// test //
+	std::string str(buffer, 7);
+	std::string	method = strCutTo(str, " ");
+	if (_checkMethod(method) == 0)
+		return _status = 400, true;
+	// test //
 	std::string	header;
 	std::string	body;
 	httpReq		reqHeader;
+	std::string reqMsg(buffer, bufSize);
 
 	_res.clear();
+	_req.bodySize = 0;
+	_req.bodySent = 0;
 	_req.redir = 0;
 	_req.serv = *serv;
 	if (_parseHeader(reqMsg, header, body) == 0)
-		return;
-	std::cout << BLU << "---- header size: " << header.length() << " ---" << RESET << std::endl;
-	std::cout << BLU << header << RESET << std::endl;
-	std::cout << YEL << "---- body size: " << body.length() << " ---" << RESET << std::endl;
-	std::cout << YEL << body << RESET << std::endl;
-	std::cout << YEL << "------------------------------" << RESET << std::endl;
+		return true;
+	// std::cout << BLU << "---- header size: " << header.length() << " ---" << RESET << std::endl;
+	// std::cout << BLU << header << RESET << std::endl;
+	// std::cout << YEL << "---- body size: " << body.length() << " ---" << RESET << std::endl;
+	// std::cout << YEL << body << RESET << std::endl;
+	// std::cout << YEL << "------------------------------" << RESET << std::endl;
 	reqHeader = storeReq(header);
 	// status = scanStartLine(reqHeader);
 	// if (status != 0)
@@ -36,24 +53,26 @@ void	Client::parseRequest(std::string reqMsg) {
 	_req.body = body;
 	_parsePath(_req.uri);
 	if (_urlEncoding(_req.path) == 0)
-		return;
+		return true;
 	_matchLocation(serv->location);
 	if (_req.serv.retur.have) { // redirection
 		_req.redir = 1;
 		_status = _req.serv.retur.code;
-		return;
+		return true;
 	}
 	if (_checkRequest() == 0)
-		return;
-	if (_findFile() == 0)
-		return;
-	if (_findType() == 0)
-		return;
+		return true;
 	if (_req.method == "POST" && _findBodySize() == 0)
-		return;
-	if (_req.serv.cgiPass)
-		_cgi.sendRequest(_status, _req);
-	return;
+		return true;
+	if (_findFile() == 0)
+		return true;
+	if (_findType() == 0)
+		return true;
+	if (_req.serv.cgiPass) {
+		if (_cgi.sendRequest(_status, _req))
+			return isBody = 1, false;
+	}
+	return true;
 }
 
 void	Client::genResponse(std::string & resMsg) {
@@ -65,8 +84,6 @@ void	Client::genResponse(std::string & resMsg) {
 		std::string	cgiMsg;
 		_cgi.receiveResponse(_status, cgiMsg);
 		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
-		if (_status == 200)
-			std::cout << YEL << resMsg << RESET << std::endl;
 	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);
@@ -278,15 +295,20 @@ void	Client::prtRequest(httpReq & request) {
 // on POST method request must have `Transfer-Encoding` or `Content-Length` to specify bodySize
 bool	Client::_findBodySize(void) {
 	if (_req.headers.count("Transfer-Encoding")) {
-		if (findHeaderValue(_req.headers, "Transfer-Encoding") != "chunked")
+		if (findHeaderValue(_req.headers, "Transfer-Encoding") != "chunked") {
+			std::cout << RED << "Not support Transfer-Encoding Type" << RESET << std::endl;
 			return _status = 501, false;
+		}
 		return true;
 	}
 	if (_req.headers.count("Content-Length")) {
 		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
-		if (_req.bodySize > _req.serv.cliBodySize)
+		if (_req.bodySize > _req.serv.cliBodySize) {
+			std::cout << RED << "Request Entity Too Large" << RESET << std::endl;
 			return _status = 413, false;
+		}
 		return true;
 	}
+	std::cout << RED << "Length Required" << RESET << std::endl;
 	return _status = 411, false;
 }
