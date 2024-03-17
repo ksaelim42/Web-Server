@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/07 12:35:15 by prachman         ###   ########.fr       */
+/*   Updated: 2024/03/14 16:12:07 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ httpReq	storeReq(std::string rawReq)
 	if (headVec.size() != tailVec.size())
 	{
 		std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
-		exit(1); //should not be exit but return 400
+		exit(1); //!should not be exit but return 400
 	}
 	for (int i = 0; i < headVec.size(); i++) 
 		reqData.headers[headVec[i]] = tailVec[i];

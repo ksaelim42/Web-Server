@@ -1,4 +1,5 @@
-#include "Server.hpp"
+// #include "Server.hpp"
+#include "../includes/Server.hpp"
 
 Server::Server(void) {
 	_initMineTypeDefault();

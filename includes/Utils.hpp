@@ -19,6 +19,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include "Server.hpp"
 
 std::string	numToStr(size_t);
 std::string	toProtoEnv(std::string);
@@ -26,6 +27,7 @@ std::string	toProperCase(std::string &);
 std::string	strCutTo(std::string &, std::string );
 std::string	findHeaderValue(std::map<std::string, std::string> &, std::string const &);
 uint64_t	strToNum(std::string);
+short int	strToShortInt(std::string str);
 char*		strdup(std::string);
 char**		aopArgs(std::vector<std::string> &);
 char**		aopEnv(std::map<std::string, std::string> &);

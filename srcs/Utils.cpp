@@ -1,4 +1,5 @@
-#include "Utils.hpp"
+// #include "Utils.hpp"
+#include "../includes/Utils.hpp"
 
 std::string	toProtoEnv(std::string var) {
 	std::string	key = "HTTP_";
@@ -38,6 +39,13 @@ std::string	numToStr(size_t num) {
 
 uint64_t	strToNum(std::string str) {
 	uint64_t			num;
+	std::stringstream	ss(str);
+	ss >> num;
+	return num;
+}
+
+short int	strToShortInt(std::string str) {
+	short int			num;
 	std::stringstream	ss(str);
 	ss >> num;
 	return num;
