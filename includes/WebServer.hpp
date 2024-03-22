@@ -27,20 +27,19 @@ class WebServer
 		std::map<int, Client>	_clients;
 		struct timeval			_timeOut;
 
-		std::string	_name;
+		int		_acceptConnection(int &);
+		int		_receiveRequest(Client &);
+		int		_sendResponse(Client &);
 		void	_fdSet(int &, fd_set &);
 		void	_fdClear(int &, fd_set &);
+		void	_disconnectClient(int &);
+		void	_disconnectAllClient(void);
 		bool	_setSockAddr(struct addrinfo * &, Server &);
 		bool	_setOptSock(int &);
 		bool	_matchServer(int &);
-		int		_acceptConnection(int &);
-		int		_receiveRequest(Client &);
-		// int		_receiveRequest(int &);
-		int		_sendResponse(Client &);
-		Server*	_getServer(int &);
 		bool	_connectedClient(fd_set &); // TODO : for test
-		void	_disconnectClient(int &);
-		void	_disconnectAllClient(void);
+		Server*	_getServer(int &);
+		ssize_t	_unChunking(Client &);
 	public:
 		WebServer(std::vector<Server> &);
 		~WebServer();

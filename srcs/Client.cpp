@@ -10,21 +10,23 @@ short int	Client::getStatus(void) const {return _status;}
 
 reqType_e	Client::getReqType(void) const {return _req.type;}
 
+void	Client::setResponse(short int status) {
+	if (status == 200) {
+		size_t	size = 0;
+		_cgi.sendBody(NULL, size, _req);
+	}
+	_status = status;
+	_req.type = RESPONSE;
+}
+
 // return true when no another request to read
 void	Client::parseRequest(char *buffer, size_t bufSize) {
 	if (_req.type == HEADER) {
 		_initReqParse();
 		_parseHeader(buffer, bufSize);
 	}
-	else if (_req.type == BODY) {
+	else if (_req.type == BODY || _req.type == CHUNK) {
 		if (_cgi.sendBody(buffer, bufSize, _req))
-			return;
-		_status = 502;
-		_req.type = RESPONSE;
-	}
-	else if (_req.type == CHUNK) {
-		_unChunk(buffer, bufSize);
-		if (_cgi.sendBody(_req.body.c_str(), _req.bodySize, _req))
 			return;
 		_status = 502;
 		_req.type = RESPONSE;

@@ -11,6 +11,7 @@ CgiHandler::~CgiHandler() {
 		close(_pipeInFd[1]);
 	if (fcntl(_pipeOutFd[0], F_GETFL) != -1)
 		close(_pipeOutFd[0]);
+	std::cout << YEL << "CGI destructor" << std::endl;
 }
 
 bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
@@ -30,7 +31,7 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 		close(_pipeOutFd[1]);
 		if (_isPost) {
 			close(_pipeInFd[0]);
-			std::cout << BYEL << "req type" << req.type << RESET << std::endl;
+			std::cout << BYEL << "req type: " << req.type << RESET << std::endl;
 			if (req.type == CHUNK)
 				return true;
 			_package = 1;
@@ -57,16 +58,18 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) {
 	ssize_t	bytes;
 
-	bytes = write(_pipeInFd[1], body, bufSize);
-	if (bytes < bufSize)
-		return false;
+	if (bufSize) {
+		bytes = write(_pipeInFd[1], body, bufSize);
+		if (bytes < bufSize)
+			return false;
+	}
 	if (req.type == CHUNK) {
-		std::cout << YEL << "CGI chunk[" << _package++ << "] sent " << bufSize << " Bytes" << RESET << std::endl;
 		if (bufSize == 0) {
 			std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
 			close(_pipeInFd[1]);
 			req.type = RESPONSE;
 		}
+		std::cout << YEL << "CGI chunk[" << _package++ << "] sent " << bufSize << " Bytes" << RESET << std::endl;
 		req.body.clear();
 		req.bodySize = 0;
 	}
@@ -85,8 +88,6 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) 
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	int	WaitStat;
 	waitpid(_pid, &WaitStat, 0);
-	// std::cout << YEL << "wait status: " << WaitStat << strerror(WaitStat) << RESET << std::endl;
-	// std::cout << YEL << "wait status: " << WIFEXITED(WaitStat) << RESET << std::endl;
 	if (WaitStat != 0)
 		return (status = 502, false);
 	char	buffer[10000];
@@ -96,7 +97,6 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	close(_pipeOutFd[0]);
 	std::cout << "bytes read: " << bytesRead << std::endl;
 	cgiMsg = buffer;
-	// std::cout << YEL << cgiMsg << RESET << std::endl; // debug
 	return (status = 200, true);
 }
 

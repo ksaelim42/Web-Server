@@ -141,13 +141,13 @@ int	WebServer::_receiveRequest(Client & client) {
 
 	if (client.getReqType() == HEADER) { // header request
 		std::cout << BLU << "fd: " << client.sockFd << " Read data" << RESET << std::endl;
-		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 	}
 	else if (client.getReqType() == BODY) { // body request
-		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 	}
 	else if (client.getReqType() == CHUNK) { // Chunk request
-		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = _unChunking(client);
 	}
 	else
 		return 0;
@@ -156,12 +156,13 @@ int	WebServer::_receiveRequest(Client & client) {
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
 	_buffer[bytes] = '\0';
-	client.parseRequest(_buffer, bytes);
+	std::cout << BLU << bytes << " Bytes : received data from client fd: " << client.sockFd << RESET << std::endl;
+	if (client.getReqType() != RESPONSE)
+		client.parseRequest(_buffer, bytes);
 	if (client.getReqType() == RESPONSE) {
 		_fdClear(client.sockFd, _readFds);
 		_fdSet(client.sockFd, _writeFds);
 	}
-	std::cout << BLU << bytes << " Bytes : received data from client fd: " << client.sockFd << RESET << std::endl;
 	// std::cout << CYN << _buffer << RESET << std::endl;
 	// std::cout << CYN << "------------------------------" << RESET << std::endl;
 	if (client.getStatus() != 200)
@@ -303,7 +304,9 @@ void	WebServer::_disconnectAllClient(void) {
 // }
 
 void	WebServer::prtLog(short int status) {
-	if (status == 403)
+	if (status == 400)
+		std::cout << RED << "Bad Request" << RESET << std::endl;
+	else if (status == 403)
 		std::cout << RED << "Forbidden" << RESET << std::endl;
 	else if (status == 404)
 		std::cout << RED << "Not Found" << RESET << std::endl;
@@ -325,4 +328,50 @@ void	WebServer::prtLog(short int status) {
 		std::cout << RED << "HTTP Version Not Supported" << RESET << std::endl;
 	else
 		std::cout << RED << "Undefined: " << status << RESET << std::endl;
+}
+
+ssize_t	WebServer::_unChunking(Client & client) {
+	char		buf[4];
+	size_t		i;
+	size_t		chunkSize;
+	ssize_t		count;
+	std::string	str;
+
+	for (i = 0; i < 4; i++) {
+		count = recv(client.sockFd, &buf[0], 1, MSG_DONTWAIT);
+		if (count <= 0)
+			return count;
+		if (isHexChar(buf[0]))
+			str.push_back(buf[0]);
+		else
+			break;
+	}
+	if (i == 0)
+		return client.setResponse(400), 1;
+	chunkSize = hexStrToDec(str);
+	std::cout << BLU << "chunk size: " << chunkSize << RESET << std::endl;
+	if (chunkSize == 0) { // Last chunk
+		count = recv(client.sockFd, buf, 4, MSG_DONTWAIT);
+		if (count <= 0)
+			return client.setResponse(400), 1;
+		else
+			return client.setResponse(200), 1;
+	}
+	else if (chunkSize > BUFFERSIZE - 1)
+		return client.setResponse(413), 1;
+	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
+	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
+		return client.setResponse(400), 1;
+	i = 0;
+	while (i < chunkSize) {
+		count = recv(client.sockFd, &_buffer[i], chunkSize - i, MSG_DONTWAIT);
+		if (count <= 0)
+			return count;
+		i -= count;
+	}
+	std::cout << BLU << "read chunk success" << RESET << std::endl;
+	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
+	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
+		return client.setResponse(400), 1;
+	return chunkSize;
 }

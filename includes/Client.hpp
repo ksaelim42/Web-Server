@@ -49,6 +49,7 @@ class Client
 		reqType_e	getReqType(void) const;
 		void		parseRequest(char *, size_t);
 		void		genResponse(std::string &);
+		void		setResponse(short int);
 		void		prtParsedReq(void);
 		void		prtRequest(httpReq &);
 };

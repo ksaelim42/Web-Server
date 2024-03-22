@@ -50,6 +50,12 @@ size_t	hexStrToDec(std::string str) {
 	return num;
 }
 
+bool	isHexChar(char & c) {
+	if (((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'F' && c <= 'F')))
+		return true;
+	return false;
+}
+
 bool	isHexStr(std::string & str) {
 	
 	for (size_t i = 0;i < str.length(); i++) {

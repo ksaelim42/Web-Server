@@ -31,6 +31,7 @@ char**		aopArgs(std::vector<std::string> &);
 char**		aopEnv(std::map<std::string, std::string> &);
 size_t		hexStrToDec(std::string);
 
+bool		isHexChar(char &);
 bool		isHexStr(std::string &);
 void		free2Dstr(char** &);
 void		prtMap(std::map<std::string, std::string> &);

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import cgi, os, sys, errno
+import cgi, os, sys
 
 form = cgi.FieldStorage()
 
@@ -18,15 +18,10 @@ if fileitem.filename:
 	if os.path.exists(dirUpload + file_name):
 		message = 'Files is already Exists'
 	else:
-		try:
-			f = open(dirUpload + file_name, "wb") # 'wb' for write in binary mode
-			f.write(fileitem.file.read())
-			message = 'The file "' + file_name + '" was uploaded successfully'
-			f.close()
-		except (BrokenPipeError, IOError):
-			f.close()
-			print("Pipe Error")
-			sys.exit(1) # Exit Fail
+		f = open(dirUpload + file_name, "wb") # 'wb' for write in binary mode
+		f.write(fileitem.file.read())
+		message = 'The file "' + file_name + '" was uploaded successfully'
+		f.close()
 else:
 	message = 'No file was uploaded'
 
