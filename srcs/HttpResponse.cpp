@@ -143,6 +143,8 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 			return "Moved Permanently";
 		case 302:
 			return "Found";
+		case 400:
+			return "Bad Request";
 		case 403:
 			return "Forbidden";
 		case 404:

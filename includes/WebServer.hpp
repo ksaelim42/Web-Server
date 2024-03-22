@@ -11,9 +11,7 @@
 #include "Utils.hpp"
 #include "Client.hpp"
 
-#define BUFFERHEAD 1024		// Header buffer size
-#define BUFFERBODY 65483	// Body buffer size
-#define BUFFERSIZE 65484	// Buffer size of HTTP request in Bytes.
+#define BUFFERSIZE 65537	// Buffer size of HTTP request in Bytes.
 #define CONNECTIONSIZE 50	// Numbers of connection from client that server can handle
 
 class WebServer
@@ -36,8 +34,9 @@ class WebServer
 		bool	_setOptSock(int &);
 		bool	_matchServer(int &);
 		int		_acceptConnection(int &);
-		int		_receiveRequest(int &);
-		int		_sendResponse(int &);
+		int		_receiveRequest(Client &);
+		// int		_receiveRequest(int &);
+		int		_sendResponse(Client &);
 		Server*	_getServer(int &);
 		bool	_connectedClient(fd_set &); // TODO : for test
 		void	_disconnectClient(int &);
@@ -49,6 +48,7 @@ class WebServer
 		bool	initServer(void);
 		bool	runServer(void);
 		bool	downServer(void);
+		void	prtLog(short int);
 		class	WebServerException : public std::exception {
 			private:
 				std::string	_ErrMsg;
@@ -62,7 +62,7 @@ class WebServer
 				virtual ~WebServerException() throw() {}
 		};
 
-		void	testPersist(Server & server); // TODO : delete it later
+		// void	testPersist(Server & server); // TODO : delete it later
 };
 
 #endif

@@ -100,6 +100,7 @@ int receiveRequest(int client_fd, std::string &request)
 	std::cout << BLU << "Receive Data: " << bytes_received << " bytes" << std::endl;
 	std::cout << CYN << buffer << std::endl;
 	std::cout << "-----------------------------------------" << RESET << std::endl;
+	sleep(1);
 	return bytes_received; // not reach EOF
 }
 

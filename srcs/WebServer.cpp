@@ -20,6 +20,10 @@ WebServer::WebServer(std::vector<Server> & servs) {
 WebServer::~WebServer() {
 }
 
+// ************************************************************************** //
+// ----------------------------- Server Fields ------------------------------ //
+// ************************************************************************** //
+
 bool	WebServer::initServer(void) {
 	struct addrinfo	*sockAddr;
 	for (int i = 0; i < _servs.size(); i++) {
@@ -85,15 +89,17 @@ bool	WebServer::runServer(void) {
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
 				}
-				else { // handle data from client
-					if (_receiveRequest(fd) <= 0)
+				else { 
+					if (_clients.count(fd) == 0)
 						continue;
-					_fdClear(fd, _readFds);
-					_fdSet(fd, _writeFds);
+					if (_receiveRequest(_clients[fd]) <= 0)
+						continue;
 				}
 			}
 			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
-				if (_sendResponse(fd) <= 0) {
+				if (_clients.count(fd) == 0)
+					continue;
+				if (_sendResponse(_clients[fd]) <= 0) {
 					_fdClear(fd, _writeFds);
 					continue;
 				}
@@ -121,58 +127,66 @@ int	WebServer::_acceptConnection(int & serverSock) {
 		return -1;
 	} else {
 		std::cout << "client fd: " << client.sockFd << ", addr: " << inet_ntoa(client.addr.sin_addr) << std::endl;
-		// fcntl(client.sockFd, F_SETFL, SO_KEEPALIVE); // TODO : should check header first
-		// fcntl(client.sockFd, F_SETFL, O_NONBLOCK); // TODO : for test
-		client.serv = _getServer(serverSock); // TODO : set as select
+		client.serv = _getServer(serverSock);
+		if (!client.serv)
+			return _disconnectClient(client.sockFd), -1;
 		_fdSet(client.sockFd, _readFds);
 		_clients[client.sockFd] = client;
 	}
 	return client.sockFd;
 }
 
-// Receive data from client
-int	WebServer::_receiveRequest(int & client_fd) {
+int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
-	if (_clients.count(client_fd)) {
-		if (_clients[client_fd].isBody) { // body request
-			bytes =  recv(client_fd, _buffer, BUFFERBODY, MSG_DONTWAIT);
-		}
-		else { // header request
-			std::cout << BLU << "fd: " << client_fd << " Read data" << RESET << std::endl;
-			bytes =  recv(client_fd, _buffer, BUFFERHEAD, MSG_DONTWAIT);
-		}
-		if (bytes == -1)
-			return std::cout << RED << "Error receiving data" << RESET << std::endl, -1;
-		else if (bytes == 0)
-			return _disconnectClient(client_fd), 0;
-		_buffer[bytes] = '\0';
-		std::cout << GRN << bytes << " Bytes : received data from client fd: " << client_fd << RESET << std::endl;
-		// std::cout << _buffer << std::endl;
-		// std::cout << CYN << "------------------------------" << RESET << std::endl;
-		if (_clients[client_fd].parseRequest(_buffer, bytes))
-			return 1;
+
+	if (client.getReqType() == HEADER) { // header request
+		std::cout << BLU << "fd: " << client.sockFd << " Read data" << RESET << std::endl;
+		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 	}
-	return 0;
+	else if (client.getReqType() == BODY) { // body request
+		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+	}
+	else if (client.getReqType() == CHUNK) { // Chunk request
+		bytes =  recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+	}
+	else
+		return 0;
+	if (bytes == -1)
+		return std::cout << RED << "Error receiving data" << RESET << std::endl, -1;
+	else if (bytes == 0)
+		return _disconnectClient(client.sockFd), 0;
+	_buffer[bytes] = '\0';
+	client.parseRequest(_buffer, bytes);
+	if (client.getReqType() == RESPONSE) {
+		_fdClear(client.sockFd, _readFds);
+		_fdSet(client.sockFd, _writeFds);
+	}
+	std::cout << BLU << bytes << " Bytes : received data from client fd: " << client.sockFd << RESET << std::endl;
+	// std::cout << CYN << _buffer << RESET << std::endl;
+	// std::cout << CYN << "------------------------------" << RESET << std::endl;
+	if (client.getStatus() != 200)
+		prtLog(client.getStatus());
+	return 1;
 }
 
-int	WebServer::_sendResponse(int & client_fd) {
 	// std::cout << BLU << resMsg.length() << " Bytes : Sent data success" << RESET << std::endl; // debug
 	// std::cout << YEL << resMsg << RESET << std::endl; // debug
 	// std::cout << BLU << "fd: " << client_fd << " Write data" << RESET << std::endl;
-	if (_clients.count(client_fd)) {
-		_clients[client_fd].genResponse(_resMsg);
 		// std::cout << MAG << _resMsg << RESET << std::endl;
-		ssize_t	bytes = send(client_fd, _resMsg.c_str(), _resMsg.length(), 0);
-		std::cout << GRN << bytes << " Bytes : Sent data success to client fd: " << client_fd << RESET << std::endl;
-		_resMsg.clear();
-		if (bytes < 0) {
-			std::cerr << "Error to response data" << std::endl;
-			return -1;
-		}
-		if (_clients[client_fd].getStatus() >= 400) {
-			_disconnectClient(client_fd);
-			return 0;
-		}
+int	WebServer::_sendResponse(Client & client) {
+	ssize_t	bytes;
+
+	client.genResponse(_resMsg);
+	bytes = send(client.sockFd, _resMsg.c_str(), _resMsg.length(), 0);
+	_resMsg.clear();
+	std::cout << CYN << bytes << " Bytes : Sent data success to client fd: " << client.sockFd << RESET << std::endl;
+	if (bytes < 0) {
+		std::cerr << "Error to response data" << std::endl;
+		return -1;
+	}
+	if (client.getStatus() >= 400) {
+		_disconnectClient(client.sockFd);
+		return 0;
 	}
 	return 1;
 }
@@ -204,20 +218,6 @@ bool	WebServer::_setOptSock(int &sockFd) {
 	// Enables sending of keep-alive messages on the TCP socket
 	if (setsockopt(sockFd, IPPROTO_TCP, SO_KEEPALIVE, &optval, sizeof(optval)) < 0)
 		return false;
-	// //Adjusts the size of the receive and send buffers for the socket
-	// int buffer_size = 8192;
-	// if (setsockopt(sockFd, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) < 0)
-	// 	return false;
-	// if (setsockopt(sockFd, SOL_SOCKET, SO_SNDBUF, &buffer_size, sizeof(buffer_size)) < 0)
-	// 	return false;
-	// // Sets the timeout for receive and send operations on the socket
-	// struct timeval timeout;
-	// timeout.tv_sec = 10;  // seconds
-	// timeout.tv_usec = 0;  // microseconds
-	// if (setsockopt(sockFd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
-	// 	return false;
-	// if (setsockopt(sockFd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
-	// 	return false;
 	return true;
 }
 
@@ -246,8 +246,8 @@ Server*	WebServer::_getServer(int &fd) {
 		if (fd == _servs[i].sockFd)
 			return &(_servs[i]);
 	}
-	std::cout << RED << "Can't get server: That possible" << RESET << std::endl;
-	return NULL; // TODO:
+	std::cout << RED << "Can't get server: That impossible" << RESET << std::endl;
+	return NULL;
 }
 
 bool	WebServer::_connectedClient(fd_set & set) {
@@ -302,20 +302,27 @@ void	WebServer::_disconnectAllClient(void) {
 // 	return req;
 // }
 
-void	WebServer::testPersist(Server & server) {
-	int fd = _acceptConnection(server.sockFd);
-	int	status;
-	std::cout << MAG << "fd: " << fd << RESET << std::endl;
-	while (true) {
-		std::cout << YEL << "client: " << _clients.size() << ",fd: " << _clients[fd].sockFd << RESET << std::endl;
-		status = _receiveRequest(fd);
-		if (status == -1) {
-			sleep(2);
-			continue;
-		}
-		else if (status == 0)
-			exit(0);
-		_sendResponse(fd);
-		sleep(1);
-	}
+void	WebServer::prtLog(short int status) {
+	if (status == 403)
+		std::cout << RED << "Forbidden" << RESET << std::endl;
+	else if (status == 404)
+		std::cout << RED << "Not Found" << RESET << std::endl;
+	else if (status == 405)
+		std::cout << RED << "Method Not Allowed" << RESET << std::endl;
+	else if (status == 411)
+		std::cout << RED << "Length Required" << RESET << std::endl;
+	else if (status == 413)
+		std::cout << RED << "Request Entity Too Large" << RESET << std::endl;
+	else if (status == 500)
+		std::cout << RED << "Internal Server Error" << RESET << std::endl;
+	else if (status == 501)
+		std::cout << RED << "Not Implemented" << RESET << std::endl;
+	else if (status == 502)
+		std::cout << RED << "Bad Gateway" << RESET << std::endl;
+	else if (status == 503)
+		std::cout << RED << "Service Unavailable" << RESET << std::endl;
+	else if (status == 505)
+		std::cout << RED << "HTTP Version Not Supported" << RESET << std::endl;
+	else
+		std::cout << RED << "Undefined: " << status << RESET << std::endl;
 }

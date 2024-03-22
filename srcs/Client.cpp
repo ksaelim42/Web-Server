@@ -3,76 +3,33 @@
 Client::Client(void) {
 	addrLen = sizeof(struct sockaddr_in);
 	serv = NULL;
-	isBody = 0;
+	_req.type = HEADER;
 }
 
 short int	Client::getStatus(void) const {return _status;}
 
-// return true when no another request to read
-bool	Client::parseRequest(char *buffer, size_t bufSize) {
-	if (isBody) {
-		if (_cgi.sendBody(buffer, bufSize, _req) == 0)
-			return isBody = 0, true;
-		return false;
-	}
-	// test //
-	std::string str(buffer, 7);
-	std::string	method = strCutTo(str, " ");
-	if (_checkMethod(method) == 0)
-		return _status = 400, true;
-	// test //
-	std::string	header;
-	std::string	body;
-	httpReq		reqHeader;
-	std::string reqMsg(buffer, bufSize);
+reqType_e	Client::getReqType(void) const {return _req.type;}
 
-	_res.clear();
-	_req.bodySize = 0;
-	_req.bodySent = 0;
-	_req.redir = 0;
-	_req.serv = *serv;
-	if (_parseHeader(reqMsg, header, body) == 0)
-		return true;
-	// std::cout << BLU << "---- header size: " << header.length() << " ---" << RESET << std::endl;
-	// std::cout << BLU << header << RESET << std::endl;
-	// std::cout << YEL << "---- body size: " << body.length() << " ---" << RESET << std::endl;
-	// std::cout << YEL << body << RESET << std::endl;
-	// std::cout << YEL << "------------------------------" << RESET << std::endl;
-	reqHeader = storeReq(header);
-	// status = scanStartLine(reqHeader);
-	// if (status != 0)
-	// 	return status;
-	// Request Field
-	_status = 200;
-	_req.pathSrc = "";
-	_req.cliIPaddr = "";		// Can't find way
-	_req.method = reqHeader.method;
-	_req.uri = reqHeader.srcPath;
-	_req.version = reqHeader.version;
-	_req.headers = reqHeader.headers;
-	_req.body = body;
-	_parsePath(_req.uri);
-	if (_urlEncoding(_req.path) == 0)
-		return true;
-	_matchLocation(serv->location);
-	if (_req.serv.retur.have) { // redirection
-		_req.redir = 1;
-		_status = _req.serv.retur.code;
-		return true;
+// return true when no another request to read
+void	Client::parseRequest(char *buffer, size_t bufSize) {
+	if (_req.type == HEADER) {
+		_initReqParse();
+		_parseHeader(buffer, bufSize);
 	}
-	if (_checkRequest() == 0)
-		return true;
-	if (_req.method == "POST" && _findBodySize() == 0)
-		return true;
-	if (_findFile() == 0)
-		return true;
-	if (_findType() == 0)
-		return true;
-	if (_req.serv.cgiPass) {
-		if (_cgi.sendRequest(_status, _req))
-			return isBody = 1, false;
+	else if (_req.type == BODY) {
+		if (_cgi.sendBody(buffer, bufSize, _req))
+			return;
+		_status = 502;
+		_req.type = RESPONSE;
 	}
-	return true;
+	else if (_req.type == CHUNK) {
+		_unChunk(buffer, bufSize);
+		if (_cgi.sendBody(_req.body.c_str(), _req.bodySize, _req))
+			return;
+		_status = 502;
+		_req.type = RESPONSE;
+	}
+	return;
 }
 
 void	Client::genResponse(std::string & resMsg) {
@@ -91,6 +48,7 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.staticContent(_status, _req);
 	if ((_status >= 400 && _status < 600))
 		resMsg = _res.errorPage(_status, _req);
+	_req.type = HEADER;
 	return;
 }
 
@@ -98,14 +56,49 @@ void	Client::genResponse(std::string & resMsg) {
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
 
-bool	Client::_parseHeader(std::string & reqMsg, std::string & header, std::string & body) {
-	std::size_t	found  = reqMsg.find("\r\n\r\n");
+bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
+	std::cout << "parse Header" << std::endl;
+	std::string	header(buffer, bufSize);
+	if (!_divideHeadBody(header))
+		return _req.type = RESPONSE, false;
+	httpReq	reqHeader = storeReq(header);
+	_req.method = reqHeader.method;
+	_req.uri = reqHeader.srcPath;
+	_req.version = reqHeader.version;
+	_req.headers = reqHeader.headers;
+	if (!_checkRequest())
+		return _req.type = RESPONSE, false;
+	_parsePath(_req.uri);
+	if (!_urlEncoding(_req.path))
+		return _req.type = RESPONSE, false;
+	_matchLocation(serv->location);
+	if (_redirect())
+		return _req.type = RESPONSE, true;
+	if (_req.method == "POST" && !_findBodySize())
+		return _req.type = RESPONSE, false;
+	if (!_findFile())
+		return _req.type = RESPONSE, false;
+	if (!_findType())
+		return _req.type = RESPONSE, false;
+	if (_req.serv.cgiPass) {
+		if (_cgi.sendRequest(_status, _req))
+			return true;
+		else
+			return _req.type = RESPONSE, false;
+	}
+	return _req.type = RESPONSE, true;
+}
+
+bool	Client::_divideHeadBody(std::string & header) {
+	size_t	found;
+	
+	found = header.find("\r\n\r\n");
 	if (found == std::string::npos)
 		return (_status = 400, false);
-	header = reqMsg.substr(0, found + 2);	// Cut the second '\r\n' out
-	if (reqMsg.length() > found + 4)
-		body = reqMsg.substr(found + 4);	// Kept only body Message
-	return (_status = 200, true);
+	if (header.length() > found + 4)
+		_req.body = header.substr(found + 4);	// Kept only body Message
+	header = header.substr(0, found + 2);	// Cut the second '\r\n' out
+	return true;
 }
 
 // Percent encode
@@ -115,9 +108,9 @@ bool	Client::_urlEncoding(std::string & path) {
 	found = path.find_first_of("%");	// return index of found character
 	while (found != std::string::npos) {
 		if (found + 2 >= path.length())	// if not follow with 2 character
-			return (_status = 400 ,false);
+			return (_status = 400, false);
 		if (!std::isxdigit(path[found + 1]) || !std::isxdigit(path[found + 2]))
-			return (_status = 400 ,false);
+			return (_status = 400, false);
 		std::string	hex = path.substr(found + 1, 2);
 		char	c = std::strtol(hex.c_str(), NULL, 16);
 		path.replace(found, 3, 1, c);
@@ -186,6 +179,14 @@ bool	Client::_matchLocation(std::vector<Location> loc) {
 	return true;
 }
 
+size_t	findCRLF(char * str, size_t & size) {
+	for (size_t i = 0; i + 1 < size; i++) {
+		if (str[i] == '\r' && str[i + 1] == '\n')
+			return i;
+	}
+	return 0;
+}
+
 // ************************************************************************** //
 // -------------------------- Check Header Fields --------------------------- //
 // ************************************************************************** //
@@ -195,7 +196,7 @@ bool	Client::_checkRequest(void) {
 		return (_status = 405, false);
 	if (!_checkVersion(_req.version))
 		return (_status = 505, false);
-	return (_status = 200, true);
+	return true;
 }
 
 bool	Client::_checkMethod(std::string method) {
@@ -234,14 +235,14 @@ bool	Client::_findFile(void) {
 			if (stat(filePath.c_str(), &_fileInfo) == 0) {
 				_req.pathSrc = filePath;
 				std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
-				return (_status = 200, true);
+				return true;
 			}
 		}
 	}
 	if (stat(path.c_str(), &_fileInfo) == 0) {
 		_req.pathSrc = path;
 		std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
-		return (_status = 200, true);
+		return true;
 	}
 	std::cout << RED << path << " :Not found file in stat" << RESET << std::endl;
 	return (_status = 404, false);
@@ -251,7 +252,7 @@ bool	Client::_findType(void) {
 	if (S_ISDIR(_fileInfo.st_mode)) { // is directory
 		if (_req.path.back() == '/') {
 			if (_req.serv.autoIndex)
-				return (_status = 200, true);
+				return true;
 			else
 				return (_status = 403, false);
 		}
@@ -299,7 +300,8 @@ bool	Client::_findBodySize(void) {
 			std::cout << RED << "Not support Transfer-Encoding Type" << RESET << std::endl;
 			return _status = 501, false;
 		}
-		return true;
+		std::cout << MAG << "Chunk Request" << RESET << std::endl;
+		return _req.type = CHUNK, true;
 	}
 	if (_req.headers.count("Content-Length")) {
 		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
@@ -307,8 +309,95 @@ bool	Client::_findBodySize(void) {
 			std::cout << RED << "Request Entity Too Large" << RESET << std::endl;
 			return _status = 413, false;
 		}
-		return true;
+		return _req.type = BODY, true;
 	}
 	std::cout << RED << "Length Required" << RESET << std::endl;
 	return _status = 411, false;
+}
+
+int	Client::_unChunk(char * & buffer, size_t & bufSize) {
+	// size_t	first;
+
+	// if (_req.bodySize == 0) {
+	// 	first = findCRLF(buffer, bufSize);
+	// 	if (first == 0)
+	// 		return _status = 400, -1;
+	// 	// std::cout << RED << "first: " << first << RESET << std::endl;
+	// 	std::string	hexStr(buffer, first);
+	// 	if (!isHexStr(hexStr)) {
+	// 		// std::cout << RED << "Bad heximal: " << hexStr << RESET << std::endl;
+	// 		return _status = 400, -1;
+	// 	}
+	// 	_req.bodySize = hexStrToDec(hexStr); // Chunk Size
+	// 	buffer += first + 2;
+	// 	bufSize -= (first + 2);
+	// 	std::cout << RED << "hex: " << _req.bodySize << RESET << std::endl;
+	// 	if (_req.bodySize + 2 <= bufSize) {
+	// 		std::cout << RED << "Full Chunk" << RESET << std::endl;
+	// 		_req.body.append(buffer, _req.bodySize);
+	// 		// std::cout << RED << "buf[1]: " << (int)buffer[_req.bodySize + 1] << RESET << std::endl;
+	// 		// std::cout << RED << "buf[2]: " << (int)buffer[_req.bodySize + 2] << RESET << std::endl;
+	// 		if(buffer[_req.bodySize] == '\r' && buffer[_req.bodySize + 1] == '\n') {
+	// 			std::cout << RED << "bodySize: " << _req.bodySize << std::endl;
+	// 			std::cout << RED << "bufSize: " << bufSize << std::endl;
+	// 			if (_req.bodySize + 2 == bufSize)
+	// 				return 1;
+	// 			else {
+	// 				buffer += _req.bodySize + 2;
+	// 				bufSize -= (_req.bodySize + 2);
+	// 				return 2;
+	// 			}
+	// 		}
+	// 		std::cout << RED << "Wrong form" << RESET << std::endl;
+	// 	}
+	// 	else {
+	// 		_req.body.append(buffer, bufSize - first - 2);
+	// 		return 0;
+	// 	}
+	// }
+	// else {
+	// 	size_t	mustFilled = _req.bodySize - _req.body.length();
+	// 	if (mustFilled + 2 <= bufSize) {
+	// 		_req.body.append(buffer, mustFilled);
+	// 		std::cout << RED << "mustFilled: " << mustFilled << std::endl;
+	// 		std::cout << RED << "bufSize: " << bufSize << std::endl;
+	// 		if(buffer[mustFilled] == '\r' && buffer[mustFilled + 1] == '\n') {
+	// 			if (mustFilled + 2 == bufSize)
+	// 				return 1;
+	// 			else {
+	// 				buffer += mustFilled + 2;
+	// 				bufSize -= (mustFilled + 2);
+	// 				return 2;
+	// 			}
+	// 		}
+	// 	}
+	// 	else {
+	// 		_req.body.append(buffer, bufSize);
+	// 		return 0;
+	// 	}
+	// }
+	// std::cout << RED << "fail chunk" << RESET << std::endl;
+	// // std::cout << RED << _req.body << RESET << std::endl;
+	// return _status = 400, -1;
+	return 1;
+}
+
+void	Client::_initReqParse(void) {
+	_res.clear();
+	_status = 200;
+	_req.bodySize = 0;
+	_req.bodySent = 0;
+	_req.redir = 0;
+	_req.serv = *serv;
+	_req.pathSrc = "";
+	_req.cliIPaddr = "";
+}
+
+bool	Client::_redirect(void) {
+	if (_req.serv.retur.have) {
+		_req.redir = 1;
+		_status = _req.serv.retur.code;
+		return true;
+	}
+	return false;
 }

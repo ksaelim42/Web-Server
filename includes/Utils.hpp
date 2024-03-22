@@ -29,7 +29,9 @@ uint64_t	strToNum(std::string);
 char*		strdup(std::string);
 char**		aopArgs(std::vector<std::string> &);
 char**		aopEnv(std::map<std::string, std::string> &);
+size_t		hexStrToDec(std::string);
 
+bool		isHexStr(std::string &);
 void		free2Dstr(char** &);
 void		prtMap(std::map<std::string, std::string> &);
 

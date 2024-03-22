@@ -27,7 +27,7 @@
 
 # define ADDR			"127.0.0.1"
 # define PORT			"1600"
-# define BUFFER_SIZE	5
+# define BUFFER_SIZE	20000
 
 void	prtErr(std::string msg);
 int		initServer(char* port);

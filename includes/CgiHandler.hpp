@@ -21,7 +21,6 @@ class CgiHandler
 		int			_pipeInFd[2];
 		int			_pipeOutFd[2];
 		bool		_isPost;
-		uint64_t	_contentSize;
 		size_t		_package;
 		std::string	_cgiFileName;
 		std::string	_cgiProgramPath;
@@ -34,8 +33,10 @@ class CgiHandler
 		void	_closePipe(void);
 		void	_childProcess(parsedReq &);
 	public:
+		CgiHandler();
+		~CgiHandler();
 		bool	sendRequest(short int &, parsedReq &);
-		bool	sendBody(char *, size_t &, parsedReq &);
+		bool	sendBody(const char *, size_t &, parsedReq &);
 		bool	receiveResponse(short int &, std::string &);
 };
 

@@ -1,6 +1,10 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
+# define REQ_HEADER			0x0
+# define REQ_BODY_LENGTH	0x1
+# define REQ_BODY_CHUNK		0x2
+
 #include "Utils.hpp"
 #include "Struct.hpp"
 #include "HttpRequest.hpp"
@@ -17,20 +21,24 @@ class Client
 		CgiHandler		_cgi;
 
 		// Parsing Request
-		bool		_parseHeader(std::string &, std::string &, std::string &);
+		void		_initReqParse(void);
+		bool		_parseHeader(char *, size_t &);
+		// bool		_parseHeader(std::string &, std::string &, std::string &);
+		bool		_divideHeadBody(std::string &);
 		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);
 		bool		_matchLocation(std::vector<Location>);
+		bool		_redirect(void);
 		bool		_findFile(void);
 		bool		_findType(void);
 		bool		_findBodySize(void);
+		int			_unChunk(char * &, size_t &);
 		// Check Header
 		bool		_checkRequest(void);
 		bool		_checkMethod(std::string);
 		bool		_checkVersion(std::string);
 	public:
 		int					sockFd;
-		bool				isBody;
 		Server *			serv;
 		struct sockaddr_in	addr;
 		socklen_t			addrLen;
@@ -38,7 +46,8 @@ class Client
 		Client(void);
 		~Client(void) {}
 		short int	getStatus(void) const;
-		bool		parseRequest(char *, size_t);
+		reqType_e	getReqType(void) const;
+		void		parseRequest(char *, size_t);
 		void		genResponse(std::string &);
 		void		prtParsedReq(void);
 		void		prtRequest(httpReq &);

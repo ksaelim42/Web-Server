@@ -1,11 +1,15 @@
 #!/usr/bin/python3
 
-import cgi, os
+import cgi, os, sys, errno
 
 form = cgi.FieldStorage()
 
-# Get filename
-fileitem = form['filename']
+if 'filename' in form:
+	fileitem = form['filename']
+else:
+	print("filename not Found")
+	sys.exit(1) # Exit Fail
+
 
 dirUpload = "../upload/"
 
@@ -14,10 +18,15 @@ if fileitem.filename:
 	if os.path.exists(dirUpload + file_name):
 		message = 'Files is already Exists'
 	else:
-		f = open(dirUpload + file_name, "wb") # 'wb' for write in binary mode
-		f.write(fileitem.file.read())
-		message = 'The file "' + file_name + '" was uploaded successfully'
-		f.close()
+		try:
+			f = open(dirUpload + file_name, "wb") # 'wb' for write in binary mode
+			f.write(fileitem.file.read())
+			message = 'The file "' + file_name + '" was uploaded successfully'
+			f.close()
+		except (BrokenPipeError, IOError):
+			f.close()
+			print("Pipe Error")
+			sys.exit(1) # Exit Fail
 else:
 	message = 'No file was uploaded'
 
@@ -38,3 +47,4 @@ print("</head><body>")
 print("<h2>" + message + "</h2>")
 print("<a href=\"/cgi-bin/list.py\">Go Back</a>")
 print("</body>\n</html>")
+sys.exit(0) # Exit Success

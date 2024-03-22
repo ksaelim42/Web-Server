@@ -43,6 +43,24 @@ uint64_t	strToNum(std::string str) {
 	return num;
 }
 
+size_t	hexStrToDec(std::string str) {
+	unsigned int		num;
+	std::istringstream	iss(str);
+	iss >> std::hex >> num;
+	return num;
+}
+
+bool	isHexStr(std::string & str) {
+	
+	for (size_t i = 0;i < str.length(); i++) {
+		if (!((str[i] >= '0' && str[i] <= '9') ||
+			(str[i] >= 'a' && str[i] <= 'f') ||
+			(str[i] >= 'F' && str[i] <= 'F')))
+			return false;
+	}
+	return true;
+}
+
 char*	strdup(std::string src) {
 	char*	dest = new char[src.length() + 1];
 	size_t	i = 0;
