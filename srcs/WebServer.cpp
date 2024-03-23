@@ -58,8 +58,7 @@ bool	WebServer::runServer(void) {
 	struct timeval	timeOut;
 	signal(SIGQUIT, signal_handler);
 
-	Server	server = _servs[0]; // TODO improve for multi server later
-	// testPersist(server);
+	// Server	server = _servs[0]; // TODO improve for multi server later
 	while (run) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
