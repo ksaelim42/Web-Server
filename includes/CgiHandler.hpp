@@ -1,10 +1,6 @@
 #ifndef CGIHANDLER_HPP
 # define CGIHANDLER_HPP
 
-# define CGI_VERS		"CGI/1.0"
-# define PROGRAM_NAME	"MPM/1.0" // Mos Prach Mark
-# define PYTHON_PATH	"/usr/bin/python3"
-
 #include <unistd.h>		// pipe, fork, read, write
 #include <fcntl.h>
 #include <sys/stat.h>	// stat

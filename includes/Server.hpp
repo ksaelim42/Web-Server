@@ -1,7 +1,6 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#define HEADBUFSIZE 1000
 #define BODYBUFSIZE 1000000	// defautl
 
 #define	METHOD_GET	0x1

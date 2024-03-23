@@ -11,9 +11,6 @@
 #include "Utils.hpp"
 #include "Client.hpp"
 
-#define BUFFERSIZE 65537	// Buffer size of HTTP request in Bytes.
-#define CONNECTIONSIZE 50	// Numbers of connection from client that server can handle
-
 class WebServer
 {
 	private:

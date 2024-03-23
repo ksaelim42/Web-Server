@@ -23,7 +23,6 @@ class Client
 		// Parsing Request
 		void		_initReqParse(void);
 		bool		_parseHeader(char *, size_t &);
-		// bool		_parseHeader(std::string &, std::string &, std::string &);
 		bool		_divideHeadBody(std::string &);
 		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);

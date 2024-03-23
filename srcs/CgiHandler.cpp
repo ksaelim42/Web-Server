@@ -11,7 +11,6 @@ CgiHandler::~CgiHandler() {
 		close(_pipeInFd[1]);
 	if (fcntl(_pipeOutFd[0], F_GETFL) != -1)
 		close(_pipeOutFd[0]);
-	std::cout << YEL << "CGI destructor" << std::endl;
 }
 
 bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
@@ -86,17 +85,25 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) 
 }
 
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
-	int	WaitStat;
+	int		WaitStat;
+	ssize_t	bytesRead;
+	char	buffer[BUFFERSIZE];
+
 	waitpid(_pid, &WaitStat, 0);
 	if (WaitStat != 0)
 		return (status = 502, false);
-	char	buffer[10000];
-	size_t	bytesRead;
-	memset(buffer, 0, 10000);
-	bytesRead = read(_pipeOutFd[0], buffer, 10000);
+	cgiMsg.clear();
+	while (true) {
+		bytesRead = read(_pipeOutFd[0], buffer, BUFFERSIZE - 1);
+		// std::cout << "bytes read: " << bytesRead << std::endl;
+		if (bytesRead == 0)
+			break;
+		else if (bytesRead < 0)
+			return (status = 502, false);
+		buffer[bytesRead] = '\0';
+		cgiMsg += buffer;
+	}
 	close(_pipeOutFd[0]);
-	std::cout << "bytes read: " << bytesRead << std::endl;
-	cgiMsg = buffer;
 	return (status = 200, true);
 }
 
@@ -106,7 +113,8 @@ void CgiHandler::_childProcess(parsedReq & req) {
 		close(_pipeInFd[1]);
 		close(_pipeInFd[0]);
 	}
-	_gotoCgiDir(req.pathSrc);
+	if (!_gotoCgiDir(req.pathSrc))
+		exit(errno);
 	dup2(_pipeOutFd[1], STDOUT_FILENO);
 	close(_pipeOutFd[0]);
 	close(_pipeOutFd[1]);
@@ -155,13 +163,13 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 }
 
 bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
-	// check file is exist
+	// Check file is exist
 	if (access(req.pathSrc.c_str(), F_OK) != 0) {
 		std::cerr << YEL << "No such file or directory" << RESET << std::endl;
 		status = 404;
 		return false;
 	}
-	// check permission
+	// Check permission
 	if (access(req.pathSrc.c_str(), X_OK) != 0) {
 		std::cerr << YEL << "Permission denied" << RESET << std::endl;
 		status = 403;
@@ -171,6 +179,7 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 		_isPost = 1;
 	else
 		_isPost = 0;
+	// Check CGI-script extension
 	size_t	found = req.pathSrc.find_last_of(".");
 	if (found != std::string::npos) {
 		std::string	ext = req.pathSrc.substr(found + 1);
@@ -212,7 +221,7 @@ bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 		std::string	path = srcPath.substr(0, found);
 		_cgiFileName = srcPath.substr(found + 1);
 		if (chdir(path.c_str()) == -1)
-			exit(errno);
+			return false;
 	}
 	else
 		_cgiFileName = srcPath;

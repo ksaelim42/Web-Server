@@ -5,6 +5,13 @@
 #include <vector>
 #include "Server.hpp"
 
+# define HEADBUFSIZE	1024		// Buffer size of Response Header in Bytes.
+# define BUFFERSIZE		65537		// Buffer size of HTTP request in Bytes.
+# define CONNECTIONSIZE	50			// Numbers of connection from client that server can handle
+# define CGI_VERS		"CGI/1.0"
+# define PROGRAM_NAME	"MPM/1.0"	// Mos Prach Mark
+# define PYTHON_PATH	"/usr/bin/python3"
+
 enum reqType_e {
 	HEADER,
 	BODY,
