@@ -17,12 +17,7 @@ WebServer::WebServer(std::vector<Server> & servs) {
 	// signal(SIGPIPE, SIG_IGN); // Protect terminate process when write on the shutdown socket
 }
 
-WebServer::~WebServer() {
-}
-
-// ************************************************************************** //
-// ----------------------------- Server Fields ------------------------------ //
-// ************************************************************************** //
+WebServer::~WebServer() { }
 
 bool	WebServer::initServer(void) {
 	struct addrinfo	*sockAddr;
@@ -118,16 +113,20 @@ bool	WebServer::downServer(void) {
 	return true;
 }
 
-int	WebServer::_acceptConnection(int & serverSock) {
+// ************************************************************************** //
+// ----------------------------- Server Fields ------------------------------ //
+// ************************************************************************** //
+
+int	WebServer::_acceptConnection(int & serverFd) {
 	Client	client;
 	std::cout << GRN << "Waiting client connection..." << RESET << std::endl;
-	client.sockFd = accept(serverSock, (struct sockaddr *)&client.addr, &client.addrLen);
+	client.sockFd = accept(serverFd, (struct sockaddr *)&client.addr, &client.addrLen);
 	if (client.sockFd < 0) {
 		std::cout << RED << "Accept fail" << RESET << std::endl;
 		return -1;
 	} else {
 		std::cout << "client fd: " << client.sockFd << ", addr: " << inet_ntoa(client.addr.sin_addr) << std::endl;
-		client.serv = _getServer(serverSock);
+		client.serv = _getServer(serverFd);
 		if (!client.serv)
 			return _disconnectClient(client.sockFd), -1;
 		_fdSet(client.sockFd, _readFds);
@@ -282,26 +281,6 @@ void	WebServer::_disconnectAllClient(void) {
 	}
 	_clients.clear();
 }
-
-// httpReq	genRequest(std::string str) {
-// 	httpReq	req;
-
-// 	req.method = strCutTo(str, " ");
-// 	req.srcPath = strCutTo(str, " ");
-// 	req.version = strCutTo(str, CRLF);
-// 	while (str.compare(0, 2, CRLF) != 0) {
-// 		std::string key = strCutTo(str, ": ");
-// 		std::string value = strCutTo(str, CRLF);
-// 		// std::cout << "key: " << key << std::endl;
-// 		// std::cout << "value: " << value << std::endl;
-// 		req.headers[key] = value;
-// 		// sleep(1);
-// 	}
-// 	strCutTo(str, CRLF);
-// 	req.body = str;
-//     str.clear();
-// 	return req;
-// }
 
 void	WebServer::prtLog(short int status) {
 	if (status == 400)

@@ -20,20 +20,19 @@
 #include <sstream>
 #include <iostream>
 
+bool		isHexChar(char &);
+bool		isHexStr(std::string &);
+void		free2Dstr(char** &);
+void		prtMap(std::map<std::string, std::string> &);
+char*		strdup(std::string);
+char**		aopArgs(std::vector<std::string> &);
+char**		aopEnv(std::map<std::string, std::string> &);
+size_t		hexStrToDec(std::string);
+uint64_t	strToNum(std::string);
 std::string	numToStr(size_t);
 std::string	toProtoEnv(std::string);
 std::string	toProperCase(std::string &);
 std::string	strCutTo(std::string &, std::string );
 std::string	findHeaderValue(std::map<std::string, std::string> &, std::string const &);
-uint64_t	strToNum(std::string);
-char*		strdup(std::string);
-char**		aopArgs(std::vector<std::string> &);
-char**		aopEnv(std::map<std::string, std::string> &);
-size_t		hexStrToDec(std::string);
-
-bool		isHexChar(char &);
-bool		isHexStr(std::string &);
-void		free2Dstr(char** &);
-void		prtMap(std::map<std::string, std::string> &);
 
 #endif

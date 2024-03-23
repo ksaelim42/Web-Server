@@ -1,8 +1,6 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
 
-# define HTTP_VERS		"HTTP/1.1"
-
 #include <ctime>		// time
 #include <dirent.h>		// opendir
 #include <fcntl.h>		// open file
@@ -31,13 +29,10 @@ class HttpResponse
 		// Body Messages
 		short int	_readFile(std::string &, std::string &);
 		short int	_listFile(parsedReq &, std::string &);
-		// Check CGI Response
+		// Inspect CGI Response
 		short int	_parseCgiHeader(std::string &, std::string	&);
 		short int	_inspectCgiHeaders(std::string &);
 	public:
-		HttpResponse() {}
-		~HttpResponse() {}
-
 		std::string	deleteResource(short int &, parsedReq &);
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);

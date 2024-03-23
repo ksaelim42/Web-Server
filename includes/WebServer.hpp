@@ -57,8 +57,6 @@ class WebServer
 				}
 				virtual ~WebServerException() throw() {}
 		};
-
-		// void	testPersist(Server & server); // TODO : delete it later
 };
 
 #endif

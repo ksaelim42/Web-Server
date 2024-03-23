@@ -8,7 +8,7 @@
 #define	METHOD_POST 0x4
 #define	METHOD_DEL	0x8
 
-#define INIT_METHOD(BF) BF |= -1
+#define INITALL_METHOD(BF) BF |= -1
 #define SET_METHOD(BF, N) BF |= N // 1.method from config	2.line 7/8/9/10 as a second parameter
 #define CLR_METHOD(BF, N) BF &= ~N
 #define IS_METHOD_SET(BF, N) BF & N
@@ -58,14 +58,13 @@ class Server // don't forget to create vector to store this class as it may have
 		std::map<short int, std::string>	errPage; //? error_page
 
 		Server(void);
-		~Server(void) {}
-		void	setMimeType(std::string key, std::string value);
-		void	clearLocation(void);
-		void	prtServer(void);
+		~Server(void);
 
-		std::string					getMimeType(const std::string & extension) const;
-		std::string					getErrPage(short int &) const;
-		struct sockaddr				getSockAddr(void) const;
+		std::string		getMimeType(const std::string & extension) const;
+		std::string		getErrPage(short int &) const;
+		struct sockaddr	getSockAddr(void) const;
+		void			clearLocation(void);
+		void			prtServer(void);
 };
 
 #endif

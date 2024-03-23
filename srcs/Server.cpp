@@ -4,12 +4,12 @@ Server::Server(void) {
 	_initMineTypeDefault();
 	_initErrPage();
 	name = "";						// default : null
-	ipAddr = "0.0.0.0";			// default : any addr
+	ipAddr = "0.0.0.0";				// default : any addr
 	port = "80";					// default : 80
 	root = "html";					// default : html directory
 	index.push_back("index.html");	// default : index.html
 	cliBodySize = BODYBUFSIZE;		// dafault : 1m byte
-	INIT_METHOD(allowMethod);		// default : allow all method
+	INITALL_METHOD(allowMethod);	// default : allow all method
 	autoIndex = 0;					// defualt : off
 	retur.have = 0;					// default : --
 	retur.code = 0;
@@ -17,42 +17,7 @@ Server::Server(void) {
 	cgiPass = 0;
 }
 
-void	Server::prtServer(void) {
-	std::cout << "server_name : " << MAG << name << RESET << std::endl;
-	std::cout << "IP address  : " << MAG << ipAddr << RESET << std::endl;
-	std::cout << "Port        : " << MAG << port << RESET << std::endl;
-	std::cout << "Root        : " << MAG << root << RESET << std::endl;
-	std::cout << "index       : ";
-	for (int i = 0; i < index.size(); i++)
-		std::cout << MAG << index[i] << ", ";
-	std::cout << RESET << std::endl;
-	std::cout << "CliBodySize : " << MAG << cliBodySize << RESET << std::endl;
-	for (int i = 0; i < location.size(); i++) {
-		std::cout << "*** Location[" << i << "] ***" << std::endl;
-		std::cout << "path        : " << MAG << location[i].path << RESET << std::endl;
-		std::cout << "Root        : " << MAG << location[i].root << RESET << std::endl;
-		std::cout << "index       : ";
-		for (int j = 0; j < location[i].index.size(); j++)
-			std::cout << MAG << location[i].index[j] << ", ";
-		std::cout << RESET << std::endl;
-		std::cout << "allowMethod : " << MAG << location[i].allowMethod << RESET << std::endl;
-		std::cout << "autoIndex   : " << MAG << location[i].autoIndex << RESET << std::endl;
-		std::cout << "cliBodySize : " << MAG << location[i].cliBodySize << RESET << std::endl;
-		std::cout << "return      : " << MAG << location[i].retur.have << ", " << location[i].retur.code << ", " << location[i].retur.text << RESET << std::endl;
-		std::cout << "cgiPass     : " << MAG << location[i].cgiPass << RESET << std::endl;
-	}
-	// TODO : MimeType
-}
-
-// ************************************************************************** //
-// --------------------------------- Setter --------------------------------- //
-// ************************************************************************** //
-
-void	Server::setMimeType(std::string key, std::string value) {
-	// if there are have key, They will be over write
-	// TODO : may be log to client
-	_mimeType[key] = value;
-}
+Server::~Server(void) {}
 
 // ************************************************************************** //
 // --------------------------------- Getter --------------------------------- //
@@ -91,6 +56,32 @@ struct sockaddr	Server::getSockAddr(void) const {
 	sockAddr = *(result->ai_addr);
 	freeaddrinfo(result);
 	return sockAddr;
+}
+
+void	Server::prtServer(void) {
+	std::cout << "server_name : " << MAG << name << RESET << std::endl;
+	std::cout << "IP address  : " << MAG << ipAddr << RESET << std::endl;
+	std::cout << "Port        : " << MAG << port << RESET << std::endl;
+	std::cout << "Root        : " << MAG << root << RESET << std::endl;
+	std::cout << "index       : ";
+	for (int i = 0; i < index.size(); i++)
+		std::cout << MAG << index[i] << ", ";
+	std::cout << RESET << std::endl;
+	std::cout << "CliBodySize : " << MAG << cliBodySize << RESET << std::endl;
+	for (int i = 0; i < location.size(); i++) {
+		std::cout << "*** Location[" << i << "] ***" << std::endl;
+		std::cout << "path        : " << MAG << location[i].path << RESET << std::endl;
+		std::cout << "Root        : " << MAG << location[i].root << RESET << std::endl;
+		std::cout << "index       : ";
+		for (int j = 0; j < location[i].index.size(); j++)
+			std::cout << MAG << location[i].index[j] << ", ";
+		std::cout << RESET << std::endl;
+		std::cout << "allowMethod : " << MAG << location[i].allowMethod << RESET << std::endl;
+		std::cout << "autoIndex   : " << MAG << location[i].autoIndex << RESET << std::endl;
+		std::cout << "cliBodySize : " << MAG << location[i].cliBodySize << RESET << std::endl;
+		std::cout << "return      : " << MAG << location[i].retur.have << ", " << location[i].retur.code << ", " << location[i].retur.text << RESET << std::endl;
+		std::cout << "cgiPass     : " << MAG << location[i].cgiPass << RESET << std::endl;
+	}
 }
 
 void	Server::clearLocation(void) {

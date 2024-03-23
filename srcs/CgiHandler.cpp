@@ -107,29 +107,9 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	return (status = 200, true);
 }
 
-void CgiHandler::_childProcess(parsedReq & req) {
-	if (_isPost) { // if post method will take input from std::in
-		dup2(_pipeInFd[0], STDIN_FILENO);
-		close(_pipeInFd[1]);
-		close(_pipeInFd[0]);
-	}
-	if (!_gotoCgiDir(req.pathSrc))
-		exit(errno);
-	dup2(_pipeOutFd[1], STDOUT_FILENO);
-	close(_pipeOutFd[0]);
-	close(_pipeOutFd[1]);
-	char *args[3];
-	args[0] = strdup(_cgiProgramPath);
-	args[1] = strdup(_cgiFileName);
-	args[2] = NULL;
-	char **env = aopEnv(_env);
-	if (execve(args[0], args, env) == -1) {
-		free2Dstr(env);
-		delete[] args[0];
-		delete[] args[1];
-		exit(errno);
-	}
-}
+// ************************************************************************** //
+// ----------------------------- CGI Processes ------------------------------ //
+// ************************************************************************** //
 
 bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env.clear();
@@ -206,15 +186,6 @@ bool	CgiHandler::_createPipe(parsedReq & req) {
 	return true;
 }
 
-void	CgiHandler::_closePipe(void) {
-	if (_isPost) {
-		close(_pipeInFd[0]);
-		close(_pipeInFd[1]);
-	}
-	close(_pipeOutFd[0]);
-	close(_pipeOutFd[1]);
-}
-
 bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	std::size_t	found = srcPath.find_last_of("/");
 	if (found != std::string::npos) {
@@ -226,4 +197,37 @@ bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	else
 		_cgiFileName = srcPath;
 	return true;
+}
+
+void	CgiHandler::_closePipe(void) {
+	if (_isPost) {
+		close(_pipeInFd[0]);
+		close(_pipeInFd[1]);
+	}
+	close(_pipeOutFd[0]);
+	close(_pipeOutFd[1]);
+}
+
+void CgiHandler::_childProcess(parsedReq & req) {
+	if (_isPost) { // if post method will take input from std::in
+		dup2(_pipeInFd[0], STDIN_FILENO);
+		close(_pipeInFd[1]);
+		close(_pipeInFd[0]);
+	}
+	if (!_gotoCgiDir(req.pathSrc))
+		exit(errno);
+	dup2(_pipeOutFd[1], STDOUT_FILENO);
+	close(_pipeOutFd[0]);
+	close(_pipeOutFd[1]);
+	char *args[3];
+	args[0] = strdup(_cgiProgramPath);
+	args[1] = strdup(_cgiFileName);
+	args[2] = NULL;
+	char **env = aopEnv(_env);
+	if (execve(args[0], args, env) == -1) {
+		free2Dstr(env);
+		delete[] args[0];
+		delete[] args[1];
+		exit(errno);
+	}
 }

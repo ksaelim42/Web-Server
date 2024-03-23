@@ -66,6 +66,13 @@ void	HttpResponse::clear(void) {
 	_body.clear();
 }
 
+void	HttpResponse::prtResponse(void) {
+	std::cout << CYN;
+	prtMap(_headers);
+	std::cout << "-----------------------------------------" << std::endl;
+	std::cout << _body << RESET << std::endl;
+}
+
 // ************************************************************************** //
 // ------------------------- Response Header Fields ------------------------- //
 // ************************************************************************** //
@@ -99,13 +106,6 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 	return headerMsg;
 }
 
-std::string	HttpResponse::_getStatusLine(short int & statusCode) {
-	std::string	httpVer = HTTP_VERS;
-	std::string	httpStatCode = numToStr(statusCode);
-	std::string httpStatText = _getStatusText(statusCode);
-	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
-}
-
 std::string	HttpResponse::_getContentLength(void) {
 	return numToStr(_body.length());
 }
@@ -129,6 +129,13 @@ std::string	HttpResponse::_getDate(void) {
 	// Date: <day-name>, <day> <month> <year> <hour>:<minute>:<second> GMT
 	std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %T %Z", gmTime);
 	return buffer;
+}
+
+std::string	HttpResponse::_getStatusLine(short int & statusCode) {
+	std::string	httpVer = HTTP_VERS;
+	std::string	httpStatCode = numToStr(statusCode);
+	std::string httpStatText = _getStatusText(statusCode);
+	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
 }
 
 std::string	HttpResponse::_getStatusText(short int & statusCode) {
@@ -273,7 +280,7 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 }
 
 // ************************************************************************** //
-// --------------------------- Inspect CGI script --------------------------- //
+// -------------------------- Inspect CGI Response -------------------------- //
 // ************************************************************************** //
 
 short int	HttpResponse::_parseCgiHeader(std::string & cgiMsg, std::string	& cgiHeadMsg) {
@@ -300,11 +307,4 @@ short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeadMsg) {
 	std::cout << "Inspect CGI heasers success" << std::endl;
 	std::cout << "header size: " << _headers.size() << std::endl;
 	return 200;
-}
-
-void	HttpResponse::prtResponse(void) {
-	std::cout << CYN;
-	prtMap(_headers);
-	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << _body << RESET << std::endl;
 }
