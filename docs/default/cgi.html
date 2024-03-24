@@ -59,6 +59,27 @@
 					</form>
 				</div>
 			</div>
+			<div id="separate">
+				<div class="body-box">
+					<form id="uploadForm" action="/cgi-bin/upload.py" method="post" enctype="multipart/form-data">
+						<h3>Upload Files</h3>
+						<div class="fill-box" style="margin-bottom: 5px;">
+							File: <input type="file" id="inputFile" name="filename" required>
+						</div>
+						<button id="btnUpload" class="button">Upload</button>
+					</form>
+				</div>
+				<div class="body-box">
+					<form id="chunkForm">
+						<h3>Upload Files by Chunk request</h3>
+						<div class="fill-box" style="margin-bottom: 5px;">
+							File: <input type="file" id="inputChunkFile" name="filename" required>
+						</div>
+						<button id="btnChunkUpload" class="button">Upload</button>
+						<p id="chunkInfo"></p>
+					</form>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script src="js/myscript.js"></script>

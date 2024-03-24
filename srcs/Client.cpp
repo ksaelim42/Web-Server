@@ -53,7 +53,6 @@ void	Client::setResponse(short int status) {
 
 void	Client::prtParsedReq(void) {
 	std::cout <<  "--- Parsed Request ---" << std::endl;
-	std::cout << "cliIPaddr: " << MAG << _req.cliIPaddr << std::endl;
 	std::cout << "status: " << _status << std::endl;
 	std::cout << "method: " << _req.method << std::endl;
 	std::cout << "uri: " << _req.uri << std::endl;
@@ -96,11 +95,10 @@ void	Client::_initReqParse(void) {
 	_req.redir = 0;
 	_req.serv = *serv;
 	_req.pathSrc = "";
-	_req.cliIPaddr = "";
 }
 
 bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
-	std::cout << "parse Header" << std::endl;
+	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
 		return _req.type = RESPONSE, false;
@@ -278,17 +276,17 @@ bool	Client::_findFile(void) {
 			filePath = path + index[i];
 			if (stat(filePath.c_str(), &_fileInfo) == 0) {
 				_req.pathSrc = filePath;
-				std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
+				Logger::isLog(DEBUG) && Logger::log(MAG, "[Request] - Find path success, Path: ", _req.pathSrc);
 				return true;
 			}
 		}
 	}
 	if (stat(path.c_str(), &_fileInfo) == 0) {
 		_req.pathSrc = path;
-		std::cout << "Find path success, path: " << MAG << _req.pathSrc << RESET << std::endl;
+		Logger::isLog(DEBUG) && Logger::log(MAG, "[Request] - Find path success, Path: ", _req.pathSrc);
 		return true;
 	}
-	std::cout << RED << path << " :Not found file in stat" << RESET << std::endl;
+	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Fine not found");
 	return (_status = 404, false);
 }
 
@@ -312,7 +310,7 @@ bool	Client::_findType(void) {
 bool	Client::_findBodySize(void) {
 	if (_req.headers.count("Transfer-Encoding")) {
 		if (findHeaderValue(_req.headers, "Transfer-Encoding") != "chunked") {
-			std::cout << RED << "Not support Transfer-Encoding Type" << RESET << std::endl;
+			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Not support Transfer-Encoding Type");
 			return _status = 501, false;
 		}
 		std::cout << MAG << "Chunk Request" << RESET << std::endl;
@@ -321,11 +319,11 @@ bool	Client::_findBodySize(void) {
 	if (_req.headers.count("Content-Length")) {
 		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
 		if (_req.bodySize > _req.serv.cliBodySize) {
-			std::cout << RED << "Request Entity Too Large" << RESET << std::endl;
+			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Entity Too Large");
 			return _status = 413, false;
 		}
 		return _req.type = BODY, true;
 	}
-	std::cout << RED << "Length Required" << RESET << std::endl;
+	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Length Required");
 	return _status = 411, false;
 }

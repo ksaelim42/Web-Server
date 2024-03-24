@@ -14,36 +14,39 @@ CgiHandler::~CgiHandler() {
 }
 
 bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
-	std::cout << BYEL << "Start handler CGI" << RESET << std::endl;
+	
+	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	if (_checkCgiScript(status, req) == 0)
 		return false;
-	if (_initEnv(req) == 0)
+	if (!_initEnv(req))
 		return false;
-	if (_createPipe(req) == 0)
+	if (!_createPipe(req)) {
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
 		return (status = 500, false);
+	}
 	_pid = fork();
-	if (_pid == -1)
+	if (_pid == -1) {
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
 		return (_closePipe(), status = 500, false);
+	}
 	if (_pid == 0) // Child Process
 		_childProcess(req);
 	else { // Parent Process
 		close(_pipeOutFd[1]);
 		if (_isPost) {
 			close(_pipeInFd[0]);
-			std::cout << BYEL << "req type: " << req.type << RESET << std::endl;
 			if (req.type == CHUNK)
 				return true;
 			_package = 1;
-			std::cout << BYEL << "---Body Request, size : " << req.body.size() << RESET << std::endl;
-			// fcntl(_pipeInFd[1], F_SETFL, O_NONBLOCK); // TODO : for test
 			if (req.body.size()) {
 				write(_pipeInFd[1], req.body.c_str(), req.body.size());
 				req.bodySent += req.body.size();
 				req.body.clear();
-				std::cout << YEL << "CGI pakage[" << _package++ << "] sent " << req.bodySent << " out of " << req.bodySize << RESET << std::endl;
+				_package++;
+				Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
 			}
 			if (req.bodySent >= req.bodySize) {
-				std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
+				Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 				close(_pipeInFd[1]);
 				return req.type = RESPONSE, true;
 			}
@@ -61,22 +64,23 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) 
 		bytes = write(_pipeInFd[1], body, bufSize);
 		if (bytes < bufSize)
 			return false;
+		_package++;
 	}
 	if (req.type == CHUNK) {
 		if (bufSize == 0) {
-			std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
+			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 			close(_pipeInFd[1]);
 			req.type = RESPONSE;
 		}
-		std::cout << YEL << "CGI chunk[" << _package++ << "] sent " << bufSize << " Bytes" << RESET << std::endl;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", _package, "] sent ", bufSize, " Bytes");
 		req.body.clear();
 		req.bodySize = 0;
 	}
 	else {
 		req.bodySent += bufSize;
-		std::cout << YEL << "CGI pakage[" << _package++ << "] sent " << req.bodySent << " out of " << req.bodySize << RESET << std::endl;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
-			std::cout << YEL << "Success for sent CGI pagekage" << RESET << std::endl;
+			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 			close(_pipeInFd[1]);
 			req.type = RESPONSE;
 		}
@@ -95,11 +99,11 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	cgiMsg.clear();
 	while (true) {
 		bytesRead = read(_pipeOutFd[0], buffer, BUFFERSIZE - 1);
-		// std::cout << "bytes read: " << bytesRead << std::endl;
 		if (bytesRead == 0)
 			break;
 		else if (bytesRead < 0)
 			return (status = 502, false);
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytesRead, " Bytes");
 		buffer[bytesRead] = '\0';
 		cgiMsg += buffer;
 	}
@@ -114,8 +118,8 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env.clear();
 	// meta-variable
-	_env["GATEWAY_INTERFACE"] = CGI_VERS;	// version of CGI
-	_env["SERVER_SOFTWARE"] = PROGRAM_NAME;	// name of Webserv/version Ex: nginx/1.18.0
+	_env["GATEWAY_INTERFACE"] = CGI_VERS;		// version of CGI
+	_env["SERVER_SOFTWARE"] = PROGRAM_NAME;		// name of Webserv/version Ex: nginx/1.18.0
 	_env["REQUEST_METHOD"] = req.method;		// HTTP method Ex: GET
 	_env["REQUEST_URI"] = req.uri;				// URI (not encode URL)
 	_env["SERVER_PROTOCOL"] = req.version;		// HTTP version that get from request (Server must check that support) Ex : HTTP/1.1
@@ -145,13 +149,13 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 	// Check file is exist
 	if (access(req.pathSrc.c_str(), F_OK) != 0) {
-		std::cerr << YEL << "No such file or directory" << RESET << std::endl;
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - No such file or directory");
 		status = 404;
 		return false;
 	}
 	// Check permission
 	if (access(req.pathSrc.c_str(), X_OK) != 0) {
-		std::cerr << YEL << "Permission denied" << RESET << std::endl;
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Permission denied");
 		status = 403;
 		return false;
 	}
@@ -169,13 +173,14 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 		}
 	}
 	status = 500;
-	std::cerr << YEL << "Program doesn't support to run this extension" << RESET << std::endl;
+	Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Not support extension type");
 	return false;
 }
 
 bool	CgiHandler::_createPipe(parsedReq & req) {
-	if (pipe(_pipeOutFd) == -1) // Sent output from Child to Parent
+	if (pipe(_pipeOutFd) == -1) { // Sent output from Child to Parent
 		return false;
+	}
 	if (_isPost) {
 		if (pipe(_pipeInFd) == -1) { // Sent input from Parent to Child
 			close(_pipeOutFd[0]);

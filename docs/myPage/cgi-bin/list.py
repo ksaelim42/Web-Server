@@ -86,7 +86,7 @@ if found:
 		print("</ul>")
 		print("</div>") # class fill-box
 	else:
-		print("<p style=\"color: #505050; text-align: center;\">Directory is empty</p>")
+		print("<p style=\"color: #A0A0A0; text-align: center;\">Directory is empty</p>")
 else:
 	print("<p>Error: Directory not found</p>")
 print("</div>") # class body-box

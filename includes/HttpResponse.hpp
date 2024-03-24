@@ -24,7 +24,6 @@ class HttpResponse
 		std::string	_getContentLength(void);
 		std::string	_getDate(void);
 		std::string	_getStatusLine(short int &);
-		std::string	_getStatusText(short int &);
 		std::string	_getLocation(parsedReq & req);
 		// Body Messages
 		short int	_readFile(std::string &, std::string &);
@@ -41,6 +40,8 @@ class HttpResponse
 		std::string	errorPage(short int &, parsedReq &);
 		void		clear(void);
 		void		prtResponse(void);
+
+		static std::string	getStatusText(short int);
 };
 
 #endif

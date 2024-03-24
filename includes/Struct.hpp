@@ -26,7 +26,6 @@ struct parsedReq {
 	uint64_t							bodySize;
 	uint64_t							bodySent;
 	Server								serv;
-	std::string							cliIPaddr;
 	std::string							method;
 	std::string							uri;		// original path that get from request
 	std::string							version;

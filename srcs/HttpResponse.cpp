@@ -1,7 +1,7 @@
 #include "HttpResponse.hpp"
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
-	std::cout << MAG << "---------------------- delete -----------------------" << RESET << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Delete -----");
 	_body = "";
 	if (access(req.pathSrc.c_str(), F_OK) != 0)
 		return status = 404, "";
@@ -14,20 +14,20 @@ std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 }
 
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
-	std::cout << MAG << "---------------------- redir -----------------------" << RESET << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Redirection -----");
 	_body = req.serv.retur.text;
 	req.pathSrc = req.serv.retur.text;
 	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
-	std::cout << MAG << "---------------------- Auto index -----------------------" << RESET << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Auto Index -----");
 	_listFile(req, _body);
 	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
-	std::cout << MAG << "---------------------- Tat Tic -----------------------" << RESET << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Static -----");
 	status = _readFile(req.pathSrc, _body);
 	if (status >= 200 && status < 300)
 		return _createHeader(status, req) + CRLF + _body;
@@ -35,6 +35,7 @@ std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 }
 
 std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response CGI-Script -----");
 	std::string	cgiHeader;
 
 	if (status != 200)
@@ -50,7 +51,7 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std:
 }
 
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
-	std::cout << MAG << "---------------------- Error Page -----------------------" << RESET << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Error Page -----");
 	req.pathSrc = req.serv.getErrPage(status);
 	if (req.pathSrc.empty())
 		_body = "Something went wrong";
@@ -83,7 +84,7 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 
 	headerMsg.reserve(HEADBUFSIZE);
 	headerMsg = _getStatusLine(status);
-	if (_headers.count("Accept-Ranges") == 0) // TODO : must be check first
+	if (_headers.count("Accept-Ranges") == 0)
 		_headers["Accept-Ranges"] = "bytes";
 	if (_headers.count("Connection") == 0) {
 		if (status >= 400)
@@ -134,11 +135,11 @@ std::string	HttpResponse::_getDate(void) {
 std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 	std::string	httpVer = HTTP_VERS;
 	std::string	httpStatCode = numToStr(statusCode);
-	std::string httpStatText = _getStatusText(statusCode);
+	std::string httpStatText = getStatusText(statusCode);
 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
 }
 
-std::string	HttpResponse::_getStatusText(short int & statusCode) {
+std::string	HttpResponse::getStatusText(short int statusCode) {
 	switch (statusCode) {
 		case 200:
 			return "OK";
@@ -180,7 +181,6 @@ std::string	HttpResponse::_getStatusText(short int & statusCode) {
 std::string	HttpResponse::_getLocation(parsedReq & req) {
 	std::string	location = "http://";
 
-	std::cout << "url :    " << req.path << std::endl;
 	std::map<std::string, std::string>::const_iterator	it;
 	it = req.headers.find("Host");
 	if (it == req.headers.end())
@@ -284,7 +284,6 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 // ************************************************************************** //
 
 short int	HttpResponse::_parseCgiHeader(std::string & cgiMsg, std::string	& cgiHeadMsg) {
-	// std::cout << cgiMsg << std::endl; // debug
 	std::size_t	found  = cgiMsg.find("\n\n");
 	if (found == std::string::npos)
 		return 502;
@@ -304,7 +303,6 @@ short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeadMsg) {
 		_headers[toProperCase(key)] = header;
 		found = cgiHeadMsg.find_first_of("\n");
 	}
-	std::cout << "Inspect CGI heasers success" << std::endl;
-	std::cout << "header size: " << _headers.size() << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "----- Inspect CGI heasers success -----");
 	return 200;
 }

@@ -30,7 +30,7 @@ std::string	toProperCase(std::string & src) {
 	return dest;
 }
 
-std::string	numToStr(size_t num) {
+std::string	numToStr(ssize_t num) {
 	std::stringstream	ss;
 	ss << num;
 	return ss.str();

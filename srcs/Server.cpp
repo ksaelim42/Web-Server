@@ -3,7 +3,7 @@
 Server::Server(void) {
 	_initMineTypeDefault();
 	_initErrPage();
-	name = "";						// default : null
+	name = "localhost";				// default : null
 	ipAddr = "0.0.0.0";				// default : any addr
 	port = "80";					// default : 80
 	root = "html";					// default : html directory
@@ -38,24 +38,6 @@ std::string	Server::getErrPage(short int & errCode) const {
 	if (it != errPage.end())
 		return it->second;
 	return "";
-}
-
-struct sockaddr	Server::getSockAddr(void) const {
-	int	status;
-	struct sockaddr	sockAddr;
-	struct addrinfo	hints, *result;
-
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;		// Allow IPv4 or IPv6
-	hints.ai_socktype = SOCK_STREAM;	// Stream socket = TCP
-	status = getaddrinfo(ipAddr.c_str(), port.c_str(), &hints, &result); // TODO : not sure name is right
-	if (status != 0) {
-		std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
-		// return false;
-	}
-	sockAddr = *(result->ai_addr);
-	freeaddrinfo(result);
-	return sockAddr;
 }
 
 void	Server::prtServer(void) {

@@ -34,6 +34,7 @@ class Client
 		bool		_findBodySize(void);
 	public:
 		int					sockFd;
+		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
 		struct sockaddr_in	addr;

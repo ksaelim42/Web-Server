@@ -60,11 +60,10 @@ class Server // don't forget to create vector to store this class as it may have
 		Server(void);
 		~Server(void);
 
-		std::string		getMimeType(const std::string & extension) const;
-		std::string		getErrPage(short int &) const;
-		struct sockaddr	getSockAddr(void) const;
-		void			clearLocation(void);
-		void			prtServer(void);
+		void		clearLocation(void);
+		void		prtServer(void);
+		std::string	getMimeType(const std::string & extension) const;
+		std::string	getErrPage(short int &) const;
 };
 
 #endif

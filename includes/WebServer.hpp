@@ -24,6 +24,7 @@ class WebServer
 		std::map<int, Client>	_clients;
 		struct timeval			_timeOut;
 
+		bool	_setPollFd(void);
 		int		_acceptConnection(int &);
 		int		_receiveRequest(Client &);
 		int		_sendResponse(Client &);
@@ -31,20 +32,19 @@ class WebServer
 		void	_fdClear(int &, fd_set &);
 		void	_disconnectClient(int &);
 		void	_disconnectAllClient(void);
-		bool	_setSockAddr(struct addrinfo * &, Server &);
+		bool	_setSockAddr(struct addrinfo &, Server &);
 		bool	_setOptSock(int &);
 		bool	_matchServer(int &);
-		bool	_connectedClient(fd_set &); // TODO : for test
 		Server*	_getServer(int &);
 		ssize_t	_unChunking(Client &);
 	public:
-		WebServer(std::vector<Server> &);
+		WebServer();
 		~WebServer();
 
-		bool	initServer(void);
+		bool	initServer(std::vector<Server> &);
 		bool	runServer(void);
 		bool	downServer(void);
-		void	prtLog(short int);
+		static void	signal_handler(int);
 		class	WebServerException : public std::exception {
 			private:
 				std::string	_ErrMsg;
