@@ -5,6 +5,8 @@
 #include <fcntl.h>		// check fd is open
 #include <sys/stat.h>	// stat
 #include <sys/wait.h>	// waitpid
+#include <cerrno>		// errno
+#include <cstdlib>		// exit
 
 #include "HttpRequest.hpp"
 #include "Utils.hpp"
@@ -24,7 +26,7 @@ class CgiHandler
 
 		bool	_initEnv(parsedReq &);
 		bool	_checkCgiScript(short int &, parsedReq &);
-		bool	_createPipe(parsedReq &);
+		bool	_createPipe(void);
 		bool	_gotoCgiDir(std::string &);
 		void	_closePipe(void);
 		void	_childProcess(parsedReq &);

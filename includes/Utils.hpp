@@ -5,8 +5,11 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <unistd.h>
 
 #include "Logger.hpp"
+
+typedef unsigned long int uint64_t;
 
 bool		isHexChar(char &);
 bool		isHexStr(std::string &);

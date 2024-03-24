@@ -46,16 +46,16 @@ void	Server::prtServer(void) {
 	std::cout << "Port        : " << MAG << port << RESET << std::endl;
 	std::cout << "Root        : " << MAG << root << RESET << std::endl;
 	std::cout << "index       : ";
-	for (int i = 0; i < index.size(); i++)
+	for (size_t i = 0; i < index.size(); i++)
 		std::cout << MAG << index[i] << ", ";
 	std::cout << RESET << std::endl;
 	std::cout << "CliBodySize : " << MAG << cliBodySize << RESET << std::endl;
-	for (int i = 0; i < location.size(); i++) {
+	for (size_t i = 0; i < location.size(); i++) {
 		std::cout << "*** Location[" << i << "] ***" << std::endl;
 		std::cout << "path        : " << MAG << location[i].path << RESET << std::endl;
 		std::cout << "Root        : " << MAG << location[i].root << RESET << std::endl;
 		std::cout << "index       : ";
-		for (int j = 0; j < location[i].index.size(); j++)
+		for (size_t j = 0; j < location[i].index.size(); j++)
 			std::cout << MAG << location[i].index[j] << ", ";
 		std::cout << RESET << std::endl;
 		std::cout << "allowMethod : " << MAG << location[i].allowMethod << RESET << std::endl;

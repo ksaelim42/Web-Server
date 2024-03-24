@@ -7,7 +7,7 @@ std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 		return status = 404, "";
 	if (access(req.pathSrc.c_str(), W_OK) != 0)
 		return status = 403, "";
-	if (std::remove(req.pathSrc.c_str()) != 0)
+	if (remove(req.pathSrc.c_str()) != 0)
 		return status = 503, "";
 	status = 204;
 	return _createHeader(status , req) + CRLF + _body;
@@ -219,7 +219,6 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 	char			buffer[20];
 	struct dirent	*entry;
 	struct stat		fileStat;
-	struct tm		*gmTime;
 	std::string		files;
 	std::string		directories;
 
@@ -233,11 +232,11 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 	body += "<hr>\n";
 	body += "<pre>\n";
 	dir = opendir(req.pathSrc.c_str());
-	if (dir == nullptr) {
+	if (dir == NULL) {
 		std::cerr << "Error opening directory." << std::endl;
 		return 0;
 	}
-	while ((entry = readdir(dir)) != nullptr) {
+	while ((entry = readdir(dir)) != NULL) {
 		std::string	fileName(entry->d_name);
 		if (fileName == ".")
 			continue ;

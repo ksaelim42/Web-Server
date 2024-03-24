@@ -199,7 +199,7 @@ bool	Client::_matchLocation(std::vector<Location> loc) {
 	
 	matchLoc.path = "";
 	// searching the location that most charactor match
-	for (int i = 0; i < loc.size(); i++) {
+	for (size_t i = 0; i < loc.size(); i++) {
 		if (_req.path.find(loc[i].path) == 0 && loc[i].path.size() > matchLoc.path.size())
 			matchLoc = loc[i];
 	}
@@ -269,7 +269,7 @@ bool	Client::_redirect(void) {
 bool	Client::_findFile(void) {
 	std::string	path;
 	path = _req.serv.root + _req.path;
-	if (path.back() == '/') {
+	if (path[path.length() - 1] == '/') {
 		std::vector<std::string>	index = _req.serv.index;
 		std::string	filePath;
 		for (size_t	i = 0; i < index.size(); i++) {
@@ -292,7 +292,7 @@ bool	Client::_findFile(void) {
 
 bool	Client::_findType(void) {
 	if (S_ISDIR(_fileInfo.st_mode)) { // is directory
-		if (_req.path.back() == '/') {
+		if (_req.path[_req.path.length() - 1] == '/') {
 			if (_req.serv.autoIndex)
 				return true;
 			else

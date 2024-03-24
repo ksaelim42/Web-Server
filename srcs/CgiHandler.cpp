@@ -20,7 +20,7 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 		return false;
 	if (!_initEnv(req))
 		return false;
-	if (!_createPipe(req)) {
+	if (!_createPipe()) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
 		return (status = 500, false);
 	}
@@ -58,7 +58,7 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 }
 
 bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) {
-	ssize_t	bytes;
+	size_t	bytes;
 
 	if (bufSize) {
 		bytes = write(_pipeInFd[1], body, bufSize);
@@ -177,7 +177,7 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 	return false;
 }
 
-bool	CgiHandler::_createPipe(parsedReq & req) {
+bool	CgiHandler::_createPipe(void) {
 	if (pipe(_pipeOutFd) == -1) { // Sent output from Child to Parent
 		return false;
 	}

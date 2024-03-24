@@ -18,6 +18,7 @@
 #include <vector>
 #include <string.h>
 #include <cstdio>	// remove()
+#include <cstdlib>
 
 struct httpReq
 {

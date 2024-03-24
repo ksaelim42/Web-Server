@@ -2,7 +2,7 @@
 
 std::string	toProtoEnv(std::string var) {
 	std::string	key = "HTTP_";
-	for (int i = 0; i < var.length(); i++) {
+	for (size_t i = 0; i < var.length(); i++) {
 		if (var[i] == '-')
 			var[i] = '_';
 		var[i] = std::toupper(var[i]);
@@ -122,21 +122,20 @@ std::string	strCutTo(std::string & str, std::string lim) {
 }
 
 // Finding special header in map headers
-std::string	findHeaderValue(std::map<std::string, std::string> & map, std::string const & content) {
-	std::map<std::string, std::string>::const_iterator	it;
+std::string	findHeaderValue(std::map<std::string, std::string> & myMap, std::string const & content) {
+	std::map<std::string, std::string>::iterator	it;
 	std::string	value = "";
 
-	it = map.find(content);
-	if (it != map.end()) {
+	it = myMap.find(content);
+	if (it != myMap.end()) {
 		value = it->second;
-		map.erase(it);
+		myMap.erase(it);
 	}
 	return value;
 }
 
 void	prtMap(std::map<std::string, std::string> & set) {
 	std::map<std::string, std::string>::const_iterator	it;
-	size_t	i = 0;
 	for (it = set.begin(); it != set.end(); it++)
 		std::cout << it->first << ": " << it->second << std::endl;
 }

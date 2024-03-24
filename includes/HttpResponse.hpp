@@ -8,6 +8,8 @@
 #include <unistd.h>		// read, write
 #include <sstream>		// ostringstream
 #include <iomanip>		// setw
+#include <cerrno>		// errno
+#include <cstdio>		// remove file
 
 #include "Utils.hpp"
 #include "Struct.hpp"

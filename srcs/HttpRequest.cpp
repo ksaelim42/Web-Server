@@ -61,7 +61,7 @@ httpReq	storeReq(std::string rawReq)
 		std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
 		exit(1); //should not be exit but return 400
 	}
-	for (int i = 0; i < headVec.size(); i++) 
+	for (size_t i = 0; i < headVec.size(); i++) 
 		reqData.headers[headVec[i]] = tailVec[i];
 	
 	return reqData;

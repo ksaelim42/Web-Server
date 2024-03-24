@@ -8,7 +8,7 @@ WebServer::~WebServer() {}
 
 bool	WebServer::initServer(std::vector<Server> & servs) {
 	struct addrinfo	sockAddr;
-	for (int i = 0; i < servs.size(); i++) {
+	for (size_t i = 0; i < servs.size(); i++) {
 		// Creating socket file descriptor
 		if (_setSockAddr(sockAddr, servs[i]) == 0)
 			throw WebServerException("Setup socket fail");
@@ -82,7 +82,7 @@ bool	WebServer::runServer(void) {
 }
 
 bool	WebServer::downServer(void) {
-	for (int i = 0; i < _servs.size(); i++)
+	for (size_t i = 0; i < _servs.size(); i++)
 		close(_servs[i].sockFd);
 	Logger::isLog(INFO) && Logger::log(GRN, "Server are closed");
 	return true;
@@ -102,7 +102,7 @@ bool	WebServer::_setPollFd(void) {
 	FD_ZERO(&_writeFds);
 	_timeOut.tv_sec = 5;
 	_timeOut.tv_usec = 0;
-	for (int i = 0; i < _servs.size(); i++) {
+	for (size_t i = 0; i < _servs.size(); i++) {
 		_fdSet(_servs[i].sockFd, _readFds);
 		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
 	}
@@ -110,8 +110,10 @@ bool	WebServer::_setPollFd(void) {
 }
 
 void	WebServer::signal_handler(int signum) {
-	std::cout << "\rTerminate Server" << std::endl;
-	g_state = 0; // OFF
+	if (signum == SIGQUIT || signum == SIGTERM) {
+		std::cout << "\rTerminate Server" << std::endl;
+		g_state = 0; // OFF
+	}
 }
 
 int	WebServer::_acceptConnection(int & serverFd) {
@@ -236,7 +238,7 @@ void	WebServer::_fdClear(int &fd, fd_set &set) {
 }
 
 bool	WebServer::_matchServer(int &fd) {
-	for (int i = 0; i < _servs.size(); i++) {
+	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return true;
 	}
@@ -244,7 +246,7 @@ bool	WebServer::_matchServer(int &fd) {
 }
 
 Server*	WebServer::_getServer(int &fd) {
-	for (int i = 0; i < _servs.size(); i++) {
+	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return &(_servs[i]);
 	}
