@@ -83,9 +83,11 @@ bool	WebServer::runServer(void) {
 }
 
 bool	WebServer::downServer(void) {
-	for (size_t i = 0; i < _servs.size(); i++)
+	_disconnectAllClient();
+	for (size_t i = 0; i < _servs.size(); i++) {
 		close(_servs[i].sockFd);
-	Logger::isLog(INFO) && Logger::log(GRN, "Server are closed");
+		Logger::isLog(DEBUG) && Logger::log(GRN, "Down server fd: ", _servs[i].sockFd);
+	}
 	return true;
 }
 
@@ -221,7 +223,7 @@ ssize_t	WebServer::_unChunking(Client & client) {
 
 void	WebServer::signal_handler(int signum) {
 	if (signum == SIGQUIT || signum == SIGTERM) {
-		std::cout << "\rTerminate Server" << std::endl;
+		Logger::isLog(INFO) && Logger::log(MAG, "\rTerminate Server");
 		g_state = 0; // OFF
 	}
 }
