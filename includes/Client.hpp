@@ -32,12 +32,15 @@ class Client
 		bool		_findFile(void);
 		bool		_findType(void);
 		bool		_findBodySize(void);
+		// Time Out
+		void		_updateTime(void);
 	public:
 		int					sockFd;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
 		struct sockaddr_in	addr;
+		std::time_t			lastTimeConnected;
 
 		Client(void);
 		~Client(void);

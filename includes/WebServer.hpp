@@ -37,6 +37,7 @@ class WebServer
 		bool	_matchServer(int &);
 		Server*	_getServer(int &);
 		ssize_t	_unChunking(Client &);
+		void	_timeOutMonitoring(void);
 	public:
 		WebServer();
 		~WebServer();

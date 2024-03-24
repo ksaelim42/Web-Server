@@ -8,6 +8,7 @@
 # define HEADBUFSIZE	1024		// Buffer size of Response Header in Bytes.
 # define BUFFERSIZE		65537		// Buffer size of HTTP request in Bytes.
 # define CONNECTIONSIZE	50			// Numbers of connection from client that server can handle
+# define KEEPALIVETIME	5			// Time in second to (keep connection to client)
 # define HTTP_VERS		"HTTP/1.1"
 # define CGI_VERS		"CGI/1.0"
 # define PROGRAM_NAME	"MPM/1.0"	// Mos Prach Mark

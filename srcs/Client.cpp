@@ -1,6 +1,7 @@
 #include "Client.hpp"
 
 Client::Client(void) {
+	_updateTime();
 	addrLen = sizeof(struct sockaddr_in);
 	serv = NULL;
 	_req.type = HEADER;
@@ -9,6 +10,7 @@ Client::Client(void) {
 Client::~Client(void) {}
 
 void	Client::parseRequest(char *buffer, size_t bufSize) {
+	_updateTime();
 	if (_req.type == HEADER) {
 		_initReqParse();
 		_parseHeader(buffer, bufSize);
@@ -23,6 +25,7 @@ void	Client::parseRequest(char *buffer, size_t bufSize) {
 }
 
 void	Client::genResponse(std::string & resMsg) {
+	_updateTime();
 	if (_status == 200 && _req.method == "DELETE")
 		resMsg = _res.deleteResource(_status, _req);
 	else if (_req.redir || (_status >= 300 && _status < 400))
@@ -43,6 +46,7 @@ void	Client::genResponse(std::string & resMsg) {
 }
 
 void	Client::setResponse(short int status) {
+	_updateTime();
 	if (status == 200) {
 		size_t	size = 0;
 		_cgi.sendBody(NULL, size, _req);
@@ -326,4 +330,13 @@ bool	Client::_findBodySize(void) {
 	}
 	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Length Required");
 	return _status = 411, false;
+}
+
+// ************************************************************************** //
+// -------------------------------- Time Out -------------------------------- //
+// ************************************************************************** //
+
+void	Client::_updateTime(void) {
+	std::time(&lastTimeConnected);		// get current time.
+	lastTimeConnected += KEEPALIVETIME;
 }

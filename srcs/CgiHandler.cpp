@@ -1,20 +1,31 @@
 #include "CgiHandler.hpp"
 
 CgiHandler::CgiHandler() {
-	_pid = -1;
-	_isPost = 0;
-	_package = 1;
+	_initCgi();
 }
 
 CgiHandler::~CgiHandler() {
-	if (fcntl(_pipeInFd[1], F_GETFL) != -1)
+	if (_pipeInFd[1] > 0 && fcntl(_pipeInFd[1], F_GETFL) != -1)
 		close(_pipeInFd[1]);
-	if (fcntl(_pipeOutFd[0], F_GETFL) != -1)
+	if (_pipeOutFd[0] > 0 && fcntl(_pipeOutFd[0], F_GETFL) != -1)
 		close(_pipeOutFd[0]);
 }
 
+void	CgiHandler::_initCgi() {
+	_pid = -1;
+	_isPost = 0;
+	_package = 1;
+	_pipeInFd[0] = -1;
+	_pipeInFd[1] = -1;
+	_pipeOutFd[0] = -1;
+	_pipeOutFd[1] = -1;
+	_cgiFileName = "";
+	_cgiProgramPath = "";
+	_env.clear();
+}
+
 bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
-	
+	_initCgi();
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	if (_checkCgiScript(status, req) == 0)
 		return false;

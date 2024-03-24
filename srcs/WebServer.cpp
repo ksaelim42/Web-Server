@@ -47,7 +47,7 @@ bool	WebServer::runServer(void) {
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
-			_disconnectAllClient();
+			_timeOutMonitoring();
 			continue;
 		} else if (status == -1) {
 			Logger::isLog(ERROR) && Logger::log(RED, "[Server] - Error select");
@@ -77,6 +77,7 @@ bool	WebServer::runServer(void) {
 				_fdSet(fd, _readFds);
 			}
 		}
+		_timeOutMonitoring();
 	}
 	return true;
 }
@@ -91,30 +92,6 @@ bool	WebServer::downServer(void) {
 // ************************************************************************** //
 // ----------------------------- Server Fields ------------------------------ //
 // ************************************************************************** //
-
-bool	WebServer::_setPollFd(void) {
-	g_state = 1; // ON
-	signal(SIGQUIT, signal_handler);
-	signal(SIGTERM, signal_handler);
-	signal(SIGPIPE, SIG_IGN); // Protect terminate process when write on the shutdown socket
-	_fdMax = 0;
-	FD_ZERO(&_readFds);
-	FD_ZERO(&_writeFds);
-	_timeOut.tv_sec = 5;
-	_timeOut.tv_usec = 0;
-	for (size_t i = 0; i < _servs.size(); i++) {
-		_fdSet(_servs[i].sockFd, _readFds);
-		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
-	}
-	return true;
-}
-
-void	WebServer::signal_handler(int signum) {
-	if (signum == SIGQUIT || signum == SIGTERM) {
-		std::cout << "\rTerminate Server" << std::endl;
-		g_state = 0; // OFF
-	}
-}
 
 int	WebServer::_acceptConnection(int & serverFd) {
 	Client	client;
@@ -192,6 +169,80 @@ int	WebServer::_sendResponse(Client & client) {
 	return 1;
 }
 
+ssize_t	WebServer::_unChunking(Client & client) {
+	char		buf[4];
+	size_t		i;
+	size_t		chunkSize;
+	ssize_t		count;
+	std::string	str;
+
+	for (i = 0; i < 4; i++) {
+		count = recv(client.sockFd, &buf[0], 1, MSG_DONTWAIT);
+		if (count <= 0)
+			return count;
+		if (isHexChar(buf[0]))
+			str.push_back(buf[0]);
+		else
+			break;
+	}
+	if (i == 0)
+		return client.setResponse(400), 1;
+	chunkSize = hexStrToDec(str);
+	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Chunck size: ",chunkSize);
+	if (chunkSize == 0) { // Last chunk
+		count = recv(client.sockFd, buf, 4, MSG_DONTWAIT);
+		if (count <= 0)
+			return client.setResponse(400), 1;
+		else
+			return client.setResponse(200), 1;
+	}
+	else if (chunkSize > BUFFERSIZE - 1)
+		return client.setResponse(413), 1;
+	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
+	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
+		return client.setResponse(400), 1;
+	i = 0;
+	while (i < chunkSize) {
+		count = recv(client.sockFd, &_buffer[i], chunkSize - i, MSG_DONTWAIT);
+		if (count <= 0)
+			return count;
+		i -= count;
+	}
+	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
+	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
+	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
+		return client.setResponse(400), 1;
+	return chunkSize;
+}
+
+// ************************************************************************** //
+// --------------------------- Server Initialize ---------------------------- //
+// ************************************************************************** //
+
+void	WebServer::signal_handler(int signum) {
+	if (signum == SIGQUIT || signum == SIGTERM) {
+		std::cout << "\rTerminate Server" << std::endl;
+		g_state = 0; // OFF
+	}
+}
+
+bool	WebServer::_setPollFd(void) {
+	g_state = 1; // ON
+	signal(SIGQUIT, signal_handler);
+	signal(SIGTERM, signal_handler);
+	signal(SIGPIPE, SIG_IGN); // Protect terminate process when write on the shutdown socket
+	_fdMax = 0;
+	FD_ZERO(&_readFds);
+	FD_ZERO(&_writeFds);
+	_timeOut.tv_sec = KEEPALIVETIME;
+	_timeOut.tv_usec = 0;
+	for (size_t i = 0; i < _servs.size(); i++) {
+		_fdSet(_servs[i].sockFd, _readFds);
+		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
+	}
+	return true;
+}
+
 bool	WebServer::_setSockAddr(struct addrinfo & sockAddr, Server & serv) {
 	int	status;
 	struct addrinfo	hints;
@@ -224,6 +275,10 @@ bool	WebServer::_setOptSock(int &sockFd) {
 		return false;
 	return true;
 }
+
+// ************************************************************************** //
+// ------------------------ Server Manipulate Clients ----------------------- //
+// ************************************************************************** //
 
 void	WebServer::_fdSet(int &fd, fd_set &set) {
 	FD_SET(fd, &set);
@@ -275,48 +330,16 @@ void	WebServer::_disconnectAllClient(void) {
 	_clients.clear();
 }
 
-ssize_t	WebServer::_unChunking(Client & client) {
-	char		buf[4];
-	size_t		i;
-	size_t		chunkSize;
-	ssize_t		count;
-	std::string	str;
+void	WebServer::_timeOutMonitoring(void) {
+	std::vector<int>	fdList;
+	std::time_t	currentTime;
 
-	for (i = 0; i < 4; i++) {
-		count = recv(client.sockFd, &buf[0], 1, MSG_DONTWAIT);
-		if (count <= 0)
-			return count;
-		if (isHexChar(buf[0]))
-			str.push_back(buf[0]);
-		else
-			break;
+	std::time(&currentTime);
+	std::map<int, Client>::iterator	it;
+	for (it = _clients.begin(); it != _clients.end(); it++) {
+		if (it->second.lastTimeConnected < currentTime)
+			fdList.push_back(it->second.sockFd);
 	}
-	if (i == 0)
-		return client.setResponse(400), 1;
-	chunkSize = hexStrToDec(str);
-	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Chunck size: ",chunkSize);
-	if (chunkSize == 0) { // Last chunk
-		count = recv(client.sockFd, buf, 4, MSG_DONTWAIT);
-		if (count <= 0)
-			return client.setResponse(400), 1;
-		else
-			return client.setResponse(200), 1;
-	}
-	else if (chunkSize > BUFFERSIZE - 1)
-		return client.setResponse(413), 1;
-	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
-	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setResponse(400), 1;
-	i = 0;
-	while (i < chunkSize) {
-		count = recv(client.sockFd, &_buffer[i], chunkSize - i, MSG_DONTWAIT);
-		if (count <= 0)
-			return count;
-		i -= count;
-	}
-	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
-	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
-	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setResponse(400), 1;
-	return chunkSize;
+	for (size_t i = 0; i < fdList.size(); i++)
+		_disconnectClient(fdList[i]);
 }
