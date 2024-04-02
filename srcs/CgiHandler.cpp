@@ -105,6 +105,7 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	char	buffer[BUFFERSIZE];
 
 	waitpid(_pid, &WaitStat, 0);
+	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
 	if (WaitStat != 0)
 		return (status = 502, false);
 	cgiMsg.clear();

@@ -44,7 +44,9 @@ bool	WebServer::runServer(void) {
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
 		// select will make system motoring three set, block until some fd ready
+		// sleep(1);
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		// Logger::isLog(WARNING) && Logger::log(GRN, "[Server] - select status: ", status);
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
@@ -54,6 +56,7 @@ bool	WebServer::runServer(void) {
 			continue;
 		}
 		for (int fd = 3; fd <= _fdMax; fd++) {
+			std::cout << RED << "For loop: " << fd << RESET << std::endl;
 			if (FD_ISSET(fd, &tmpReadFds)) {
 				if (_matchServer(fd)) { // if match any servers => new connection
 					if (_acceptConnection(fd) < 0) // can't accept connection
