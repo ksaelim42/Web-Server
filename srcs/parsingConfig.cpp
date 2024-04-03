@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/03 12:48:19 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/03 14:23:36 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -268,6 +268,7 @@ int main(int ac, char **av)
 		// std::cout << value << std::endl;
 		// break ;
 	}
+	std::cout << "hello" << std::endl;
 	printConfig(obj);
 }
 
