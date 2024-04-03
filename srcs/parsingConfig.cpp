@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/17 15:11:40 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/03 12:14:16 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <string>
 #include <map>
 
-void	storeDirectives(Server &obj, std::string key, std::string value, std::vector<std::string> valueVec)
+void storeDirectives(Server &obj, std::string key, std::string value, std::vector<std::string> valueVec)
 {
 	if (key == "server_name")
 		obj.name = value;
@@ -30,10 +30,10 @@ void	storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 	else if (key == "client_max_body_size")
 	{
 		uint64_t maxSize;
-		
+
 		maxSize = strToNum(value);
 		if (maxSize > UINT64_MAX) //? mac printed out 'error', not sure if linux will do the same
-			return ; // ! more later
+			return;				  // ! more later
 		obj.cliBodySize = maxSize;
 	}
 	else if (key == "autoindex")
@@ -50,7 +50,7 @@ void	storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 	}
 	else if (key == "limit_except")
 	{
-		obj.allowMethod = 0;	
+		obj.allowMethod = 0;
 		for (std::vector<std::string>::iterator it = valueVec.begin(); it != valueVec.end(); it++)
 		{
 			if (*it == "GET")
@@ -66,9 +66,9 @@ void	storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 	else if (key == "return")
 	{
 		obj.retur.have = false;
-		if (!value.empty())	
+		if (!value.empty())
 		{
-			short int	status;
+			short int status;
 
 			obj.retur.have = true;
 			status = strToShortInt(valueVec[0]);
@@ -84,18 +84,21 @@ void	storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 	}
 	else if (key == "error_page")
 	{
-		int	valuePos = valueVec.size();
+		int valuePos = valueVec.size() - 1;
 		short int errStatus;
-		
+
+		std::map<short int, std::string>::iterator it = obj.errPage.begin();
 		for (int i = 0; i < valuePos; i++)
 		{
 			errStatus = strToShortInt(valueVec[i]);
 			obj.errPage[errStatus] = valueVec[valuePos];
+			// std::cout << it->first << " => " << it->second << std::endl;
+			// it++;
 		}
 	}
 }
 
-void	storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
+void storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
 {
 	if (key == "location")
 		locStruct.path = value;
@@ -104,10 +107,10 @@ void	storeLocation(Location &locStruct, std::string key, std::string value, std:
 	else if (key == "client_max_body_size")
 	{
 		uint64_t maxSize;
-		
+
 		maxSize = strToNum(value);
 		if (maxSize > UINT64_MAX) //? mac printed out 'error', not sure if linux will do the same
-			return ; // ! more later
+			return;				  // ! more later
 		locStruct.cliBodySize = maxSize;
 	}
 	else if (key == "autoindex")
@@ -124,7 +127,7 @@ void	storeLocation(Location &locStruct, std::string key, std::string value, std:
 	}
 	else if (key == "limit_except")
 	{
-		locStruct.allowMethod = 0;	
+		locStruct.allowMethod = 0;
 		for (std::vector<std::string>::iterator it = valueVec.begin(); it != valueVec.end(); it++)
 		{
 			if (*it == "GET")
@@ -140,9 +143,9 @@ void	storeLocation(Location &locStruct, std::string key, std::string value, std:
 	else if (key == "return")
 	{
 		locStruct.retur.have = false;
-		if (!value.empty())	
+		if (!value.empty())
 		{
-			short int	status;
+			short int status;
 
 			locStruct.retur.have = true;
 			status = strToShortInt(valueVec[0]);
@@ -157,11 +160,11 @@ void	storeLocation(Location &locStruct, std::string key, std::string value, std:
 	}
 }
 
-void	setValue(Server &obj, Location &locStruct, std::string key, std::string value, bool isLocation)
+void setValue(Server &obj, Location &locStruct, std::string key, std::string value, bool isLocation)
 {
-	std::string					manyCase[] = {"index", "limit_except", "error_page", "return"};
-	std::vector<std::string>	valueVec;
-	bool						isMany = false;
+	std::string manyCase[] = {"index", "limit_except", "error_page", "return"};
+	std::vector<std::string> valueVec;
+	bool isMany = false;
 
 	// std::cout << value << std::endl;
 	for (int i = 0; i < 4; i++)
@@ -169,14 +172,14 @@ void	setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		if (key == manyCase[i])
 		{
 			isMany = true;
-			break ;
+			break;
 		}
 	}
 	if (isMany)
 	{
 		for (int i = 0; i < value.length(); i++)
 		{
-			std::string	tmp;
+			std::string tmp;
 			while (value[i] != ' ' && i < value.length())
 				tmp += value[i++];
 			if (!tmp.empty())
@@ -194,12 +197,12 @@ void	setValue(Server &obj, Location &locStruct, std::string key, std::string val
 
 int main(int ac, char **av)
 {
-	std::ifstream	configFile; 
-	std::string		tmp;
-	std::map<std::string, std::string>	mapConfig;
-	Server	obj;
-	Location	locStruct;
-	bool	isLocation = false;
+	std::ifstream configFile;
+	std::string tmp;
+	std::map<std::string, std::string> mapConfig;
+	Server obj;
+	Location locStruct;
+	bool isLocation = false;
 
 	if (ac != 2)
 		return (std::cout << "must have 2 arguments" << std::endl, 0);
@@ -208,7 +211,7 @@ int main(int ac, char **av)
 		return (std::cout << "cannot open config file" << std::endl, 0);
 	while (std::getline(configFile, tmp))
 	{
-		std::string	key;
+		std::string key;
 		int i = 0;
 		// for (int i = 0; tmp[i]; i++)
 		while (tmp[i])
@@ -220,7 +223,7 @@ int main(int ac, char **av)
 				// copy a directive
 				while (!isspace(tmp[i]))
 					key += tmp[i++];
-				break ;
+				break;
 			}
 			i++;
 		}
@@ -283,9 +286,9 @@ int main(int ac, char **av)
 	// for (std::vector<std::string>::iterator it = obj.index.begin(); it != obj.index.end(); it++)
 	// 	std::cout << *it << std::endl;
 	// error page
-	std::cout << "err_page: " << std::endl;
-	for (std::map<short int, std::string>::iterator it = obj.errPage.begin(); it != obj.errPage.end(); it++)
-		std::cout << it->first << " => " << it->second << std::endl;
+	// std::cout << "err_page: " << std::endl;
+	// for (std::map<short int, std::string>::iterator it = obj.errPage.begin(); it != obj.errPage.end(); it++)
+	// 	std::cout << it->first << " => " << it->second << std::endl;
 }
 
 //! NOTE
