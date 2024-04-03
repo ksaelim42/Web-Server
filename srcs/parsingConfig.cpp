@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/03 12:14:16 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/03 12:48:19 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -268,27 +268,7 @@ int main(int ac, char **av)
 		// std::cout << value << std::endl;
 		// break ;
 	}
-	// std::cout << "server_name: " << obj.name << std::endl;
-	// std::cout << "clien_body_size: " << obj.cliBodySize << std::endl;
-	// std::cout << "port: " << obj.port << std::endl;
-	// std::cout << "ip: " << obj.ipAddr << std::endl;
-	// std::cout << "root: " << obj.root << std::endl;
-	// std::cout << "autoindex: " << obj.autoIndex << std::endl;
-	// std::cout << "cgi: " << obj.cgiPass << std::endl;
-	// std::cout << "method: " << obj.allowMethod << std::endl;
-	// // return
-	// std::cout << "return:" << std::endl;
-	// std::cout << obj.retur.have << std::endl;
-	// std::cout << obj.retur.code << std::endl;
-	// std::cout << obj.retur.text << std::endl;
-	// index
-	// std::cout << "INDEX: " << std::endl;
-	// for (std::vector<std::string>::iterator it = obj.index.begin(); it != obj.index.end(); it++)
-	// 	std::cout << *it << std::endl;
-	// error page
-	// std::cout << "err_page: " << std::endl;
-	// for (std::map<short int, std::string>::iterator it = obj.errPage.begin(); it != obj.errPage.end(); it++)
-	// 	std::cout << it->first << " => " << it->second << std::endl;
+	printConfig(obj);
 }
 
 //! NOTE

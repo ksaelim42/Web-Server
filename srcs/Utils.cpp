@@ -1,5 +1,6 @@
 // #include "Utils.hpp"
 #include "../includes/Utils.hpp"
+#include "../includes/Server.hpp"
 
 std::string	toProtoEnv(std::string var) {
 	std::string	key = "HTTP_";
@@ -121,4 +122,29 @@ void	prtMap(std::map<std::string, std::string> & set) {
 	size_t	i = 0;
 	for (it = set.begin(); it != set.end(); it++)
 		std::cout << it->first << ": " << it->second << std::endl;
+}
+
+void	printConfig(Server obj)
+{
+	std::cout << "server_name: " << obj.name << std::endl;
+	std::cout << "clien_body_size: " << obj.cliBodySize << std::endl;
+	std::cout << "port: " << obj.port << std::endl;
+	std::cout << "ip: " << obj.ipAddr << std::endl;
+	std::cout << "root: " << obj.root << std::endl;
+	std::cout << "autoindex: " << obj.autoIndex << std::endl;
+	std::cout << "cgi: " << obj.cgiPass << std::endl;
+	std::cout << "method: " << obj.allowMethod << std::endl;
+	// return
+	std::cout << "return:" << std::endl;
+	std::cout << obj.retur.have << std::endl;
+	std::cout << obj.retur.code << std::endl;
+	std::cout << obj.retur.text << std::endl;
+	// index
+	std::cout << "INDEX: " << std::endl;
+	for (std::vector<std::string>::iterator it = obj.index.begin(); it != obj.index.end(); it++)
+		std::cout << *it << std::endl;
+	// error page
+	std::cout << "err_page: " << std::endl;
+	for (std::map<short int, std::string>::iterator it = obj.errPage.begin(); it != obj.errPage.end(); it++)
+		std::cout << it->first << " => " << it->second << std::endl;
 }
