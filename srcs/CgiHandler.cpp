@@ -5,10 +5,19 @@ CgiHandler::CgiHandler() {
 }
 
 CgiHandler::~CgiHandler() {
-	if (_pipeInFd[1] > 0 && fcntl(_pipeInFd[1], F_GETFL) != -1)
-		close(_pipeInFd[1]);
-	if (_pipeOutFd[0] > 0 && fcntl(_pipeOutFd[0], F_GETFL) != -1)
-		close(_pipeOutFd[0]);
+	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Destructor");
+	if (_pipeInFd[1] > 0 && fcntl(_pipeInFd[1], F_GETFL) != -1) {
+		_closePipe(_pipeInFd[1]);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", _pipeInFd[1], " was closed");
+	}
+	if (_pipeOutFd[0] > 0 && fcntl(_pipeOutFd[0], F_GETFL) != -1) {
+		_closePipe(_pipeOutFd[0]);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", _pipeOutFd[0], " was closed");
+	}
+	if (_pid != -1) {
+		kill(_pid, SIGKILL);
+		Logger::isLog(WARNING) && Logger::log(YEL, _pid, " was killed");
+	}
 }
 
 void	CgiHandler::_initCgi() {
@@ -38,14 +47,14 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
-		return (_closePipe(), status = 500, false);
+		return (_closeAllPipe(), status = 500, false);
 	}
 	if (_pid == 0) // Child Process
 		_childProcess(req);
 	else { // Parent Process
-		close(_pipeOutFd[1]);
+		_closePipe(_pipeOutFd[1]);
 		if (_isPost) {
-			close(_pipeInFd[0]);
+			_closePipe(_pipeInFd[0]);
 			if (req.type == CHUNK)
 				return true;
 			_package = 1;
@@ -58,7 +67,7 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 			}
 			if (req.bodySent >= req.bodySize) {
 				Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-				close(_pipeInFd[1]);
+				_closePipe(_pipeInFd[1]);
 				return req.type = RESPONSE, true;
 			}
 		}
@@ -80,7 +89,7 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) 
 	if (req.type == CHUNK) {
 		if (bufSize == 0) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			close(_pipeInFd[1]);
+			_closePipe(_pipeInFd[1]);
 			req.type = RESPONSE;
 		}
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", _package, "] sent ", bufSize, " Bytes");
@@ -92,7 +101,7 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) 
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			close(_pipeInFd[1]);
+			_closePipe(_pipeInFd[1]);
 			req.type = RESPONSE;
 		}
 	}
@@ -105,6 +114,7 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	char	buffer[BUFFERSIZE];
 
 	waitpid(_pid, &WaitStat, 0);
+	_pid = -1;
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
 	if (WaitStat != 0)
 		return (status = 502, false);
@@ -119,7 +129,7 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 		buffer[bytesRead] = '\0';
 		cgiMsg += buffer;
 	}
-	close(_pipeOutFd[0]);
+	_closePipe(_pipeOutFd[0]);
 	return (status = 200, true);
 }
 
@@ -216,26 +226,31 @@ bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	return true;
 }
 
-void	CgiHandler::_closePipe(void) {
+void	CgiHandler::_closePipe(int &fd) {
+	close(fd);
+	fd = -1;
+}
+
+void	CgiHandler::_closeAllPipe(void) {
 	if (_isPost) {
-		close(_pipeInFd[0]);
-		close(_pipeInFd[1]);
+		_closePipe(_pipeInFd[0]);
+		_closePipe(_pipeInFd[1]);
 	}
-	close(_pipeOutFd[0]);
-	close(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd[0]);
+	_closePipe(_pipeOutFd[1]);
 }
 
 void CgiHandler::_childProcess(parsedReq & req) {
 	if (_isPost) { // if post method will take input from std::in
 		dup2(_pipeInFd[0], STDIN_FILENO);
-		close(_pipeInFd[1]);
-		close(_pipeInFd[0]);
+		_closePipe(_pipeInFd[1]);
+		_closePipe(_pipeInFd[0]);
 	}
 	if (!_gotoCgiDir(req.pathSrc))
 		exit(errno);
 	dup2(_pipeOutFd[1], STDOUT_FILENO);
-	close(_pipeOutFd[0]);
-	close(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd[0]);
+	_closePipe(_pipeOutFd[1]);
 	char *args[3];
 	args[0] = strdup(_cgiProgramPath);
 	args[1] = strdup(_cgiFileName);

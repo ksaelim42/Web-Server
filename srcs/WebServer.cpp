@@ -44,19 +44,18 @@ bool	WebServer::runServer(void) {
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
 		// select will make system motoring three set, block until some fd ready
-		// sleep(1);
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
-		// Logger::isLog(WARNING) && Logger::log(GRN, "[Server] - select status: ", status);
+		// Logger::isLog(INFO) && Logger::log(GRN, "[Server] - select status: ", status); // debug
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
 			continue;
 		} else if (status == -1) {
-			Logger::isLog(ERROR) && Logger::log(RED, "[Server] - Error select");
+			char* err = strerror(errno);
+			Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error select: ", err);
 			continue;
 		}
-		for (int fd = 3; fd <= _fdMax; fd++) {
-			std::cout << RED << "For loop: " << fd << RESET << std::endl;
+		for (int fd = 0; fd <= _fdMax; fd++) {
 			if (FD_ISSET(fd, &tmpReadFds)) {
 				if (_matchServer(fd)) { // if match any servers => new connection
 					if (_acceptConnection(fd) < 0) // can't accept connection
@@ -110,7 +109,7 @@ int	WebServer::_acceptConnection(int & serverFd) {
 		if (!client.serv)
 			return _disconnectClient(client.sockFd), -1;
 		_fdSet(client.sockFd, _readFds);
-		Logger::isLog(DEBUG) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
+		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 		_clients[client.sockFd] = client;
 	}
 	return client.sockFd;

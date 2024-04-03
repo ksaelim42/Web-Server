@@ -60,7 +60,7 @@ int	main(int argc, char**argv)
 {
 	(void)argc; // TODO : set take config argument
 	(void)argv;
-	Logger::setLevel(WARNING);
+	Logger::setLevel(INFO);
 	try {
 		WebServer	webserv;
 		std::vector<Server>		servs;

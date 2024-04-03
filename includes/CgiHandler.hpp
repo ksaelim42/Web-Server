@@ -29,7 +29,8 @@ class CgiHandler
 		bool	_checkCgiScript(short int &, parsedReq &);
 		bool	_createPipe(void);
 		bool	_gotoCgiDir(std::string &);
-		void	_closePipe(void);
+		void	_closeAllPipe(void);
+		void	_closePipe(int &fd);
 		void	_childProcess(parsedReq &);
 	public:
 		CgiHandler();
