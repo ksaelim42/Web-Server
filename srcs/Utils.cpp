@@ -147,4 +147,35 @@ void	printConfig(Server obj)
 	std::cout << "err_page: " << std::endl;
 	for (std::map<short int, std::string>::iterator it = obj.errPage.begin(); it != obj.errPage.end(); it++)
 		std::cout << it->first << " => " << it->second << std::endl;
+	
+	// location 
+	if (obj.location.size() < 1)
+		return ;
+	int	locSize = obj.location.size();
+	for (int i = 0; i < locSize; i++)
+	{
+		std::cout << "#########LOCATION######### NO: " << i << std::endl;
+		std::cout << "path: " << obj.location[i].path << std::endl;
+		std::cout << "root: " << obj.location[i].root << std::endl;
+		std::cout << "allowMethod: " << obj.location[i].allowMethod << std::endl;
+		std::cout << "autoIndex: " << obj.location[i].autoIndex << std::endl;
+		std::cout << "cliBodySize: " << obj.location[i].cliBodySize << std::endl;
+		std::cout << "cgiPass: " << obj.location[i].cgiPass << std::endl;
+		// return
+		std::cout << "return :" << std::endl;
+		std::cout << obj.location[i].retur.have << std::endl;
+		std::cout << obj.location[i].retur.code << std::endl;
+		std::cout << obj.location[i].retur.text << std::endl;
+		// index
+		std::cout << "INDEX :" << std::endl;
+		for (std::vector<std::string>::iterator it = obj.location[i].index.begin(); it != obj.location[i].index.end(); it++)
+			std::cout << *it << std::endl;
+	}
 }
+
+
+
+
+
+
+

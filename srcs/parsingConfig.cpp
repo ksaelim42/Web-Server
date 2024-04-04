@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/04 13:41:00 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/04 15:50:24 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,8 +246,9 @@ int main(int ac, char **av)
 		{
 			std::string locKey = "location";
 			isLocation = true;
-			if (key == "}")
+			if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 			{
+				std::cout << "end location" << std::endl;
 				isLocation = false;
 				obj.location.push_back(locStruct);
 			}
