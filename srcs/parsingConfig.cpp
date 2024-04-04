@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/03 14:23:36 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/04 13:41:00 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,12 +88,12 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		short int errStatus;
 
 		std::map<short int, std::string>::iterator it = obj.errPage.begin();
+		if (!obj.errPage.empty()) // in case of incorrect buffer
+			obj.errPage.erase(it, obj.errPage.end());
 		for (int i = 0; i < valuePos; i++)
 		{
 			errStatus = strToShortInt(valueVec[i]);
 			obj.errPage[errStatus] = valueVec[valuePos];
-			// std::cout << it->first << " => " << it->second << std::endl;
-			// it++;
 		}
 	}
 }
@@ -234,12 +234,7 @@ int main(int ac, char **av)
 				i++;
 			// copy value(s)
 			while (tmp[i])
-			{
-				// std::cout << tmp[i] << std::endl;
 				value += tmp[i++];
-				// if (tmp[i] == ';')
-				// 	break ;
-			}
 		}
 		// remove ; from the value
 		for (int j = 0; j < value[j]; j++)
@@ -264,14 +259,6 @@ int main(int ac, char **av)
 		}
 		if (key != "location")
 			setValue(obj, locStruct, key, value, 0);
-		// std::cout << key << " : ";
-		// std::cout << value << std::endl;
-		// break ;
 	}
-	std::cout << "hello" << std::endl;
 	printConfig(obj);
 }
-
-//! NOTE
-// directives that are nor 'location' are stored just fine
-// location is not yet stored
