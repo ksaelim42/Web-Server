@@ -15,7 +15,7 @@ IFLAGS	= #-I$(DIR_INCS)
 ### Source Files ###
 # HEADERS	= $(wildcard $(DIR_INCS)/*.hpp)
 
-SRCS	= Server.cpp Utils.cpp parsingConfig.cpp
+SRCS	= Server.cpp Utils.cpp parsingConfig.cpp configUtils.cpp
 
 ### Object Files ###
 OBJS	= $(subst $(DIR_SRCS), $(DIR_OBJS), $(SRCS:.cpp=.o))

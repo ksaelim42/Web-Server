@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/04 15:50:24 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/05 16:00:07 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,8 +100,16 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 
 void storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
 {
+	// if (!locStruct.path.empty())
+	// 	locStruct.path.clear();
+	// std::cout << "IN" << std::endl;
+	// std::cout << key << std::endl;
+	// std::cout << "value: " << value << std::endl;
 	if (key == "location")
+	{
 		locStruct.path = value;
+		// std::cout << "key is locatiion here: " << locStruct.path << std::endl;
+	}
 	else if (key == "root")
 		locStruct.root = value;
 	else if (key == "client_max_body_size")
@@ -115,9 +123,12 @@ void storeLocation(Location &locStruct, std::string key, std::string value, std:
 	}
 	else if (key == "autoindex")
 	{
+		// std::cout << "value: " << value << std::endl;
 		locStruct.autoIndex = false;
 		if (value == "on")
+		{
 			locStruct.autoIndex = true;
+		}
 	}
 	else if (key == "cgi_pass")
 	{
@@ -155,6 +166,7 @@ void storeLocation(Location &locStruct, std::string key, std::string value, std:
 	}
 	else if (key == "index")
 	{
+		locStruct.index.clear(); // to make sure that the buffer won't messed up
 		for (int i = 0; i < valueVec.size(); i++)
 			locStruct.index.push_back(valueVec[i]);
 	}
@@ -193,7 +205,9 @@ void setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		storeLocation(locStruct, key, value, valueVec);
 	else
 		storeDirectives(obj, key, value, valueVec);
+	// std::cout << "out: " << locStruct.path << std::endl;
 }
+
 
 int main(int ac, char **av)
 {
@@ -244,17 +258,21 @@ int main(int ac, char **av)
 		}
 		if (key == "location" || isLocation)
 		{
-			std::string locKey = "location";
+			// std::string locKey = "location";
 			isLocation = true;
 			if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 			{
-				std::cout << "end location" << std::endl;
+				// std::cout << "end location" << std::endl;
 				isLocation = false;
+				// std::cout << "stored: " << locStruct.path << std::endl;
 				obj.location.push_back(locStruct);
+				clearLocation(locStruct);
 			}
 			if (isLocation)
 			{
-				setValue(obj, locStruct, locKey, value, 1);
+				// std::cout << "key: " << key << std::endl;
+				// std::cout << "value: " << value << std::endl;
+				setValue(obj, locStruct, key, value, 1);
 				continue;
 			}
 		}

@@ -14,7 +14,7 @@ server {
 
     location /blog {
         root        /var/www/html/myPage;
-        autoindex    on; # can be on/off
+        autoindex    on;
     }
 
     location /redir {

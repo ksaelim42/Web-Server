@@ -68,4 +68,8 @@ class Server // don't forget to create vector to store this class as it may have
 		struct sockaddr				getSockAddr(void) const;
 };
 
+
+void	printConfig(Server obj);
+void	clearLocation(Location &locStruct);
+
 #endif
