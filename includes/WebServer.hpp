@@ -28,16 +28,17 @@ class WebServer
 		int		_acceptConnection(int &);
 		int		_receiveRequest(Client &);
 		int		_sendResponse(Client &);
-		void	_fdSet(int &, fd_set &);
-		void	_fdClear(int &, fd_set &);
-		void	_disconnectClient(int &);
+		void	_fdSet(int, fd_set &);
+		void	_fdClear(int, fd_set &);
+		void	_disconnectClient(int);
 		void	_disconnectAllClient(void);
 		bool	_setSockAddr(struct addrinfo &, Server &);
 		bool	_setOptSock(int &);
-		bool	_matchServer(int &);
-		Server*	_getServer(int &);
+		bool	_matchServer(int);
+		Server*	_getServer(int);
 		ssize_t	_unChunking(Client &);
 		void	_timeOutMonitoring(void);
+		void	_prtFristSet(fd_set &);
 	public:
 		WebServer();
 		~WebServer();

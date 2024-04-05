@@ -32,6 +32,12 @@ bool	WebServer::initServer(std::vector<Server> & servs) {
 	return true;
 }
 
+std::string	currentTime(void) {
+	std::time_t	time = std::time(NULL);
+	std::tm* tm = std::localtime(&time);
+	return numToStr(tm->tm_hour) + ":" + numToStr(tm->tm_min) + ":" + numToStr(tm->tm_sec);
+}
+
 bool	WebServer::runServer(void) {
 	fd_set			tmpReadFds;
 	fd_set			tmpWriteFds;
@@ -44,8 +50,10 @@ bool	WebServer::runServer(void) {
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
 		// select will make system motoring three set, block until some fd ready
+		// _prtFristSet(tmpReadFds);
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
-		// Logger::isLog(INFO) && Logger::log(GRN, "[Server] - select status: ", status); // debug
+		// std::string curTime = currentTime();
+		// Logger::isLog(INFO) && Logger::log(GRN, "[Server] - select blocking: ", curTime); // debug
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
@@ -106,8 +114,10 @@ int	WebServer::_acceptConnection(int & serverFd) {
 	} else {
 		client.serv = _getServer(serverFd);
 		client.IPaddr = inet_ntoa(client.addr.sin_addr);
-		if (!client.serv)
+		if (!client.serv) // if There aren't server open
 			return _disconnectClient(client.sockFd), -1;
+		// if (fcntl(client.sockFd, F_SETFL, O_NONBLOCK) < 0) // if can't set non-blocking I/O
+		// 	return _disconnectClient(client.sockFd), -1;
 		_fdSet(client.sockFd, _readFds);
 		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 		_clients[client.sockFd] = client;
@@ -284,19 +294,19 @@ bool	WebServer::_setOptSock(int &sockFd) {
 // ------------------------ Server Manipulate Clients ----------------------- //
 // ************************************************************************** //
 
-void	WebServer::_fdSet(int &fd, fd_set &set) {
+void	WebServer::_fdSet(int fd, fd_set &set) {
 	FD_SET(fd, &set);
 	if (fd > _fdMax)
 		_fdMax = fd;
 }
 
-void	WebServer::_fdClear(int &fd, fd_set &set) {
+void	WebServer::_fdClear(int fd, fd_set &set) {
 	FD_CLR(fd, &set);
 	if (fd == _fdMax)
 		_fdMax--;
 }
 
-bool	WebServer::_matchServer(int &fd) {
+bool	WebServer::_matchServer(int fd) {
 	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return true;
@@ -304,7 +314,7 @@ bool	WebServer::_matchServer(int &fd) {
 	return false;
 }
 
-Server*	WebServer::_getServer(int &fd) {
+Server*	WebServer::_getServer(int fd) {
 	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return &(_servs[i]);
@@ -313,7 +323,7 @@ Server*	WebServer::_getServer(int &fd) {
 	return NULL;
 }
 
-void	WebServer::_disconnectClient(int & client_fd) {
+void	WebServer::_disconnectClient(int client_fd) {
 	if (_clients.count(client_fd)) {
 		_fdClear(client_fd, _readFds);
 		_fdClear(client_fd, _writeFds);
@@ -346,4 +356,31 @@ void	WebServer::_timeOutMonitoring(void) {
 	}
 	for (size_t i = 0; i < fdList.size(); i++)
 		_disconnectClient(fdList[i]);
+}
+
+// ************************************************************************** //
+// --------------------------- Function Debugging --------------------------- //
+// ************************************************************************** //
+
+void	WebServer::_prtFristSet(fd_set &set) {
+	long firstFdSet[2];
+	size_t	size = sizeof(firstFdSet[0]);
+
+	firstFdSet[0] = set.fds_bits[0];
+	firstFdSet[1] = set.fds_bits[1];
+	std::cout << MAG << "fd : ";
+	for (size_t i = 0; i < size * 2; i++)
+		std::cout << i << " ";
+	std::cout << "\nset: ";
+	for (size_t j = 0; j < 2; j++) {
+		for (size_t i = 0; i < size; i++) {
+			if ((i + j * 8) > 9)
+				std::cout << " ";
+			if ((firstFdSet[j] >> i) & 1)
+				std::cout << GRN << 1 << " "; 
+			else
+				std::cout << WHT << 0 << " "; 
+		}
+	}
+	std::cout << RESET << std::endl;
 }

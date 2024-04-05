@@ -38,6 +38,8 @@ class CgiHandler
 		bool	sendRequest(short int &, parsedReq &);
 		bool	sendBody(const char *, size_t &, parsedReq &);
 		bool	receiveResponse(short int &, std::string &);
+		int		getFdIn(void);
+		int		getFdOut(void);
 };
 
 #endif
