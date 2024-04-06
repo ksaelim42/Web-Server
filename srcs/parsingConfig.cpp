@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/05 16:00:07 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/06 13:26:51 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,6 +258,12 @@ int main(int ac, char **av)
 		}
 		if (key == "location" || isLocation)
 		{
+			// remove { from the path
+			for (int i = 0; i < value.length(); i++)
+			{
+				if (value[i] == '{')
+					value.erase(value.begin() + i);
+			}
 			// std::string locKey = "location";
 			isLocation = true;
 			if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
