@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/06 13:42:28 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/06 14:26:56 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,6 +194,65 @@ void setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		storeDirectives(obj, key, value, valueVec);
 }
 
+bool getLocation(Server &obj, Location &locStruct, std::string key, std::string value, bool &isLocation)
+{
+	if (key != "location" && !isLocation)
+		return false;
+	// remove { from the path
+	for (int i = 0; i < value.length(); i++)
+	{
+		if (value[i] == '{')
+			value.erase(value.begin() + i);
+	}
+	isLocation = true;
+	if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
+	{
+		isLocation = false;
+		obj.location.push_back(locStruct);
+		clearLocation(locStruct);
+		return false;
+	}
+	setValue(obj, locStruct, key, value, 1);
+	return true;
+}
+
+std::string getValue(std::string value, std::string key, std::string line, int &i)
+{
+	while (line[i] && key != "server")
+	{
+		while (isspace(line[i]))
+			i++;
+		// copy value(s)
+		while (line[i])
+			value += line[i++];
+	}
+	// remove ; from the value
+	for (int j = 0; j < value[j]; j++)
+	{
+		if (value[j] == ';')
+			value.erase(value.begin() + j);
+	}
+	return value;
+}
+
+std::string	getKey(std::string key, std::string line, int &i)
+{
+	while (line[i])
+	{
+		if (line[i] == ' ')
+			i++;
+		else
+		{
+			// copy a directive
+			while (!isspace(line[i]))
+				key += line[i++];
+			break;
+		}
+		i++;
+	}
+	return key;
+}
+
 int main(int ac, char **av)
 {
 	std::ifstream configFile;
@@ -210,59 +269,15 @@ int main(int ac, char **av)
 		return (std::cout << "cannot open config file" << std::endl, 0);
 	while (std::getline(configFile, tmp))
 	{
-		std::string key;
 		int i = 0;
-		while (tmp[i])
-		{
-			if (tmp[i] == ' ')
-				i++;
-			else
-			{
-				// copy a directive
-				while (!isspace(tmp[i]))
-					key += tmp[i++];
-				break;
-			}
-			i++;
-		}
+		std::string key;
 		std::string value;
-		while (tmp[i] && key != "server")
-		{
-			while (isspace(tmp[i]))
-				i++;
-			// copy value(s)
-			while (tmp[i])
-				value += tmp[i++];
-		}
-		// remove ; from the value
-		for (int j = 0; j < value[j]; j++)
-		{
-			if (value[j] == ';')
-				value.erase(value.begin() + j);
-		}
-		if (key == "location" || isLocation)
-		{
-			// remove { from the path
-			for (int i = 0; i < value.length(); i++)
-			{
-				if (value[i] == '{')
-					value.erase(value.begin() + i);
-			}
-			isLocation = true;
-			if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
-			{
-				isLocation = false;
-				obj.location.push_back(locStruct);
-				clearLocation(locStruct);
-			}
-			if (isLocation)
-			{
-				setValue(obj, locStruct, key, value, 1);
-				continue;
-			}
-		}
-		if (key != "location")
-			setValue(obj, locStruct, key, value, 0);
+
+		key = getKey(key, tmp, i);
+		value = getValue(value, key, tmp, i);
+		if (getLocation(obj, locStruct, key, value, isLocation))
+			continue;
+		setValue(obj, locStruct, key, value, 0);
 	}
 	printConfig(obj);
 }
