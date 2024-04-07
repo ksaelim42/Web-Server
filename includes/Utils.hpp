@@ -8,6 +8,9 @@
 #include <unistd.h>
 
 #include "Logger.hpp"
+class Server;
+struct return_t;
+struct Location;
 
 typedef unsigned long int uint64_t;
 
@@ -25,5 +28,9 @@ std::string	toProtoEnv(std::string);
 std::string	toProperCase(std::string &);
 std::string	strCutTo(std::string &, std::string );
 std::string	findHeaderValue(std::map<std::string, std::string> &, std::string const &);
+short int	strToShortInt(std::string str);
+// config utils
+void	clearLocation(Location &locStruct);
+void	printConfig(Server obj);
 
 #endif

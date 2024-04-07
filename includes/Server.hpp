@@ -66,4 +66,8 @@ class Server // don't forget to create vector to store this class as it may have
 		std::string	getErrPage(short int &) const;
 };
 
+
+void	printConfig(Server obj);
+void	clearLocation(Location &locStruct);
+
 #endif

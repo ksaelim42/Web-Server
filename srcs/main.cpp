@@ -1,4 +1,5 @@
 #include "WebServer.hpp"
+#include "parsingConfig.hpp"
 
 Location	createLocation(std::string path, std::string root, \
 std::vector<std::string> index, uint16_t method, bool autoIndex, \
@@ -56,10 +57,42 @@ Server	createServer2(void) {
 	return serv;
 }
 
-int	main(int argc, char**argv)
+bool parsingConfig(int ac, char **av)
 {
-	(void)argc; // TODO : set take config argument
-	(void)argv;
+	std::ifstream configFile;
+	std::string tmp;
+	std::map<std::string, std::string> mapConfig;
+	Server obj;
+	Location locStruct;
+	bool isLocation = false;
+
+	if (ac != 2)
+		return (std::cout << "must have 2 arguments" << std::endl, false);
+	configFile.open(av[1]);
+	if (!configFile.is_open())
+		return (std::cout << "cannot open config file" << std::endl, false);
+	while (std::getline(configFile, tmp))
+	{
+		int i = 0;
+		std::string key;
+		std::string value;
+
+		key = getKey(key, tmp, i);
+		value = getValue(value, key, tmp, i);
+		if (getLocation(obj, locStruct, key, value, isLocation)) {
+			continue;
+		}
+		setValue(obj, locStruct, key, value, 0);
+	}
+	printConfig(obj);
+	return true;
+}
+
+int	main(int argc, char** argv)
+{
+	if (!parsingConfig(argc, argv))
+		return 1;
+	exit(0);
 	Logger::setLevel(INFO);
 	try {
 		WebServer	webserv;
