@@ -36,6 +36,7 @@ class Client
 		void		_updateTime(void);
 	public:
 		int					sockFd;
+		char				buffer[BUFFERSIZE];
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;

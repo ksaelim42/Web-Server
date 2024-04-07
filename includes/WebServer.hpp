@@ -7,6 +7,7 @@
 #include <arpa/inet.h>	// inet_ntoa TODO : not allow to use
 #include <sys/select.h>	// select function
 #include <signal.h>		// signal function
+#include <sys/epoll.h>
 
 #include "Utils.hpp"
 #include "Client.hpp"
@@ -15,30 +16,34 @@ class WebServer
 {
 	private:
 		int						_fdMax;
+		int						_epoll_fd;
 		fd_set					_readFds;
 		fd_set					_writeFds;
-		char					_buffer[BUFFERSIZE];
-		std::string				_reqMsg;
 		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
 		struct timeval			_timeOut;
 
 		bool	_setPollFd(void);
-		int		_acceptConnection(int &);
+		int		_acceptConnection(int);
 		int		_receiveRequest(Client &);
 		int		_sendResponse(Client &);
-		void	_fdSet(int, fd_set &);
-		void	_fdClear(int, fd_set &);
 		void	_disconnectClient(int);
 		void	_disconnectAllClient(void);
 		bool	_setSockAddr(struct addrinfo &, Server &);
 		bool	_setOptSock(int &);
-		bool	_matchServer(int);
-		Server*	_getServer(int);
+		bool	_matchServer(int &);
+		Server*	_getServer(int &);
 		ssize_t	_unChunking(Client &);
 		void	_timeOutMonitoring(void);
 		void	_prtFristSet(fd_set &);
+		// select
+		void	_fdSet(int, fd_set &);
+		void	_fdClear(int, fd_set &);
+		// epoll
+		int		_fdAdd(int &, int &, uint32_t);
+		int		_fdMod(int &, int, uint32_t);
+		int		_fdDel(int &, int);
 	public:
 		WebServer();
 		~WebServer();

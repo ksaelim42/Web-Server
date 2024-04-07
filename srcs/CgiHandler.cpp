@@ -133,14 +133,6 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 	return (status = 200, true);
 }
 
-int	CgiHandler::getFdIn(void) {
-	return _pipeInFd[1];
-}
-
-int	CgiHandler::getFdOut(void) {
-	return _pipeOutFd[0];
-}
-
 // ************************************************************************** //
 // ----------------------------- CGI Processes ------------------------------ //
 // ************************************************************************** //

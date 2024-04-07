@@ -42,7 +42,7 @@ int	main (void) {
 					fdMod(epoll_fd, ep_event[i].data.fd, EPOLLOUT);
 				}
 			}
-			else if (ep_event[i].events & POLLOUT) { // send data back to client
+			else if (ep_event[i].events & EPOLLOUT) { // send data back to client
 				std::string	resMsg;
 				readFile("text.txt", resMsg);
 				sendReponse(ep_event[i].data.fd, resMsg);
@@ -52,7 +52,6 @@ int	main (void) {
 				// std::cout << GRN << "Close connection" << RESET << std::endl;
 			}
 		}
-		sleep(1);
 	}
 	return 0;
 }

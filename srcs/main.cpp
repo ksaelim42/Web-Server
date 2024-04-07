@@ -18,7 +18,7 @@ uint64_t cliSize, return_t retur, bool cgiPass) {
 Server	createServer(void) {
 	Server	serv;
 	serv.name = "localhost";
-	serv.port = "8014";
+	serv.port = "8015";
 	serv.root = "docs/myPage";
 	std::vector<std::string>	index;
 	return_t	retur;

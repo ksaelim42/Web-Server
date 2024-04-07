@@ -32,19 +32,14 @@ bool	WebServer::initServer(std::vector<Server> & servs) {
 	return true;
 }
 
-std::string	currentTime(void) {
-	std::time_t	time = std::time(NULL);
-	std::tm* tm = std::localtime(&time);
-	return numToStr(tm->tm_hour) + ":" + numToStr(tm->tm_min) + ":" + numToStr(tm->tm_sec);
-}
-
 bool	WebServer::runServer(void) {
-	fd_set			tmpReadFds;
-	fd_set			tmpWriteFds;
-	int				status;
-	struct timeval	timeOut;
+	int					fd;
+	int					nfds;
+	// int					timeOut = KEEPALIVETIME * 1000;
+	struct epoll_event	ep_event[MAX_EVENTS];
 
-	_setPollFd();
+	if (!_setPollFd())
+		return false;
 	while (g_state) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
@@ -58,33 +53,36 @@ bool	WebServer::runServer(void) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
 			continue;
-		} else if (status == -1) {
+		} else if (nfds == -1) {
 			char* err = strerror(errno);
-			Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error select: ", err);
+			Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error Epoll: ", err);
 			continue;
 		}
-		for (int fd = 0; fd <= _fdMax; fd++) {
-			if (FD_ISSET(fd, &tmpReadFds)) {
+		for (int i = 0; i < nfds; i++) {
+			if (ep_event[i].events & EPOLLIN) {
+				fd = ep_event[i].data.fd;
 				if (_matchServer(fd)) { // if match any servers => new connection
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
 				}
 				else { 
-					if (_clients.count(fd) == 0)
+					if (_clients.count(fd) == 0) // return 0 if count can't find element
 						continue;
 					if (_receiveRequest(_clients[fd]) <= 0)
 						continue;
+					if (_clients[fd].getReqType() == RESPONSE) {
+						_fdMod(_epoll_fd, fd, EPOLLOUT);
+					}
 				}
 			}
-			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
+			else if (ep_event[i].events & EPOLLOUT) { // send data back to client
+				fd = ep_event[i].data.fd;
 				if (_clients.count(fd) == 0)
 					continue;
 				if (_sendResponse(_clients[fd]) <= 0) {
-					_fdClear(fd, _writeFds);
 					continue;
 				}
-				_fdClear(fd, _writeFds);
-				_fdSet(fd, _readFds);
+				_fdMod(_epoll_fd, fd, EPOLLIN);
 			}
 		}
 		_timeOutMonitoring();
@@ -105,16 +103,16 @@ bool	WebServer::downServer(void) {
 // ----------------------------- Server Fields ------------------------------ //
 // ************************************************************************** //
 
-int	WebServer::_acceptConnection(int & serverFd) {
+int	WebServer::_acceptConnection(int serverFd) {
 	Client	client;
 	client.sockFd = accept(serverFd, (struct sockaddr *)&client.addr, &client.addrLen);
 	if (client.sockFd < 0) {
-		Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Accept fail");
+		Logger::isLog(INFO) && Logger::log(RED, "[Server] - Accept fail");
 		return -1;
 	} else {
 		client.serv = _getServer(serverFd);
 		client.IPaddr = inet_ntoa(client.addr.sin_addr);
-		if (!client.serv) // if There aren't server open
+		if (!client.serv)
 			return _disconnectClient(client.sockFd), -1;
 		// if (fcntl(client.sockFd, F_SETFL, O_NONBLOCK) < 0) // if can't set non-blocking I/O
 		// 	return _disconnectClient(client.sockFd), -1;
@@ -129,11 +127,11 @@ int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
 
 	if (client.getReqType() == HEADER) { // header request
-		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.getReqType() == BODY) { // body request
-		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.getReqType() == CHUNK) { // Chunk request
@@ -148,15 +146,11 @@ int	WebServer::_receiveRequest(Client & client) {
 	}
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
-	_buffer[bytes] = '\0';
+	client.buffer[bytes] = '\0';
 	if (client.getReqType() != RESPONSE)
-		client.parseRequest(_buffer, bytes);
-	if (client.getReqType() == RESPONSE) {
-		_fdClear(client.sockFd, _readFds);
-		_fdSet(client.sockFd, _writeFds);
-	}
+		client.parseRequest(client.buffer, bytes);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
-	Logger::isLog(ERROR) && Logger::log(CYN, _buffer);
+	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	if (client.getStatus() >= 400) {
 		std::string	statusText = HttpResponse::getStatusText(client.getStatus());
@@ -217,7 +211,7 @@ ssize_t	WebServer::_unChunking(Client & client) {
 		return client.setResponse(400), 1;
 	i = 0;
 	while (i < chunkSize) {
-		count = recv(client.sockFd, &_buffer[i], chunkSize - i, MSG_DONTWAIT);
+		count = recv(client.sockFd, &client.buffer[i], chunkSize - i, MSG_DONTWAIT);
 		if (count <= 0)
 			return count;
 		i -= count;
@@ -245,14 +239,24 @@ bool	WebServer::_setPollFd(void) {
 	signal(SIGQUIT, signal_handler);
 	signal(SIGTERM, signal_handler);
 	signal(SIGPIPE, SIG_IGN); // Protect terminate process when write on the shutdown socket
-	_fdMax = 0;
-	FD_ZERO(&_readFds);
-	FD_ZERO(&_writeFds);
-	_timeOut.tv_sec = KEEPALIVETIME;
-	_timeOut.tv_usec = 0;
+	// _fdMax = 0;
+	// FD_ZERO(&_readFds);
+	// FD_ZERO(&_writeFds);
+	// _timeOut.tv_sec = KEEPALIVETIME;
+	// _timeOut.tv_usec = 0;
+	// for (size_t i = 0; i < _servs.size(); i++) {
+	// 	_fdSet(_servs[i].sockFd, _readFds);
+	// 	Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
+	// }
+	_epoll_fd = epoll_create(10);
+	if (_epoll_fd == -1)
+		return (perror("epoll create"), false);
 	for (size_t i = 0; i < _servs.size(); i++) {
-		_fdSet(_servs[i].sockFd, _readFds);
-		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
+		if (_fdAdd(_epoll_fd, _servs[i].sockFd, EPOLLIN) == -1) {
+			Logger::isLog(INFO) && Logger::log(RED, "Fail to create server: ", _servs[i].name, ":", _servs[i].port);
+			return (perror("epoll_ctl"), false);
+		}
+		Logger::isLog(INFO) && Logger::log(WHT, "Run server: ", _servs[i].name, ":", _servs[i].port);
 	}
 	return true;
 }
@@ -291,22 +295,31 @@ bool	WebServer::_setOptSock(int &sockFd) {
 }
 
 // ************************************************************************** //
-// ------------------------ Server Manipulate Clients ----------------------- //
+// ---------------------------- Select Function ----------------------------- //
 // ************************************************************************** //
 
-void	WebServer::_fdSet(int fd, fd_set &set) {
+// FD_ZERO : memset fd_set
+// FD_SET : set fd in fd_set
+// FD_CLEAR : remove fd in fd_set
+// FD_ISSET : check fd are in fd_set
+
+void	WebServer::_fdSet(int &fd, fd_set &set) {
 	FD_SET(fd, &set);
 	if (fd > _fdMax)
 		_fdMax = fd;
 }
 
-void	WebServer::_fdClear(int fd, fd_set &set) {
+void	WebServer::_fdClear(int &fd, fd_set &set) {
 	FD_CLR(fd, &set);
 	if (fd == _fdMax)
 		_fdMax--;
 }
 
-bool	WebServer::_matchServer(int fd) {
+// ************************************************************************** //
+// ------------------------ Server Manipulate Clients ----------------------- //
+// ************************************************************************** //
+
+bool	WebServer::_matchServer(int &fd) {
 	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return true;
@@ -314,7 +327,7 @@ bool	WebServer::_matchServer(int fd) {
 	return false;
 }
 
-Server*	WebServer::_getServer(int fd) {
+Server*	WebServer::_getServer(int &fd) {
 	for (size_t i = 0; i < _servs.size(); i++) {
 		if (fd == _servs[i].sockFd)
 			return &(_servs[i]);
@@ -323,7 +336,7 @@ Server*	WebServer::_getServer(int fd) {
 	return NULL;
 }
 
-void	WebServer::_disconnectClient(int client_fd) {
+void	WebServer::_disconnectClient(int & client_fd) {
 	if (_clients.count(client_fd)) {
 		_fdClear(client_fd, _readFds);
 		_fdClear(client_fd, _writeFds);
