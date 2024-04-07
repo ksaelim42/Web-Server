@@ -57,7 +57,7 @@ Server	createServer2(void) {
 	return serv;
 }
 
-bool parsingConfig(int ac, char **av)
+bool parsingConfig(int ac, char **av, std::vector<Server> & servs)
 {
 	std::ifstream configFile;
 	std::string tmp;
@@ -84,21 +84,26 @@ bool parsingConfig(int ac, char **av)
 		}
 		setValue(obj, locStruct, key, value, 0);
 	}
-	printConfig(obj);
+	// printConfig(obj);
+	servs.push_back(obj);
 	return true;
 }
 
 int	main(int argc, char** argv)
 {
-	if (!parsingConfig(argc, argv))
+	std::vector<Server>		servs;
+
+	if (!parsingConfig(argc, argv, servs))
 		return 1;
-	exit(0);
-	Logger::setLevel(INFO);
 	try {
+		Logger::setLevel(INFO);
 		WebServer	webserv;
-		std::vector<Server>		servs;
-		servs.push_back(createServer());
-		servs.push_back(createServer2());
+
+		servs[0].prtServer();
+		// servs.push_back(createServer());
+		// servs[1].prtServer();
+		// exit(0); // TODO
+		// servs.push_back(createServer2());
 		webserv.initServer(servs);
 
 		webserv.runServer();

@@ -20,7 +20,7 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		obj.root = value;
 	else if (key == "listen")
 	{
-		obj.ipAddr = value;
+		obj.ipAddr = "0.0.0.0";
 		obj.port = value;
 	}
 	else if (key == "client_max_body_size")

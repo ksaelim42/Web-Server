@@ -42,10 +42,10 @@ std::string	Server::getErrPage(short int & errCode) const {
 }
 
 void	Server::prtServer(void) {
-	std::cout << "server_name : " << MAG << name << RESET << std::endl;
-	std::cout << "IP address  : " << MAG << ipAddr << RESET << std::endl;
-	std::cout << "Port        : " << MAG << port << RESET << std::endl;
-	std::cout << "Root        : " << MAG << root << RESET << std::endl;
+	std::cout << "server_name : " << MAG << name << "|" << RESET << std::endl;
+	std::cout << "IP address  : " << MAG << ipAddr << "|" << RESET << std::endl;
+	std::cout << "Port        : " << MAG << port << "|" << RESET << std::endl;
+	std::cout << "Root        : " << MAG << root << "|" << RESET << std::endl;
 	std::cout << "index       : ";
 	for (size_t i = 0; i < index.size(); i++)
 		std::cout << MAG << index[i] << ", ";
