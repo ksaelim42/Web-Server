@@ -18,7 +18,6 @@ class Client
 
 		// Parsing Request
 		void		_initReqParse(void);
-		bool		_parseHeader(char *, size_t &);
 		bool		_divideHeadBody(std::string &);
 		bool		_parsePath(std::string);
 		bool		_urlEncoding(std::string & path);
@@ -36,8 +35,13 @@ class Client
 		void		_updateTime(void);
 	public:
 		int					sockFd;
+		int					pipeIn;
+		int					pipeOut;
+		size_t				package;
 		char				buffer[BUFFERSIZE];
+		size_t 				bufSize;
 		pid_t				pid;
+		type_e				type;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
@@ -46,7 +50,7 @@ class Client
 
 		Client(void);
 		~Client(void);
-		void		parseRequest(char *, size_t);
+		bool		parseHeader(char *, size_t &);
 		void		genResponse(std::string &);
 		void		setResponse(short int);
 		void		prtParsedReq(void);

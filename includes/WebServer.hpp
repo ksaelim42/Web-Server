@@ -29,6 +29,7 @@ class WebServer
 		bool	_setPollFd(void);
 		int		_acceptConnection(int);
 		int		_receiveRequest(Client &);
+		int		_parsingRequest(Client &);
 		int		_sendResponse(Client &);
 		void	_disconnectClient(int);
 		void	_disconnectAllClient(void);

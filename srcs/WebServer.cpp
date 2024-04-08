@@ -54,8 +54,8 @@ bool	WebServer::runServer(void) {
 			continue;
 		}
 		for (int i = 0; i < nfds; i++) {
+			fd = ep_event[i].data.fd;
 			if (ep_event[i].events & EPOLLIN) {
-				fd = ep_event[i].data.fd;
 				if (_matchServer(fd)) { // if match any servers => new connection
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
@@ -63,20 +63,20 @@ bool	WebServer::runServer(void) {
 				else if (_clients.count(fd)) { // client request
 					if (_receiveRequest(_clients[fd]) <= 0)
 						continue;
+					_parsingRequest(_clients[fd]);
 				}
-				// else if (_cgi.pipes.count(fd)) { // cgi response
-
-				// }
+				else if (_cgi.pipes.count(fd)) { // cgi output
+					_cgi.sendRequest(fd)
+				}
 			}
 			else if (ep_event[i].events & EPOLLOUT) { // send data back to client
-				fd = ep_event[i].data.fd;
 				if (_clients.count(fd)) {
 					if (_sendResponse(_clients[fd]) <= 0) {
 						continue;
 					}
 					_fdMod(_epoll_fd, fd, EPOLLIN);
 				}
-				else if (_cgi.pipes.count(fd)) { // cgi request
+				else if (_cgi.pipes.count(fd)) { // cgi input
 					_cgi.sendRequest(fd);
 					_fdMod(_epoll_fd, fd, EPOLLIN);
 				}
@@ -122,15 +122,15 @@ int	WebServer::_acceptConnection(int serverFd) {
 int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
 
-	if (client.getReqType() == HEADER) { // header request
+	if (client.type == HEADER) { // header request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.getReqType() == BODY) { // body request
+	else if (client.type == BODY) { // body request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.getReqType() == CHUNK) { // Chunk request
+	else if (client.type == CHUNK) { // Chunk request
 		bytes = _unChunking(client);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
@@ -143,20 +143,31 @@ int	WebServer::_receiveRequest(Client & client) {
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
 	client.buffer[bytes] = '\0';
+	client.bufSize = bytes;
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
-	if (client.getReqType() == HEADER) {
-		client.parseRequest(client.buffer, bytes);
+	return 1;
+}
+
+int	WebServer::_parsingRequest(Client & client) {
+	if (client.type == HEADER) {
+		client.parseHeader(client.buffer, client.bufSize);
+		if (client.type == CGI) {
+			if (_cgi.createRequest(&client)) {
+				if (_fdAdd(_epoll_fd, client.pipeIn, EPOLLIN) == -1)
+					return _disconnectClient(client.sockFd), 0;
+				pipes[client.pipeIn] = &client;
+				pipes[client.pipeOut] = &client;
+			}
+			else
+				client.type = RESPONSE;
+		}
 	}
-	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
+	else if (client.type == BODY || client.type == CHUNK) {
 		_fdMod(_epoll_fd, fd, EPOLLOUT);
 	}
-	if (client.getReqType() == CGI) {
-		if (_cgi.createRequest(&client))
-		else
-	}
-	if (client.getReqType() == RESPONSE) {
+	if (client.type == RESPONSE) {
 		_fdMod(_epoll_fd, fd, EPOLLOUT);
 	}
 	if (client.getStatus() >= 400) {

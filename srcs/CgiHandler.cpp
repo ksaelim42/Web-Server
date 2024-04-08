@@ -52,42 +52,48 @@ bool	CgiHandler::createRequest(Client *client) {
 	if (_pid == 0) // Child Process
 		_childProcess(client->req);
 	else { // Parent Process
-		_parentProcess(client->req);
+		_closePipe(_pipeOutFd[1]);
+		if (_isPost) {
+			_closePipe(_pipeInFd[0]);
+			client->pipeIn = _pipeInFd[1];
+		}
+		else 
+			req.type = RESPONSE;
+		client->pid = _pid;
+		client->pipeOut = _pipeOutFd[0];
+		client->package = 1;
 	}
-	client->pid = _pid;
-	pipes[_pipeOutFd[0]] = &client;
 	return true;
 }
 
-bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) {
+bool	CgiHandler::sendRequest(int fd, Client & client) {
 	size_t	bytes;
 
-	if (bufSize) {
-		bytes = write(_pipeInFd[1], body, bufSize);
-		if (bytes < bufSize)
+	if (client.bufSize) {
+		bytes = write(fd, client.body, client.bufSize);
+		if (bytes < client.bufSize)
 			return false;
-		_package++;
+		client.package++;
 	}
-	if (req.type == CHUNK) {
-		if (bufSize == 0) {
+	if (client.type == CHUNK) {
+		if (client.bufSize == 0) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			_closePipe(_pipeInFd[1]);
-			req.type = RESPONSE;
+			_closePipe(fd);
+			client.type = RESPONSE;
 		}
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", _package, "] sent ", bufSize, " Bytes");
-		req.body.clear();
-		req.bodySize = 0;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", client.package, "] sent ", client.bufSize, " Bytes");
 	}
-	else {
-		req.bodySent += bufSize;
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
-		if (req.bodySent >= req.bodySize) {
+	else { // BODY
+		client.req.bodySent += client.bufSize;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", client.package, "] sent ", client.req.bodySent, " out of ", client.req.bodySize);
+		if (client.req.bodySent >= client.req.bodySize) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			_closePipe(_pipeInFd[1]);
-			req.type = RESPONSE;
+			_closePipe(fd);
+			client.type = RESPONSE;
 		}
 	}
 	return true;
+
 }
 
 bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
@@ -246,25 +252,4 @@ void	CgiHandler::_childProcess(parsedReq & req) {
 }
 
 void	CgiHandler::_parentProcess(parsedReq & req) {
-	_closePipe(_pipeOutFd[1]);
-	if (_isPost) {
-		_closePipe(_pipeInFd[0]);
-		if (req.type == CHUNK)
-			return true;
-		_package = 1;
-		if (req.body.size()) {
-			write(_pipeInFd[1], req.body.c_str(), req.body.size());
-			req.bodySent += req.body.size();
-			req.body.clear();
-			_package++;
-			Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
-		}
-		if (req.bodySent >= req.bodySize) {
-			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			_closePipe(_pipeInFd[1]);
-			return req.type = RESPONSE, true;
-		}
-	}
-	else 
-		req.type = RESPONSE;
 }

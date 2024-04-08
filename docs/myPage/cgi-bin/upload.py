@@ -4,10 +4,12 @@ import cgi, os, sys
 
 form = cgi.FieldStorage()
 
+print("Upload CGI-script", file=sys.stderr)
+
 if 'filename' in form:
 	fileitem = form['filename']
 else:
-	print("filename not Found")
+	print("filename not Found", file=sys.stderr)
 	sys.exit(1) # Exit Fail
 
 dirUpload = "../upload/"

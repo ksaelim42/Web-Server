@@ -15,7 +15,7 @@
 # define PYTHON_PATH	"/usr/bin/python3"
 # define MAX_EVENTS 20
 
-enum reqType_e {
+enum type_e {
 	HEADER,
 	BODY,
 	CHUNK,
@@ -25,7 +25,6 @@ enum reqType_e {
 
 struct parsedReq {
 	bool								redir;
-	reqType_e							type;
 	uint64_t							bodySize;
 	uint64_t							bodySent;
 	Server								serv;

@@ -20,7 +20,6 @@ class CgiHandler
 		int			_pipeInFd[2];
 		int			_pipeOutFd[2];
 		bool		_isPost;
-		size_t		_package;
 		std::string	_cgiFileName;
 		std::string	_cgiProgramPath;
 		std::map<std::string, std::string>	_env;

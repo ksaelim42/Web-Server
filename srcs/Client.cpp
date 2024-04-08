@@ -9,19 +9,35 @@ Client::Client(void) {
 
 Client::~Client(void) {}
 
-void	Client::parseRequest(char *buffer, size_t bufSize) {
+bool	Client::parseHeader(char *buffer, size_t & bufSize) {
+	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	_updateTime();
-	if (_req.type == HEADER) {
-		_initReqParse();
-		_parseHeader(buffer, bufSize);
-	}
-	else if (_req.type == BODY || _req.type == CHUNK) {
-		if (_cgi.sendBody(buffer, bufSize, _req))
-			return;
-		_status = 502;
-		_req.type = RESPONSE;
-	}
-	return;
+	_initReqParse();
+	std::string	header(buffer, bufSize);
+	if (!_divideHeadBody(header))
+		return _req.type = RESPONSE, false;
+	httpReq	reqHeader = storeReq(header);
+	_req.method = reqHeader.method;
+	_req.uri = reqHeader.srcPath;
+	_req.version = reqHeader.version;
+	_req.headers = reqHeader.headers;
+	if (!_checkRequest())
+		return _req.type = RESPONSE, false;
+	_parsePath(_req.uri);
+	if (!_urlEncoding(_req.path))
+		return _req.type = RESPONSE, false;
+	_matchLocation(serv->location);
+	if (_redirect())
+		return _req.type = RESPONSE, true;
+	if (_req.method == "POST" && !_findBodySize())
+		return _req.type = RESPONSE, false;
+	if (!_findFile())
+		return _req.type = RESPONSE, false;
+	if (!_findType())
+		return _req.type = RESPONSE, false;
+	if (_req.serv.cgiPass)
+		return _req.type = CGI, true;
+	return _req.type = RESPONSE, true;
 }
 
 void	Client::genResponse(std::string & resMsg) {
@@ -31,9 +47,9 @@ void	Client::genResponse(std::string & resMsg) {
 	else if (_req.redir || (_status >= 300 && _status < 400))
 		resMsg = _res.redirection(_status, _req);
 	else if (_status == 200 && _req.serv.cgiPass) {
-		std::string	cgiMsg;
-		_cgi.receiveResponse(_status, cgiMsg);
-		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+	// 	std::string	cgiMsg;
+	// 	_cgi.receiveResponse(_status, cgiMsg);
+	// 	resMsg = _res.cgiResponse(_status, _req, cgiMsg);
 	}
 	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
 		resMsg = _res.autoIndex(_status, _req);
@@ -85,8 +101,6 @@ void	Client::prtRequest(httpReq & request) {
 
 short int	Client::getStatus(void) const {return _status;}
 
-reqType_e	Client::getReqType(void) const {return _req.type;}
-
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
@@ -99,40 +113,6 @@ void	Client::_initReqParse(void) {
 	_req.redir = 0;
 	_req.serv = *serv;
 	_req.pathSrc = "";
-}
-
-bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
-	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
-	std::string	header(buffer, bufSize);
-	if (!_divideHeadBody(header))
-		return _req.type = RESPONSE, false;
-	httpReq	reqHeader = storeReq(header);
-	_req.method = reqHeader.method;
-	_req.uri = reqHeader.srcPath;
-	_req.version = reqHeader.version;
-	_req.headers = reqHeader.headers;
-	if (!_checkRequest())
-		return _req.type = RESPONSE, false;
-	_parsePath(_req.uri);
-	if (!_urlEncoding(_req.path))
-		return _req.type = RESPONSE, false;
-	_matchLocation(serv->location);
-	if (_redirect())
-		return _req.type = RESPONSE, true;
-	if (_req.method == "POST" && !_findBodySize())
-		return _req.type = RESPONSE, false;
-	if (!_findFile())
-		return _req.type = RESPONSE, false;
-	if (!_findType())
-		return _req.type = RESPONSE, false;
-	if (_req.serv.cgiPass)
-		return _req.type = CGI, true;
-
-		// if (_cgi.sendRequest(_status, _req))
-		// 	return true;
-		// else
-		// 	return _req.type = RESPONSE, false;
-	return _req.type = RESPONSE, true;
 }
 
 bool	Client::_divideHeadBody(std::string & header) {
