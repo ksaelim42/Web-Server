@@ -125,12 +125,13 @@ bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
 		return _req.type = RESPONSE, false;
 	if (!_findType())
 		return _req.type = RESPONSE, false;
-	if (_req.serv.cgiPass) {
-		if (_cgi.sendRequest(_status, _req))
-			return true;
-		else
-			return _req.type = RESPONSE, false;
-	}
+	if (_req.serv.cgiPass)
+		return _req.type = CGI, true;
+
+		// if (_cgi.sendRequest(_status, _req))
+		// 	return true;
+		// else
+		// 	return _req.type = RESPONSE, false;
 	return _req.type = RESPONSE, true;
 }
 

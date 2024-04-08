@@ -11,6 +11,7 @@
 #include "HttpRequest.hpp"
 #include "Utils.hpp"
 #include "Struct.hpp"
+#include "Client.hpp"
 
 class CgiHandler
 {
@@ -32,9 +33,13 @@ class CgiHandler
 		void	_closeAllPipe(void);
 		void	_closePipe(int &fd);
 		void	_childProcess(parsedReq &);
+		void	_parentProcess(parsedReq &);
 	public:
+		std::map<int, Client *>	pipes;
+
 		CgiHandler();
 		~CgiHandler();
+		bool	createRequest(Client *);
 		bool	sendRequest(short int &, parsedReq &);
 		bool	sendBody(const char *, size_t &, parsedReq &);
 		bool	receiveResponse(short int &, std::string &);

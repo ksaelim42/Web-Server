@@ -60,24 +60,26 @@ bool	WebServer::runServer(void) {
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
 				}
-				else { 
-					if (_clients.count(fd) == 0) // return 0 if count can't find element
-						continue;
+				else if (_clients.count(fd)) { // client request
 					if (_receiveRequest(_clients[fd]) <= 0)
 						continue;
-					if (_clients[fd].getReqType() == RESPONSE) {
-						_fdMod(_epoll_fd, fd, EPOLLOUT);
-					}
 				}
+				// else if (_cgi.pipes.count(fd)) { // cgi response
+
+				// }
 			}
 			else if (ep_event[i].events & EPOLLOUT) { // send data back to client
 				fd = ep_event[i].data.fd;
-				if (_clients.count(fd) == 0)
-					continue;
-				if (_sendResponse(_clients[fd]) <= 0) {
-					continue;
+				if (_clients.count(fd)) {
+					if (_sendResponse(_clients[fd]) <= 0) {
+						continue;
+					}
+					_fdMod(_epoll_fd, fd, EPOLLIN);
 				}
-				_fdMod(_epoll_fd, fd, EPOLLIN);
+				else if (_cgi.pipes.count(fd)) { // cgi request
+					_cgi.sendRequest(fd);
+					_fdMod(_epoll_fd, fd, EPOLLIN);
+				}
 			}
 		}
 		_timeOutMonitoring();
@@ -141,11 +143,22 @@ int	WebServer::_receiveRequest(Client & client) {
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
 	client.buffer[bytes] = '\0';
-	if (client.getReqType() != RESPONSE)
-		client.parseRequest(client.buffer, bytes);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
+	if (client.getReqType() == HEADER) {
+		client.parseRequest(client.buffer, bytes);
+	}
+	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
+		_fdMod(_epoll_fd, fd, EPOLLOUT);
+	}
+	if (client.getReqType() == CGI) {
+		if (_cgi.createRequest(&client))
+		else
+	}
+	if (client.getReqType() == RESPONSE) {
+		_fdMod(_epoll_fd, fd, EPOLLOUT);
+	}
 	if (client.getStatus() >= 400) {
 		std::string	statusText = HttpResponse::getStatusText(client.getStatus());
 		Logger::isLog(DEBUG) && Logger::log(RED, statusText);

@@ -11,6 +11,7 @@
 
 #include "Utils.hpp"
 #include "Client.hpp"
+#include "CgiHandler.hpp"
 
 class WebServer
 {
@@ -23,6 +24,7 @@ class WebServer
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
 		struct timeval			_timeOut;
+		CgiHandler				_cgi;
 
 		bool	_setPollFd(void);
 		int		_acceptConnection(int);

@@ -33,47 +33,29 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
-	_initCgi();
+bool	CgiHandler::createRequest(Client *client) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
-	if (_checkCgiScript(status, req) == 0)
+	_initCgi();
+	if (_checkCgiScript(clinet->status, client->req) == 0)
 		return false;
-	if (!_initEnv(req))
+	if (!_initEnv(client->req))
 		return false;
 	if (!_createPipe()) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
-		return (status = 500, false);
+		return (client->status = 500, false);
 	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
-		return (_closeAllPipe(), status = 500, false);
+		return (_closeAllPipe(), client->status = 500, false);
 	}
 	if (_pid == 0) // Child Process
-		_childProcess(req);
+		_childProcess(client->req);
 	else { // Parent Process
-		_closePipe(_pipeOutFd[1]);
-		if (_isPost) {
-			_closePipe(_pipeInFd[0]);
-			if (req.type == CHUNK)
-				return true;
-			_package = 1;
-			if (req.body.size()) {
-				write(_pipeInFd[1], req.body.c_str(), req.body.size());
-				req.bodySent += req.body.size();
-				req.body.clear();
-				_package++;
-				Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
-			}
-			if (req.bodySent >= req.bodySize) {
-				Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-				_closePipe(_pipeInFd[1]);
-				return req.type = RESPONSE, true;
-			}
-		}
-		else 
-			req.type = RESPONSE;
+		_parentProcess(client->req);
 	}
+	client->pid = _pid;
+	pipes[_pipeOutFd[0]] = &client;
 	return true;
 }
 
@@ -138,7 +120,6 @@ bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
 // ************************************************************************** //
 
 bool	CgiHandler::_initEnv(parsedReq & req) {
-	_env.clear();
 	// meta-variable
 	_env["GATEWAY_INTERFACE"] = CGI_VERS;		// version of CGI
 	_env["SERVER_SOFTWARE"] = PROGRAM_NAME;		// name of Webserv/version Ex: nginx/1.18.0
@@ -240,7 +221,7 @@ void	CgiHandler::_closeAllPipe(void) {
 	_closePipe(_pipeOutFd[1]);
 }
 
-void CgiHandler::_childProcess(parsedReq & req) {
+void	CgiHandler::_childProcess(parsedReq & req) {
 	if (_isPost) { // if post method will take input from std::in
 		dup2(_pipeInFd[0], STDIN_FILENO);
 		_closePipe(_pipeInFd[1]);
@@ -262,4 +243,28 @@ void CgiHandler::_childProcess(parsedReq & req) {
 		delete[] args[1];
 		exit(errno);
 	}
+}
+
+void	CgiHandler::_parentProcess(parsedReq & req) {
+	_closePipe(_pipeOutFd[1]);
+	if (_isPost) {
+		_closePipe(_pipeInFd[0]);
+		if (req.type == CHUNK)
+			return true;
+		_package = 1;
+		if (req.body.size()) {
+			write(_pipeInFd[1], req.body.c_str(), req.body.size());
+			req.bodySent += req.body.size();
+			req.body.clear();
+			_package++;
+			Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
+		}
+		if (req.bodySent >= req.bodySize) {
+			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
+			_closePipe(_pipeInFd[1]);
+			return req.type = RESPONSE, true;
+		}
+	}
+	else 
+		req.type = RESPONSE;
 }

@@ -19,7 +19,8 @@ enum reqType_e {
 	HEADER,
 	BODY,
 	CHUNK,
-	RESPONSE
+	RESPONSE,
+	CGI
 };
 
 struct parsedReq {

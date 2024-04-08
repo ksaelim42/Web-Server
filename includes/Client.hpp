@@ -14,7 +14,7 @@ class Client
 		struct stat		_fileInfo;
 		parsedReq		_req;
 		HttpResponse	_res;
-		CgiHandler		_cgi;
+		// CgiHandler		_cgi;
 
 		// Parsing Request
 		void		_initReqParse(void);
@@ -37,6 +37,7 @@ class Client
 	public:
 		int					sockFd;
 		char				buffer[BUFFERSIZE];
+		pid_t				pid;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
