@@ -119,8 +119,8 @@ int	WebServer::_acceptConnection(int & serverFd) {
 		// if (fcntl(client.sockFd, F_SETFL, O_NONBLOCK) < 0) // if can't set non-blocking I/O
 		// 	return _disconnectClient(client.sockFd), -1;
 		_fdSet(client.sockFd, _readFds);
-		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 		_clients[client.sockFd] = client;
+		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 	}
 	return client.sockFd;
 }
@@ -129,11 +129,11 @@ int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
 
 	if (client.type == HEADER) { // header request
-		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.type == BODY) { // body request
-		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.type == CHUNK) { // Chunk request
@@ -148,16 +148,17 @@ int	WebServer::_receiveRequest(Client & client) {
 	}
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
-	_buffer[bytes] = '\0';
+	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
+	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
+	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
+	client.buffer[bytes] = '\0';
+	client.bufSize = bytes;
 	if (client.type != RESPONSE)
-		client.parseRequest(_buffer, bytes);
+		client.parseRequest(client.buffer, bytes);
 	if (client.type == RESPONSE) {
 		_fdClear(client.sockFd, _readFds);
 		_fdSet(client.sockFd, _writeFds);
 	}
-	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
-	Logger::isLog(ERROR) && Logger::log(CYN, _buffer);
-	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	if (client.getStatus() >= 400) {
 		std::string	statusText = HttpResponse::getStatusText(client.getStatus());
 		Logger::isLog(DEBUG) && Logger::log(RED, statusText);
@@ -217,15 +218,15 @@ ssize_t	WebServer::_unChunking(Client & client) {
 		return client.setResponse(400), 1;
 	i = 0;
 	while (i < chunkSize) {
-		count = recv(client.sockFd, &_buffer[i], chunkSize - i, MSG_DONTWAIT);
+		count = recv(client.sockFd, &client.buffer[i], chunkSize - i, MSG_DONTWAIT);
 		if (count <= 0)
 			return count;
 		i -= count;
 	}
-	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
 		return client.setResponse(400), 1;
+	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
 	return chunkSize;
 }
 

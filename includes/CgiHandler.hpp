@@ -3,7 +3,6 @@
 
 #include <unistd.h>		// pipe, fork, read, write
 #include <fcntl.h>		// check fd is open
-#include <sys/stat.h>	// stat
 #include <sys/wait.h>	// waitpid
 #include <cerrno>		// errno
 #include <cstdlib>		// exit

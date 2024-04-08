@@ -11,7 +11,6 @@ class Client
 {
 	private:
 		short int		_status;
-		struct stat		_fileInfo;
 		parsedReq		_req;
 		HttpResponse	_res;
 		CgiHandler		_cgi;
@@ -37,6 +36,8 @@ class Client
 	public:
 		int					sockFd;
 		type_e				type;
+		char				buffer[BUFFERSIZE];
+		size_t				bufSize;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;

@@ -26,21 +26,23 @@ void	Client::parseRequest(char *buffer, size_t bufSize) {
 
 void	Client::genResponse(std::string & resMsg) {
 	_updateTime();
-	if (_status == 200 && _req.method == "DELETE")
-		resMsg = _res.deleteResource(_status, _req);
-	else if (_req.redir || (_status >= 300 && _status < 400))
-		resMsg = _res.redirection(_status, _req);
-	else if (_status == 200 && _req.serv.cgiPass) {
-		std::string	cgiMsg;
-		_cgi.receiveResponse(_status, cgiMsg);
-		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+	if (type == RESPONSE) {
+		if (_status == 200 && _req.method == "DELETE")
+			resMsg = _res.deleteResource(_status, _req);
+		else if (_req.redir || (_status >= 300 && _status < 400))
+			resMsg = _res.redirection(_status, _req);
+		else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
+			resMsg = _res.autoIndex(_status, _req);
+		else if (_status == 200 && _req.serv.cgiPass) {
+			std::string	cgiMsg;
+			_cgi.receiveResponse(_status, cgiMsg);
+			resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+		}
+		else if (_status >= 200 && _status < 300)
+			resMsg = _res.staticContent(_status, _req);
+		if ((_status >= 400 && _status < 600))
+			resMsg = _res.errorPage(_status, _req);
 	}
-	else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_fileInfo.st_mode))
-		resMsg = _res.autoIndex(_status, _req);
-	else if (_status >= 200 && _status < 300)
-		resMsg = _res.staticContent(_status, _req);
-	if ((_status >= 400 && _status < 600))
-		resMsg = _res.errorPage(_status, _req);
 	type = HEADER;
 	return;
 }
@@ -276,14 +278,14 @@ bool	Client::_findFile(void) {
 		std::string	filePath;
 		for (size_t	i = 0; i < index.size(); i++) {
 			filePath = path + index[i];
-			if (stat(filePath.c_str(), &_fileInfo) == 0) {
+			if (stat(filePath.c_str(), &_req.fileInfo) == 0) {
 				_req.pathSrc = filePath;
 				Logger::isLog(DEBUG) && Logger::log(MAG, "[Request] - Find path success, Path: ", _req.pathSrc);
 				return true;
 			}
 		}
 	}
-	if (stat(path.c_str(), &_fileInfo) == 0) {
+	if (stat(path.c_str(), &_req.fileInfo) == 0) {
 		_req.pathSrc = path;
 		Logger::isLog(DEBUG) && Logger::log(MAG, "[Request] - Find path success, Path: ", _req.pathSrc);
 		return true;
@@ -293,7 +295,7 @@ bool	Client::_findFile(void) {
 }
 
 bool	Client::_findType(void) {
-	if (S_ISDIR(_fileInfo.st_mode)) { // is directory
+	if (S_ISDIR(_req.fileInfo.st_mode)) { // is directory
 		if (_req.path[_req.path.length() - 1] == '/') {
 			if (_req.serv.autoIndex)
 				return true;
@@ -303,7 +305,7 @@ bool	Client::_findType(void) {
 		else
 			return (_status = 301, true);
 	}
-	else if (S_ISREG(_fileInfo.st_mode))
+	else if (S_ISREG(_req.fileInfo.st_mode))
 		return true;
 	return (_status = 404, false);
 }

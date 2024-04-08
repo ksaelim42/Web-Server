@@ -17,8 +17,6 @@ class WebServer
 		int						_fdMax;
 		fd_set					_readFds;
 		fd_set					_writeFds;
-		char					_buffer[BUFFERSIZE];
-		std::string				_reqMsg;
 		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
