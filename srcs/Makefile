@@ -44,7 +44,7 @@ NAME	= mytest
 
 CC = g++
 CFLAGS = #-Wall -Wextra -std=c99
-SRC = parsingConfig.cpp Utils.cpp Server.cpp configUtils.cpp
+SRC = parsingConfig.cpp Utils.cpp Server.cpp
 OBJ = $(SRC:.c=.o)
 
 $(NAME):$(OBJ)
