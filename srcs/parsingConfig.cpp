@@ -228,6 +228,8 @@ std::string getValue(std::string value, std::string key, std::string line, int &
 	{
 		if (value[j] == ';')
 			value.erase(value.begin() + j);
+		if (value[j] == '\r')
+			value.erase(value.begin() + j);
 	}
 	return value;
 }

@@ -168,9 +168,9 @@ void	clearLocation(Location &locStruct)
 
 void	printConfig(Server obj)
 {
-	std::cout << "server_name: " << obj.name << std::endl;
+	std::cout << "server_name: " << obj.name << "|" << std::endl;
 	std::cout << "clien_body_size: " << obj.cliBodySize << std::endl;
-	std::cout << "port: " << obj.port << std::endl;
+	std::cout << "port: " << obj.port << "|" << std::endl;
 	std::cout << "ip: " << obj.ipAddr << std::endl;
 	std::cout << "root: " << obj.root << std::endl;
 	std::cout << "autoindex: " << obj.autoIndex << std::endl;
