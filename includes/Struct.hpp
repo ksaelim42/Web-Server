@@ -21,7 +21,8 @@ enum type_e {
 	HEADER,
 	BODY,
 	CHUNK,
-	RESPONSE
+	RESPONSE,
+	OPEN_FILE
 };
 
 struct parsedReq {

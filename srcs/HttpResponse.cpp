@@ -10,25 +10,48 @@ std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	if (remove(req.pathSrc.c_str()) != 0)
 		return status = 503, "";
 	status = 204;
-	return _createHeader(status , req) + CRLF + _body;
+	_headers["Content-Length"] = _body.length();
+	return _createHeader(status , req) + CRLF;
 }
 
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Redirection -----");
 	_body = req.serv.retur.text;
 	req.pathSrc = req.serv.retur.text;
+	_headers["Content-Length"] = _body.length();
 	return _createHeader(status , req) + CRLF + _body;
 }
 
 std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Auto Index -----");
 	_listFile(req, _body);
+	_headers["Content-Length"] = _body.length();
 	return _createHeader(status , req) + CRLF + _body;
+}
+
+int	HttpResponse::openFile(short int & status, parsedReq & req) {
+	int	fd;
+
+	fd = open(req.pathSrc.c_str(), O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT)	// 2 No such file or directory : 404
+			return status = 404, -1;
+		if (errno == EACCES)	// 13 Permission denied : 403
+			return status = 403, -1;
+		// EMFILE, ENFILE : Too many open file, File table overflow
+		// Server Error, May reach the limit of file descriptors : 500
+		return status = 500, -1;
+	}
+	return fd;
+	// body.resize(fileInfo.st_size);
+	// read(fd, &body[0], fileInfo.st_size);	// Read all data in inFile to Buffer
+	// close(fd);
+	// return 200;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Static -----");
-	status = _readFile(req.pathSrc, _body);
+	status = openFile(status, req);
 	if (status >= 200 && status < 300)
 		return _createHeader(status, req) + CRLF + _body;
 	return ("");
@@ -93,7 +116,7 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 			_headers["Connection"] = "keep-alive";
 	}
 	if (_headers.count("Content-Length") == 0)
-		_headers["Content-Length"] = _getContentLength();
+		_headers["Content-Length"] = _getContentLength(req);
 	if (_headers.count("Content-Type") == 0)
 		_headers["Content-Type"] = _getContentType(req);
 	if (_headers.count("Date") == 0)
@@ -107,8 +130,8 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 	return headerMsg;
 }
 
-std::string	HttpResponse::_getContentLength(void) {
-	return numToStr(_body.length());
+std::string	HttpResponse::_getContentLength(parsedReq & req) {
+	return numToStr(req.fileInfo.st_size);
 }
 
 std::string	HttpResponse::_getContentType(parsedReq & req) {
@@ -191,28 +214,6 @@ std::string	HttpResponse::_getLocation(parsedReq & req) {
 // ************************************************************************** //
 // ----------------------------- Body Messages ------------------------------ //
 // ************************************************************************** //
-
-short int	HttpResponse::_readFile(std::string & path, std::string & body) {
-	int			fd;
-	struct stat	fileInfo;
-
-	if (stat(path.c_str(), &fileInfo) == -1)
-		return 404;
-	fd = open(path.c_str(), O_RDONLY);
-	if (fd < 0) {
-		if (errno == ENOENT)	// 2 No such file or directory : 404
-			return 404;
-		if (errno == EACCES)	// 13 Permission denied : 403
-			return 403;
-		// EMFILE, ENFILE : Too many open file, File table overflow
-		// Server Error, May reach the limit of file descriptors : 500
-		return 500;
-	}
-	body.resize(fileInfo.st_size);
-	read(fd, &body[0], fileInfo.st_size);	// Read all data in inFile to Buffer
-	close(fd);
-	return 200;
-}
 
 short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 	DIR				*dir;
