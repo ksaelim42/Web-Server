@@ -28,7 +28,7 @@ class HttpResponse
 		std::string	_getStatusLine(short int &);
 		std::string	_getLocation(parsedReq & req);
 		// Body Messages
-		short int	_readFile(std::string &, std::string &);
+		// short int	_readFile(std::string &, std::string &);
 		short int	_listFile(parsedReq &, std::string &);
 		// Inspect CGI Response
 		short int	_parseCgiHeader(std::string &, std::string	&);
@@ -40,6 +40,7 @@ class HttpResponse
 		std::string	staticContent(short int &, parsedReq &);
 		std::string	cgiResponse(short int &,  parsedReq &, std::string &);
 		std::string	errorPage(short int &, parsedReq &);
+		int			openFile(short int &, parsedReq &);
 		void		clear(void);
 		void		prtResponse(void);
 

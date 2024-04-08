@@ -38,7 +38,13 @@ void	Client::genResponse(std::string & resMsg) {
 			_cgi.receiveResponse(_status, cgiMsg);
 			resMsg = _res.cgiResponse(_status, _req, cgiMsg);
 		}
-		else if (_status >= 200 && _status < 300)
+		else if (_status >= 200 && _status < 300) {
+			type = OPEN_FILE;
+			// int fd = openFile(status, req);
+			// if (status >= 200 && status < 300)
+			// 	return _createHeader(status, req) + CRLF + _body;
+
+		}
 			resMsg = _res.staticContent(_status, _req);
 		if ((_status >= 400 && _status < 600))
 			resMsg = _res.errorPage(_status, _req);
