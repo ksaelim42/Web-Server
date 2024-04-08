@@ -6,11 +6,12 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/06 14:26:56 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/08 16:48:59 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "parsingConfig.hpp"
+// #include "parsingConfig.hpp"
+#include "../includes/parsingConfig.hpp"
 
 void storeDirectives(Server &obj, std::string key, std::string value, std::vector<std::string> valueVec)
 {
@@ -178,7 +179,7 @@ void setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		for (size_t i = 0; i < value.length(); i++)
 		{
 			std::string tmp;
-			while (value[i] != ' ' && i < value.length())
+			while (!isspace(value[i]) && i < value.length())
 				tmp += value[i++];
 			if (!tmp.empty())
 				valueVec.push_back(tmp);
@@ -235,11 +236,8 @@ std::string	getKey(std::string key, std::string line, int &i)
 {
 	while (line[i])
 	{
-		if (line[i] == ' ')
-			i++;
-		else
+		if (!isspace(line[i]))
 		{
-			// copy a directive
 			while (!isspace(line[i]))
 				key += line[i++];
 			break;
