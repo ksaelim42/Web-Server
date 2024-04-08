@@ -128,15 +128,15 @@ int	WebServer::_acceptConnection(int & serverFd) {
 int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
 
-	if (client.getReqType() == HEADER) { // header request
+	if (client.type == HEADER) { // header request
 		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.getReqType() == BODY) { // body request
+	else if (client.type == BODY) { // body request
 		bytes = recv(client.sockFd, _buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.getReqType() == CHUNK) { // Chunk request
+	else if (client.type == CHUNK) { // Chunk request
 		bytes = _unChunking(client);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
@@ -149,9 +149,9 @@ int	WebServer::_receiveRequest(Client & client) {
 	else if (bytes == 0)
 		return _disconnectClient(client.sockFd), 0;
 	_buffer[bytes] = '\0';
-	if (client.getReqType() != RESPONSE)
+	if (client.type != RESPONSE)
 		client.parseRequest(_buffer, bytes);
-	if (client.getReqType() == RESPONSE) {
+	if (client.type == RESPONSE) {
 		_fdClear(client.sockFd, _readFds);
 		_fdSet(client.sockFd, _writeFds);
 	}

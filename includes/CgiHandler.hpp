@@ -35,8 +35,8 @@ class CgiHandler
 	public:
 		CgiHandler();
 		~CgiHandler();
-		bool	sendRequest(short int &, parsedReq &);
-		bool	sendBody(const char *, size_t &, parsedReq &);
+		bool	sendRequest(short int &, parsedReq &, type_e &);
+		bool	sendBody(const char *, size_t &, parsedReq &, type_e &);
 		bool	receiveResponse(short int &, std::string &);
 		int		getFdIn(void);
 		int		getFdOut(void);

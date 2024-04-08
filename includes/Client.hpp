@@ -36,6 +36,7 @@ class Client
 		void		_updateTime(void);
 	public:
 		int					sockFd;
+		type_e				type;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
@@ -51,7 +52,6 @@ class Client
 		void		prtRequest(httpReq &);
 		// Getter
 		short int	getStatus(void) const;
-		reqType_e	getReqType(void) const;
 };
 
 #endif

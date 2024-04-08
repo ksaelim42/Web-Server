@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+import sys
+
+print("run cgi-script hello", file=sys.stderr)
+
 print("Content-Type: text/html")
 
 print("")

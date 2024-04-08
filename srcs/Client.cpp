@@ -4,22 +4,22 @@ Client::Client(void) {
 	_updateTime();
 	addrLen = sizeof(struct sockaddr_in);
 	serv = NULL;
-	_req.type = HEADER;
+	type = HEADER;
 }
 
 Client::~Client(void) {}
 
 void	Client::parseRequest(char *buffer, size_t bufSize) {
 	_updateTime();
-	if (_req.type == HEADER) {
+	if (type == HEADER) {
 		_initReqParse();
 		_parseHeader(buffer, bufSize);
 	}
-	else if (_req.type == BODY || _req.type == CHUNK) {
-		if (_cgi.sendBody(buffer, bufSize, _req))
+	else if (type == BODY || type == CHUNK) {
+		if (_cgi.sendBody(buffer, bufSize, _req, type))
 			return;
 		_status = 502;
-		_req.type = RESPONSE;
+		type = RESPONSE;
 	}
 	return;
 }
@@ -41,7 +41,7 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.staticContent(_status, _req);
 	if ((_status >= 400 && _status < 600))
 		resMsg = _res.errorPage(_status, _req);
-	_req.type = HEADER;
+	type = HEADER;
 	return;
 }
 
@@ -49,10 +49,10 @@ void	Client::setResponse(short int status) {
 	_updateTime();
 	if (status == 200) {
 		size_t	size = 0;
-		_cgi.sendBody(NULL, size, _req);
+		_cgi.sendBody(NULL, size, _req, type);
 	}
 	_status = status;
-	_req.type = RESPONSE;
+	type = RESPONSE;
 }
 
 void	Client::prtParsedReq(void) {
@@ -85,8 +85,6 @@ void	Client::prtRequest(httpReq & request) {
 
 short int	Client::getStatus(void) const {return _status;}
 
-reqType_e	Client::getReqType(void) const {return _req.type;}
-
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
@@ -105,33 +103,33 @@ bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	httpReq	reqHeader = storeReq(header);
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
 	if (!_checkRequest())
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	_parsePath(_req.uri);
 	if (!_urlEncoding(_req.path))
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	_matchLocation(serv->location);
 	if (_redirect())
-		return _req.type = RESPONSE, true;
+		return type = RESPONSE, true;
 	if (_req.method == "POST" && !_findBodySize())
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	if (!_findFile())
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	if (!_findType())
-		return _req.type = RESPONSE, false;
+		return type = RESPONSE, false;
 	if (_req.serv.cgiPass) {
-		if (_cgi.sendRequest(_status, _req))
+		if (_cgi.sendRequest(_status, _req, type))
 			return true;
 		else
-			return _req.type = RESPONSE, false;
+			return type = RESPONSE, false;
 	}
-	return _req.type = RESPONSE, true;
+	return type = RESPONSE, true;
 }
 
 bool	Client::_divideHeadBody(std::string & header) {
@@ -318,7 +316,7 @@ bool	Client::_findBodySize(void) {
 			return _status = 501, false;
 		}
 		std::cout << MAG << "Chunk Request" << RESET << std::endl;
-		return _req.type = CHUNK, true;
+		return type = CHUNK, true;
 	}
 	if (_req.headers.count("Content-Length")) {
 		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
@@ -326,7 +324,7 @@ bool	Client::_findBodySize(void) {
 			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Entity Too Large");
 			return _status = 413, false;
 		}
-		return _req.type = BODY, true;
+		return type = BODY, true;
 	}
 	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Length Required");
 	return _status = 411, false;
