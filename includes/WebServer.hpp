@@ -41,7 +41,7 @@ class WebServer
 		void	_fdSet(int, fd_set &);
 		void	_fdClear(int, fd_set &);
 		// epoll
-		int		_fdAdd(int &, int &, uint32_t);
+		int		_fdAdd(int &, int, uint32_t);
 		int		_fdMod(int &, int, uint32_t);
 		int		_fdDel(int &, int);
 	public:

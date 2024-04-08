@@ -41,15 +41,10 @@ bool	WebServer::runServer(void) {
 	if (!_setPollFd())
 		return false;
 	while (g_state) {
-		tmpReadFds = _readFds; // because select will modified fd_set
-		tmpWriteFds = _writeFds; // because select will modified fd_set
-		timeOut = _timeOut;
-		// select will make system motoring three set, block until some fd ready
-		// _prtFristSet(tmpReadFds);
-		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		nfds = epoll_wait(_epoll_fd, ep_event, MAX_EVENTS, -1);
 		// std::string curTime = currentTime();
 		// Logger::isLog(INFO) && Logger::log(GRN, "[Server] - select blocking: ", curTime); // debug
-		if (status == 0) {
+		if (nfds == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
 			continue;
@@ -114,11 +109,10 @@ int	WebServer::_acceptConnection(int serverFd) {
 		client.IPaddr = inet_ntoa(client.addr.sin_addr);
 		if (!client.serv)
 			return _disconnectClient(client.sockFd), -1;
-		// if (fcntl(client.sockFd, F_SETFL, O_NONBLOCK) < 0) // if can't set non-blocking I/O
-		// 	return _disconnectClient(client.sockFd), -1;
-		_fdSet(client.sockFd, _readFds);
-		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
+		if (_fdAdd(_epoll_fd, client.sockFd, EPOLLIN) == -1)
+			return _disconnectClient(client.sockFd), -1;
 		_clients[client.sockFd] = client;
+		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 	}
 	return client.sockFd;
 }
@@ -303,13 +297,13 @@ bool	WebServer::_setOptSock(int &sockFd) {
 // FD_CLEAR : remove fd in fd_set
 // FD_ISSET : check fd are in fd_set
 
-void	WebServer::_fdSet(int &fd, fd_set &set) {
+void	WebServer::_fdSet(int fd, fd_set &set) {
 	FD_SET(fd, &set);
 	if (fd > _fdMax)
 		_fdMax = fd;
 }
 
-void	WebServer::_fdClear(int &fd, fd_set &set) {
+void	WebServer::_fdClear(int fd, fd_set &set) {
 	FD_CLR(fd, &set);
 	if (fd == _fdMax)
 		_fdMax--;
@@ -336,7 +330,7 @@ Server*	WebServer::_getServer(int &fd) {
 	return NULL;
 }
 
-void	WebServer::_disconnectClient(int & client_fd) {
+void	WebServer::_disconnectClient(int client_fd) {
 	if (_clients.count(client_fd)) {
 		_fdClear(client_fd, _readFds);
 		_fdClear(client_fd, _writeFds);
@@ -396,4 +390,32 @@ void	WebServer::_prtFristSet(fd_set &set) {
 		}
 	}
 	std::cout << RESET << std::endl;
+}
+
+// ************************************************************************** //
+// ----------------------------- Epoll Function ----------------------------- //
+// ************************************************************************** //
+
+// EPOLL_CTL_ADD : add new fd and event to poll_fd
+// EPOLL_CTL_MOD : change setting event on fd that are in poll_fd
+// EPOLL_CTL_DEL : remove fd in poll_fd
+
+int	WebServer::_fdAdd(int & epoll_fd, int fd, uint32_t events) {
+	struct epoll_event	ev;
+
+	ev.data.fd = fd;
+	ev.events = events;
+	return epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+}
+
+int	WebServer::_fdMod(int & epoll_fd, int fd, uint32_t events) {
+	struct epoll_event	ev;
+
+	ev.data.fd = fd;
+	ev.events = events;
+	return epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev);
+}
+
+int	WebServer::_fdDel(int & epoll_fd, int fd) {
+	return epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 }
