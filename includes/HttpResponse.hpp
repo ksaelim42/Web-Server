@@ -18,7 +18,6 @@ class HttpResponse
 {
 	private:
 		std::map<std::string, std::string>	_headers;
-		std::string							_body;
 
 		// Header Field
 		std::string	_createHeader(short int &, parsedReq &);
@@ -34,6 +33,9 @@ class HttpResponse
 		short int	_parseCgiHeader(std::string &, std::string	&);
 		short int	_inspectCgiHeaders(std::string &);
 	public:
+		resType_e	type;
+		std::string	body;
+
 		std::string	deleteResource(short int &, parsedReq &);
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);

@@ -63,7 +63,8 @@ class Server // don't forget to create vector to store this class as it may have
 		void		clearLocation(void);
 		void		prtServer(void);
 		std::string	getMimeType(const std::string & extension) const;
-		std::string	getErrPage(short int &) const;
+		std::string	getErrContent(short int &) const;
+		void		initErrContent(void);
 };
 
 

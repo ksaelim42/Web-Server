@@ -33,7 +33,7 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::sendRequest(short int & status, parsedReq & req, type_e & type) {
+bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	_initCgi();
 	if (_checkCgiScript(status, req) == 0)
@@ -55,7 +55,7 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req, type_e & type)
 		_closePipe(_pipeOutFd[1]);
 		if (_isPost) {
 			_closePipe(_pipeInFd[0]);
-			if (type == CHUNK)
+			if (req.type == CHUNK)
 				return true;
 			_package = 1;
 			if (req.body.size()) {
@@ -68,16 +68,16 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req, type_e & type)
 			if (req.bodySent >= req.bodySize) {
 				Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 				_closePipe(_pipeInFd[1]);
-				return type = RESPONSE, true;
+				return req.type = RESPONSE, true;
 			}
 		}
 		else 
-			type = RESPONSE;
+			req.type = RESPONSE;
 	}
 	return true;
 }
 
-bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req, type_e & type) {
+bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) {
 	size_t	bytes;
 
 	if (bufSize) {
@@ -86,11 +86,11 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req, 
 			return false;
 		_package++;
 	}
-	if (type == CHUNK) {
+	if (req.type == CHUNK) {
 		if (bufSize == 0) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 			_closePipe(_pipeInFd[1]);
-			type = RESPONSE;
+			req.type = RESPONSE;
 		}
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", _package, "] sent ", bufSize, " Bytes");
 		req.body.clear();
@@ -102,7 +102,7 @@ bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req, 
 		if (req.bodySent >= req.bodySize) {
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 			_closePipe(_pipeInFd[1]);
-			type = RESPONSE;
+			req.type = RESPONSE;
 		}
 	}
 	return true;

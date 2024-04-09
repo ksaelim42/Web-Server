@@ -2,9 +2,13 @@
 
 int	g_state;
 
-WebServer::WebServer() {}
+WebServer::WebServer() {
+	buffer = new char[LARGEFILESIZE];
+}
 
-WebServer::~WebServer() {}
+WebServer::~WebServer() {
+	delete[] buffer;
+}
 
 bool	WebServer::initServer(std::vector<Server> & servs) {
 	struct addrinfo	sockAddr;
@@ -69,23 +73,27 @@ bool	WebServer::runServer(void) {
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
 				}
-				else if (_clients.count(fd)) { // match client socket => read request
+				else if (_clients.count(fd)) { // match client socket => recv request
 					if (_receiveRequest(_clients[fd]) <= 0)
 						continue;
+					_parsingRequest(_clients[fd]);
 				}
-				else if () {
-
+				else if (_pipeFds.count(fd)) { // match File or CGI pipeOut => read File
+					_readContent(fd, _pipeFds[fd]);
+					// if file read file if cgi pipe read cgi pipe
 				}
+				continue;
 			}
 			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client
-				if (_clients.count(fd) == 0)
-					continue;
-				if (_sendResponse(_clients[fd]) <= 0) {
-					_fdClear(fd, _writeFds);
-					continue;
+				if (_clients.count(fd)) { // match client socket => send response
+					if (_sendResponse(_clients[fd]) <= 0)
+						continue;
+					_fdSet(fd, _readFds);
 				}
-				_fdClear(fd, _writeFds);
-				_fdSet(fd, _readFds);
+				else if (_pipeFds.count(fd)) { // match CGI pipeIn => write request
+					// sent cgi request
+				}
+				continue;
 			}
 		}
 		_timeOutMonitoring();
@@ -117,27 +125,25 @@ int	WebServer::_acceptConnection(int & serverFd) {
 		client.IPaddr = inet_ntoa(client.addr.sin_addr);
 		if (!client.serv) // if There aren't server open
 			return _disconnectClient(client.sockFd), -1;
-		// if (fcntl(client.sockFd, F_SETFL, O_NONBLOCK) < 0) // if can't set non-blocking I/O
-		// 	return _disconnectClient(client.sockFd), -1;
-		_fdSet(client.sockFd, _readFds);
 		_clients[client.sockFd] = client;
 		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 	}
+	_fdSet(client.sockFd, _readFds);
 	return client.sockFd;
 }
 
 int	WebServer::_receiveRequest(Client & client) {
 	ssize_t	bytes;
 
-	if (client.type == HEADER) { // header request
+	if (client.getReqType() == HEADER) { // header request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.type == BODY) { // body request
+	else if (client.getReqType() == BODY) { // body request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
-	else if (client.type == CHUNK) { // Chunk request
+	else if (client.getReqType() == CHUNK) { // Chunk request
 		bytes = _unChunking(client);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
@@ -147,22 +153,52 @@ int	WebServer::_receiveRequest(Client & client) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error receiving data fd: ", client.sockFd);
 		return -1;
 	}
-	else if (bytes == 0)
+	else if (bytes == 0 && client.getReqType != CHUNK)
 		return _disconnectClient(client.sockFd), 0;
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	client.buffer[bytes] = '\0';
 	client.bufSize = bytes;
-	if (client.type != RESPONSE)
-		client.parseRequest(client.buffer, bytes);
-	if (client.type == RESPONSE) {
-		_fdClear(client.sockFd, _readFds);
-		_fdSet(client.sockFd, _writeFds);
+	_fdClear(client.sockFd, _readFds);
+	return 1;
+}
+
+int	WebServer::_parsingRequest(Client & client) {
+	if (client.getReqType() == HEADER) {
+		if (!client.parseHeader(client.buffer, client.bufSize))
+			client.setResType(ERROR_RES);
+		int	fd;
+		if (client.getReqType() == FILE_REQ) {
+			fd = client.openFile();
+			if (fd > 0) {
+				client.pipeOut = fd;
+				_pipeFds[fd] = &client;
+				_fdSet(fd, _readFds);
+			}
+			else {
+				client.setResType(ERROR_RES);
+			}
+		}
+		else if (client.getReqType() == CGI_REQ) {
+			// create cgi
+		// _cgi.createRequest(&client))
+		// 		_fdSet(client.pipeIn, _writeFds);
+		// 		pipes[client.pipeIn] = &client;
+		// 		pipes[client.pipeOut] = &client;
+			_fdSet(client.pipeIn, _writeFds);
+		}
 	}
-	if (client.getStatus() >= 400) {
-		std::string	statusText = HttpResponse::getStatusText(client.getStatus());
-		Logger::isLog(DEBUG) && Logger::log(RED, statusText);
+	else if (client.getReqType() == BODY || client.type == CHUNK) {
+		_fdSet(client.pipeIn, _writeFds);
+		return 1;
+	}
+	if (client.getReqType() == RESPONSE) {
+		if (client.getStatus() >= 400) {
+			std::string	statusText = HttpResponse::getStatusText(client.getStatus());
+			Logger::isLog(DEBUG) && Logger::log(RED, statusText);
+		}
+		_fdSet(client.sockFd, _writeFds);
 	}
 	return 1;
 }
@@ -171,17 +207,22 @@ int	WebServer::_sendResponse(Client & client) {
 	ssize_t	bytes;
 
 	client.genResponse(_resMsg);
-	bytes = send(client.sockFd, _resMsg.c_str(), _resMsg.length(), 0);
+	bytes = send(client.sockFd, _resMsg.c_str(), _resMsg.length(), MSG_DONTWAIT);
 	_resMsg.clear();
 	if (bytes < 0) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error to response data");
 		return -1;
 	}
 	Logger::isLog(DEBUG) && Logger::log(CYN, "[Server] - Sent data ", bytes, " Bytes to client fd: ", client.sockFd);
-	if (client.getStatus() >= 400) {
+	if (client.getResType == ERROR) {
 		_disconnectClient(client.sockFd);
 		return 0;
 	}
+	if (client.genResponse == BODY)
+		_fdSet(client.pipeOut, _readFds);
+	else
+		_fdSet(client.sockFd, _readFds);
+	_fdClear(client.sockFd, _writeFds);
 	return 1;
 }
 
@@ -202,21 +243,21 @@ ssize_t	WebServer::_unChunking(Client & client) {
 			break;
 	}
 	if (i == 0)
-		return client.setResponse(400), 1;
+		return client.setStatus(400), client.setResType(ERROR_RES), 1;
 	chunkSize = hexStrToDec(str);
 	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Chunck size: ",chunkSize);
 	if (chunkSize == 0) { // Last chunk
 		count = recv(client.sockFd, buf, 4, MSG_DONTWAIT);
 		if (count <= 0)
-			return client.setResponse(400), 1;
+			return client.setStatus(400), client.setResType(ERROR_RES), 1;
 		else
-			return client.setResponse(200), 1;
+			return 0;
 	}
 	else if (chunkSize > BUFFERSIZE - 1)
-		return client.setResponse(413), 1;
+		return client.setStatus(413), client.setResType(ERROR_RES), 1;
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setResponse(400), 1;
+		return client.setStatus(400), client.setResType(ERROR_RES), 1;
 	i = 0;
 	while (i < chunkSize) {
 		count = recv(client.sockFd, &client.buffer[i], chunkSize - i, MSG_DONTWAIT);
@@ -226,7 +267,7 @@ ssize_t	WebServer::_unChunking(Client & client) {
 	}
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setResponse(400), 1;
+		return client.setStatus(400), client.setResType(ERROR_RES), 1;
 	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
 	return chunkSize;
 }
@@ -253,6 +294,7 @@ bool	WebServer::_setPollFd(void) {
 	_timeOut.tv_sec = KEEPALIVETIME;
 	_timeOut.tv_usec = 0;
 	for (size_t i = 0; i < _servs.size(); i++) {
+		_servs[i].init
 		_fdSet(_servs[i].sockFd, _readFds);
 		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
 	}
@@ -385,4 +427,15 @@ void	WebServer::_prtFristSet(fd_set &set) {
 		}
 	}
 	std::cout << RESET << std::endl;
+}
+
+void	WebServer::_readContent(int fd, Client * client) {
+	if (client->getReqType() == FILE_REQ) {
+		client->readFile(fd, this->buffer);
+		_fdSet(client->sockFd, _writeFds);
+	}
+	else if (client->getReqType() == CGI_REQ) {
+		// call cgi
+	}
+	_fdClear(fd, _readFds);
 }

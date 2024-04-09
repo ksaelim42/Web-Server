@@ -1,8 +1,9 @@
 #include "HttpResponse.hpp"
 
+HttpResponse::HttpResponse() : type(ERROR) {}
+
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Delete -----");
-	_body = "";
 	if (access(req.pathSrc.c_str(), F_OK) != 0)
 		return status = 404, "";
 	if (access(req.pathSrc.c_str(), W_OK) != 0)
@@ -10,23 +11,23 @@ std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	if (remove(req.pathSrc.c_str()) != 0)
 		return status = 503, "";
 	status = 204;
-	_headers["Content-Length"] = _body.length();
+	_headers["Content-Length"] = "0";
 	return _createHeader(status , req) + CRLF;
 }
 
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Redirection -----");
-	_body = req.serv.retur.text;
+	body = req.serv.retur.text;
 	req.pathSrc = req.serv.retur.text;
-	_headers["Content-Length"] = _body.length();
-	return _createHeader(status , req) + CRLF + _body;
+	_headers["Content-Length"] = body.length();
+	return _createHeader(status , req) + CRLF + body;
 }
 
 std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Auto Index -----");
-	_listFile(req, _body);
-	_headers["Content-Length"] = _body.length();
-	return _createHeader(status , req) + CRLF + _body;
+	_listFile(req, body);
+	_headers["Content-Length"] = body.length();
+	return _createHeader(status , req) + CRLF + body;
 }
 
 int	HttpResponse::openFile(short int & status, parsedReq & req) {
@@ -43,18 +44,11 @@ int	HttpResponse::openFile(short int & status, parsedReq & req) {
 		return status = 500, -1;
 	}
 	return fd;
-	// body.resize(fileInfo.st_size);
-	// read(fd, &body[0], fileInfo.st_size);	// Read all data in inFile to Buffer
-	// close(fd);
-	// return 200;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Static -----");
-	status = openFile(status, req);
-	if (status >= 200 && status < 300)
-		return _createHeader(status, req) + CRLF + _body;
-	return ("");
+	return _createHeader(status, req) + CRLF + body;
 }
 
 std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
@@ -69,25 +63,19 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std:
 	status = _inspectCgiHeaders(cgiHeader);
 	if (status != 200)
 		return "";
-	_body = cgiMsg;
-	return _createHeader(status , req) + CRLF + _body;
+	body = cgiMsg;
+	return _createHeader(status , req) + CRLF + body;
 }
 
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Error Page -----");
-	req.pathSrc = req.serv.getErrPage(status);
-	if (req.pathSrc.empty())
-		_body = "Something went wrong";
-	else {
-		if (_readFile(req.pathSrc, _body) != 200)
-			_body = "Something went wrong";
-	}
-	return _createHeader(status , req) + CRLF + _body;
+	body = req.serv.getErrContent(status);
+	return _createHeader(status , req) + CRLF + body;
 }
 
 void	HttpResponse::clear(void) {
 	_headers.clear();
-	_body.clear();
+	body.clear();
 }
 
 void	HttpResponse::prtResponse(void) {

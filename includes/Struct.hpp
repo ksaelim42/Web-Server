@@ -17,20 +17,27 @@
 # define PROGRAM_NAME	"MPM/1.0"	// Mos Prach Mark
 # define PYTHON_PATH	"/usr/bin/python3"
 
-enum type_e {
+enum reqType_e {
 	HEADER,
 	BODY,
 	CHUNK,
-	CGI,
-	RES_ERR,
-	RES_REDIR,
-	RES_DEL,
-	RES_AUTOINDEX,
-	RES_FILE
+	FILE_REQ,
+	CGI_REQ,
+	RESPONSE
+};
+
+enum resType_e {
+	ERROR_RES,
+	REDIRECT_RES,
+	DELETE_RES,
+	AUTOINDEX_RES,
+	FILE_RES,
+	CGI_RES,
+	BODY_RES
 };
 
 struct parsedReq {
-	bool								redir;
+	reqType_e							type;
 	uint64_t							bodySize;
 	uint64_t							bodySent;
 	Server								serv;

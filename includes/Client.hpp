@@ -33,9 +33,12 @@ class Client
 		bool		_findBodySize(void);
 		// Time Out
 		void		_updateTime(void);
+		// Setter
 	public:
 		int					sockFd;
-		type_e				type;
+		pid_t				pid;
+		int					pipeIn;
+		int					pipeOut;
 		char				buffer[BUFFERSIZE];
 		size_t				bufSize;
 		std::string			IPaddr;
@@ -46,13 +49,24 @@ class Client
 
 		Client(void);
 		~Client(void);
+		bool		parseHeader(char *, size_t &);
 		void		parseRequest(char *, size_t);
 		void		genResponse(std::string &);
 		void		setResponse(short int);
 		void		prtParsedReq(void);
 		void		prtRequest(httpReq &);
-		// Getter
+		int			openFile(void);
+		// Getter & Setter
+		void		setStatus(short int);
+		void		setReqType(reqType_e);
+		void		setResType(resType_e);
 		short int	getStatus(void) const;
+		reqType_e	getReqType(void) const;
+		resType_e	getResType(void) const;
+
+		int		readFile(int fd, char* buffer);
+
+
 };
 
 #endif

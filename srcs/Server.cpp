@@ -20,6 +20,23 @@ Server::Server(void) {
 
 Server::~Server(void) {}
 
+void	Server::initErrContent(void) {
+	std::ifstream		inputFile;
+	std::stringstream	buffer;
+
+	std::map<short int, std::string>::iterator	it;
+	for (it = errPage.begin(); it != errPage.end(); it++) {
+		inputFile::open(it->second, std::ifstream::in);
+		if (inputFile.is_open()) {
+			buffer << inputFile.rdbuf();
+			inputFile.close();
+			it->second = buffer.str();
+		}
+		else
+			it->second = "Something went wrong";
+	}
+}
+
 // ************************************************************************** //
 // --------------------------------- Getter --------------------------------- //
 // ************************************************************************** //
@@ -33,12 +50,12 @@ std::string	Server::getMimeType(const std::string & extension) const {
 	return it->second;
 }
 
-std::string	Server::getErrPage(short int & errCode) const {
+std::string	Server::getErrContent(short int & errCode) const {
 	std::map<short int, std::string>::const_iterator	it;
 	it = errPage.find(errCode);
 	if (it != errPage.end())
 		return it->second;
-	return "";
+	return "Something went wrong";
 }
 
 void	Server::prtServer(void) {

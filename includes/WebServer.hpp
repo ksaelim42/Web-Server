@@ -20,30 +20,39 @@ class WebServer
 		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
+		std::map<int, Client *>	_pipeFds;
 		struct timeval			_timeOut;
 
+		// Server initiation
 		bool	_setPollFd(void);
+		bool	_setSockAddr(struct addrinfo &, Server &);
+		bool	_setOptSock(int &);
+		// Recv, Sent, Read, Write
 		int		_acceptConnection(int &);
+		int		_parsingRequest(Client &);
 		int		_receiveRequest(Client &);
 		int		_sendResponse(Client &);
+		ssize_t	_unChunking(Client &);
+		int		_readContent(int, Client *);
+		// Manipulate Client
 		void	_fdSet(int, fd_set &);
 		void	_fdClear(int, fd_set &);
 		void	_disconnectClient(int);
 		void	_disconnectAllClient(void);
-		bool	_setSockAddr(struct addrinfo &, Server &);
-		bool	_setOptSock(int &);
 		bool	_matchServer(int);
 		Server*	_getServer(int);
-		ssize_t	_unChunking(Client &);
 		void	_timeOutMonitoring(void);
+		// Debugging
 		void	_prtFristSet(fd_set &);
 	public:
+		char*	buffer;
+
 		WebServer();
 		~WebServer();
-
 		bool	initServer(std::vector<Server> &);
 		bool	runServer(void);
 		bool	downServer(void);
+
 		static void	signal_handler(int);
 		class	WebServerException : public std::exception {
 			private:

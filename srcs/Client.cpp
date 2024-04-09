@@ -4,61 +4,106 @@ Client::Client(void) {
 	_updateTime();
 	addrLen = sizeof(struct sockaddr_in);
 	serv = NULL;
-	type = HEADER;
 }
 
-Client::~Client(void) {}
+Client::~Client(void) {
+	if (pipeIn > 0 && fcntl(pipeIn, F_GETFL) != -1) {
+		_closePipe(pipeIn);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeIn, " was closed");
+	}
+	if (pipeOut > 0 && fcntl(pipeOut, F_GETFL) != -1) {
+		_closePipe(pipeOut);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeOut, " was closed");
+	}
+	if (pid != -1) {
+		kill(pid, SIGKILL);
+		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
+	}
+}
 
-void	Client::parseRequest(char *buffer, size_t bufSize) {
+bool	Client::parseHeader(char *buffer, size_t & bufSize) {
+	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	_updateTime();
-	if (type == HEADER) {
-		_initReqParse();
-		_parseHeader(buffer, bufSize);
+	_initReqParse();
+	std::string	header(buffer, bufSize);
+	if (!_divideHeadBody(header))
+		return false;
+	httpReq	reqHeader = storeReq(header);
+	_req.method = reqHeader.method;
+	_req.uri = reqHeader.srcPath;
+	_req.version = reqHeader.version;
+	_req.headers = reqHeader.headers;
+	if (!_checkRequest())
+		return false;
+	_parsePath(_req.uri);
+	if (!_urlEncoding(_req.path))
+		return false;
+	_matchLocation(serv->location);
+	if (_redirect()) {
+		setResType(REDIRECT_RES);
+		return true;
 	}
-	else if (type == BODY || type == CHUNK) {
-		if (_cgi.sendBody(buffer, bufSize, _req, type))
-			return;
-		_status = 502;
-		type = RESPONSE;
-	}
-	return;
+	if (_req.method == "POST" && !_findBodySize())
+		return false;
+	if (!_findFile())
+		return false;
+	if (!_findType())
+		return false;
+	if (_req.serv.cgiPass)
+		setResType(CGI_RES);
+	else if (_req.method == "DELETE")
+		setResType(DELETE_RES);
+	else if (_req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
+		setResType(AUTOINDEX_RES);
+	else
+		setResType(FILE_RES);
+	return true;
 }
+
+	// else if (type == BODY || type == CHUNK) {
+	// 	if (_cgi.sendBody(buffer, bufSize, _req, type))
+	// 		return;
 
 void	Client::genResponse(std::string & resMsg) {
 	_updateTime();
-	if (type == RES_DEL)
+	if (_res.type == FILE_RES)
+		resMsg = _res.staticContent(_status, _req);
+	else if (_res.type == BODY_RES)
+		resMsg = _res.body;
+	else if (_res.type == ERROR_RES)
+		resMsg = _res.errorPage(_status, _req);
+	else if (_res.type == DELETE_RES)
 		resMsg = _res.deleteResource(_status, _req);
-	else if (type == RES_REDIR)
+	else if (_res.type == REDIRECT_RES)
 		resMsg = _res.redirection(_status, _req);
-	else if (type == RES_AUTOINDEX)
+	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(_status, _req);
-	else if (_status == 200 && _req.serv.cgiPass) {
-		std::string	cgiMsg;
-		_cgi.receiveResponse(_status, cgiMsg);
-		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+	
+	if (_res.type == FILE_RES || _res.type == BODY_RES) {
+		if (_req.bodySent >= _req.bodySize) {
+			close(pipeOut);
+			pipeOut = -1;
+			_req.type = HEADER;
+		}
+		else
+			_res.type = BODY_RES;
 	}
-	else if (_status >= 200 && _status < 300) {
-		type = OPEN_FILE;
+	// else if (_status == 200 && _req.serv.cgiPass) {
+	// 	std::string	cgiMsg;
+	// 	_cgi.receiveResponse(_status, cgiMsg);
+	// 	resMsg = _res.cgiResponse(_status, _req, cgiMsg);
+	// }
+	// else if (_status >= 200 && _status < 300) {
+	// 	type = OPEN_FILE;
 		// int fd = openFile(status, req);
 		// if (status >= 200 && status < 300)
 		// 	return _createHeader(status, req) + CRLF + _body;
 
-	}
-		resMsg = _res.staticContent(_status, _req);
-	if ((_status >= 400 && _status < 600))
-		resMsg = _res.errorPage(_status, _req);
-	type = HEADER; // ??
+	// }
+	// 	resMsg = _res.staticContent(_status, _req);
+	// if ((_status >= 400 && _status < 600))
+	// 	resMsg = _res.errorPage(_status, _req);
 	return;
-}
-
-void	Client::setResponse(short int status) {
-	_updateTime();
-	if (status == 200) {
-		size_t	size = 0;
-		_cgi.sendBody(NULL, size, _req, type);
-	}
-	_status = status;
-	type = RESPONSE;
 }
 
 void	Client::prtParsedReq(void) {
@@ -89,57 +134,53 @@ void	Client::prtRequest(httpReq & request) {
 	std::cout << BBLU <<  "********************" << RESET << std::endl;
 }
 
-short int	Client::getStatus(void) const {return _status;}
+// ************************************************************************** //
+// ---------------------------- Setter & Getter ----------------------------- //
+// ************************************************************************** //
+
+short int	Client::getStatus(void) const {
+	return _status;
+}
+
+reqType_e	Client::getReqType(void) const {
+	return _req.type;
+}
+
+resType_e	Client::getResType(void) const {
+	return _res.type;
+}
+
+void	Client::setStatus(short int status) {
+	this->_status = status;
+}
+
+void	Client::setReqType(reqType_e type) {
+	_req.type = type;
+}
+
+void	Client::setResType(resType_e type) {
+	_req.type = RESPONSE;
+	_res.type = type;
+}
+
+// short int	Client::getReqType(void) const {return _status;}
 
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
 
 void	Client::_initReqParse(void) {
-	_res.clear();
 	_status = 200;
+	pipeIn = -1;
+	pipeOut = -1;
+	pid = -1;
+	bufSize = 0;
+	_req.type = HEADER;
 	_req.bodySize = 0;
 	_req.bodySent = 0;
-	_req.redir = 0;
 	_req.serv = *serv;
 	_req.pathSrc = "";
-}
-
-bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
-	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
-	std::string	header(buffer, bufSize);
-	if (!_divideHeadBody(header))
-		return type = RES_ERR, false;
-	httpReq	reqHeader = storeReq(header);
-	_req.method = reqHeader.method;
-	_req.uri = reqHeader.srcPath;
-	_req.version = reqHeader.version;
-	_req.headers = reqHeader.headers;
-	if (!_checkRequest())
-		return type = RES_ERR, false;
-	_parsePath(_req.uri);
-	if (!_urlEncoding(_req.path))
-		return type = RES_ERR, false;
-	_matchLocation(serv->location);
-	if (_redirect())
-		return type = RES_REDIR, true;
-	if (_req.method == "POST" && !_findBodySize())
-		return type = RES_ERR, false;
-	if (!_findFile())
-		return type = RES_ERR, false;
-	if (!_findType())
-		return type = RES_ERR, false;
-	if (_req.serv.cgiPass) // TODO open pipe first
-		return type = CGI, true;
-	else if (_req.method == "DELETE")
-		return type = RES_DEL, true;
-	else if (_req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
-		return type = RES_AUTOINDEX, true;
-		// if (_cgi.sendRequest(_status, _req, type))
-		// 	return true;
-		// else
-		// 	return type = RESPONSE, false;
-	return type = RES_FILE, true;
+	_res.clear();
 }
 
 bool	Client::_divideHeadBody(std::string & header) {
@@ -327,7 +368,8 @@ bool	Client::_findBodySize(void) {
 			return _status = 501, false;
 		}
 		std::cout << MAG << "Chunk Request" << RESET << std::endl;
-		return type = CHUNK, true;
+		_req.type = CHUNK;
+		return true;
 	}
 	if (_req.headers.count("Content-Length")) {
 		_req.bodySize = strToNum(findHeaderValue(_req.headers, "Content-Length"));
@@ -335,7 +377,8 @@ bool	Client::_findBodySize(void) {
 			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Entity Too Large");
 			return _status = 413, false;
 		}
-		return type = BODY, true;
+		_req.type = BODY;
+		return true;
 	}
 	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Length Required");
 	return _status = 411, false;
@@ -348,4 +391,37 @@ bool	Client::_findBodySize(void) {
 void	Client::_updateTime(void) {
 	std::time(&lastTimeConnected);		// get current time.
 	lastTimeConnected += KEEPALIVETIME;
+}
+
+int	Client::openFile(void) {
+	int	fd;
+
+	fd = open(_req.pathSrc.c_str(), O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT)	// 2 No such file or directory : 404
+			return _status = 404, -1;
+		if (errno == EACCES)	// 13 Permission denied : 403
+			return _status = 403, -1;
+		// EMFILE, ENFILE : Too many open file, File table overflow
+		// Server Error, May reach the limit of file descriptors : 500
+		return _status = 500, -1;
+	}
+	_req.bodySize = _req.fileInfo.st_size;
+	return fd;
+}
+
+int	Client::readFile(int fd, char* buffer) {
+	ssize_t	bytes;
+
+	if (_req.bodySize < _req.bodySent + LARGEFILESIZE) {
+		bytes = read(fd, buffer, _req.bodySize);
+		_res.body.assign(buffer, bytes);
+	}
+	else {
+		bytes = read(fd, buffer, LARGEFILESIZE);
+		_res.body.assign(buffer, bytes);
+	}
+	_req.bodySent += bytes;
+	setResType(FILE_RES);
+	return true;
 }
