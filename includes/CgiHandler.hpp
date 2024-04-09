@@ -7,9 +7,9 @@
 #include <cerrno>		// errno
 #include <cstdlib>		// exit
 
-#include "HttpRequest.hpp"
 #include "Utils.hpp"
 #include "Struct.hpp"
+#include "Client.hpp"
 
 class CgiHandler
 {
@@ -18,7 +18,6 @@ class CgiHandler
 		int			_pipeInFd[2];
 		int			_pipeOutFd[2];
 		bool		_isPost;
-		size_t		_package;
 		std::string	_cgiFileName;
 		std::string	_cgiProgramPath;
 		std::map<std::string, std::string>	_env;
@@ -34,8 +33,8 @@ class CgiHandler
 	public:
 		CgiHandler();
 		~CgiHandler();
-		bool	sendRequest(short int &, parsedReq &);
-		bool	sendBody(const char *, size_t &, parsedReq &);
+		bool	createRequest(Client &, parsedReq &);
+		bool	sendBody(Client &, parsedReq &, int fd);
 		bool	receiveResponse(short int &, std::string &);
 		int		getFdIn(void);
 		int		getFdOut(void);

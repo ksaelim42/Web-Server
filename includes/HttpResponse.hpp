@@ -22,7 +22,7 @@ class HttpResponse
 		// Header Field
 		std::string	_createHeader(short int &, parsedReq &);
 		std::string	_getContentType(parsedReq &);
-		std::string	_getContentLength(void);
+		std::string	_getContentLength(parsedReq &);
 		std::string	_getDate(void);
 		std::string	_getStatusLine(short int &);
 		std::string	_getLocation(parsedReq & req);
@@ -36,6 +36,7 @@ class HttpResponse
 		resType_e	type;
 		std::string	body;
 
+		HttpResponse();
 		std::string	deleteResource(short int &, parsedReq &);
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);

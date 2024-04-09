@@ -13,6 +13,7 @@
 #define CLR_METHOD(BF, N) BF &= ~N
 #define IS_METHOD_SET(BF, N) BF & N
 
+#include <fstream>		// open and read file
 #include <netdb.h>		// for getaddrinfo
 #include <cstring>		// for memset
 #include "Utils.hpp"

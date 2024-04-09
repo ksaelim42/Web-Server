@@ -26,7 +26,7 @@ void	Server::initErrContent(void) {
 
 	std::map<short int, std::string>::iterator	it;
 	for (it = errPage.begin(); it != errPage.end(); it++) {
-		inputFile::open(it->second, std::ifstream::in);
+		inputFile.open(it->second.c_str(), std::ifstream::in);
 		if (inputFile.is_open()) {
 			buffer << inputFile.rdbuf();
 			inputFile.close();

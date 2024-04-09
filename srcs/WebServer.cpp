@@ -36,12 +36,6 @@ bool	WebServer::initServer(std::vector<Server> & servs) {
 	return true;
 }
 
-std::string	currentTime(void) {
-	std::time_t	time = std::time(NULL);
-	std::tm* tm = std::localtime(&time);
-	return numToStr(tm->tm_hour) + ":" + numToStr(tm->tm_min) + ":" + numToStr(tm->tm_sec);
-}
-
 bool	WebServer::runServer(void) {
 	fd_set			tmpReadFds;
 	fd_set			tmpWriteFds;
@@ -53,11 +47,10 @@ bool	WebServer::runServer(void) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
-		// select will make system motoring three set, block until some fd ready
 		// _prtFristSet(tmpReadFds);
+		// select will make system motoring three set, block until some fd ready
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
-		// std::string curTime = currentTime();
-		// Logger::isLog(INFO) && Logger::log(GRN, "[Server] - select blocking: ", curTime); // debug
+		Logger::isLog(DEBUG) && _displayCurrentTime();
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
 			_timeOutMonitoring();
@@ -91,6 +84,8 @@ bool	WebServer::runServer(void) {
 					_fdSet(fd, _readFds);
 				}
 				else if (_pipeFds.count(fd)) { // match CGI pipeIn => write request
+					Client * client = _pipeFds[fd];
+					_cgi.sendBody(*client, client->getRequest(), fd);
 					// sent cgi request
 				}
 				continue;
@@ -153,7 +148,7 @@ int	WebServer::_receiveRequest(Client & client) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error receiving data fd: ", client.sockFd);
 		return -1;
 	}
-	else if (bytes == 0 && client.getReqType != CHUNK)
+	else if (bytes == 0 && client.getReqType() != CHUNK)
 		return _disconnectClient(client.sockFd), 0;
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	Logger::isLog(ERROR) && Logger::log(CYN, client.buffer);
@@ -168,28 +163,31 @@ int	WebServer::_parsingRequest(Client & client) {
 	if (client.getReqType() == HEADER) {
 		if (!client.parseHeader(client.buffer, client.bufSize))
 			client.setResType(ERROR_RES);
-		int	fd;
 		if (client.getReqType() == FILE_REQ) {
-			fd = client.openFile();
-			if (fd > 0) {
-				client.pipeOut = fd;
-				_pipeFds[fd] = &client;
-				_fdSet(fd, _readFds);
+			client.pipeOut = client.openFile();
+			if (client.pipeOut != -1) {
+				_pipeFds[client.pipeOut] = &client;
+				_fdSet(client.pipeOut, _readFds);
 			}
-			else {
+			else
 				client.setResType(ERROR_RES);
-			}
 		}
 		else if (client.getReqType() == CGI_REQ) {
-			// create cgi
-		// _cgi.createRequest(&client))
-		// 		_fdSet(client.pipeIn, _writeFds);
-		// 		pipes[client.pipeIn] = &client;
-		// 		pipes[client.pipeOut] = &client;
-			_fdSet(client.pipeIn, _writeFds);
+			if (!_cgi.createRequest(client, client.getRequest()))
+				client.setResType(ERROR_RES);
+			if (client.pipeIn != -1)
+				_pipeFds[client.pipeIn] = &client;
+			if (client.pipeOut != -1)
+				_pipeFds[client.pipeOut] = &client;
+			if (client.getReqType() == BODY) {
+				if (client.bufSize)
+					_fdSet(client.pipeIn, _writeFds);
+				else
+					_fdSet(client.sockFd, _readFds);
+			}
 		}
 	}
-	else if (client.getReqType() == BODY || client.type == CHUNK) {
+	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
 		_fdSet(client.pipeIn, _writeFds);
 		return 1;
 	}
@@ -214,11 +212,11 @@ int	WebServer::_sendResponse(Client & client) {
 		return -1;
 	}
 	Logger::isLog(DEBUG) && Logger::log(CYN, "[Server] - Sent data ", bytes, " Bytes to client fd: ", client.sockFd);
-	if (client.getResType == ERROR) {
+	if (client.getResType() == ERROR_RES) {
 		_disconnectClient(client.sockFd);
 		return 0;
 	}
-	if (client.genResponse == BODY)
+	if (client.getResType() == BODY_RES)
 		_fdSet(client.pipeOut, _readFds);
 	else
 		_fdSet(client.sockFd, _readFds);
@@ -243,21 +241,21 @@ ssize_t	WebServer::_unChunking(Client & client) {
 			break;
 	}
 	if (i == 0)
-		return client.setStatus(400), client.setResType(ERROR_RES), 1;
+		return client.status = 400, client.setResType(ERROR_RES), 1;
 	chunkSize = hexStrToDec(str);
 	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Chunck size: ",chunkSize);
 	if (chunkSize == 0) { // Last chunk
 		count = recv(client.sockFd, buf, 4, MSG_DONTWAIT);
 		if (count <= 0)
-			return client.setStatus(400), client.setResType(ERROR_RES), 1;
+			return client.status = 400, client.setResType(ERROR_RES), 1;
 		else
 			return 0;
 	}
 	else if (chunkSize > BUFFERSIZE - 1)
-		return client.setStatus(413), client.setResType(ERROR_RES), 1;
+		return client.status = 413, client.setResType(ERROR_RES), 1;
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setStatus(400), client.setResType(ERROR_RES), 1;
+		return client.status = 400, client.setResType(ERROR_RES), 1;
 	i = 0;
 	while (i < chunkSize) {
 		count = recv(client.sockFd, &client.buffer[i], chunkSize - i, MSG_DONTWAIT);
@@ -267,7 +265,7 @@ ssize_t	WebServer::_unChunking(Client & client) {
 	}
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
-		return client.setStatus(400), client.setResType(ERROR_RES), 1;
+		return client.status = 400, client.setResType(ERROR_RES), 1;
 	Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Read Chunk Success");
 	return chunkSize;
 }
@@ -294,7 +292,7 @@ bool	WebServer::_setPollFd(void) {
 	_timeOut.tv_sec = KEEPALIVETIME;
 	_timeOut.tv_usec = 0;
 	for (size_t i = 0; i < _servs.size(); i++) {
-		_servs[i].init
+		_servs[i].initErrContent();
 		_fdSet(_servs[i].sockFd, _readFds);
 		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
 	}
@@ -427,6 +425,14 @@ void	WebServer::_prtFristSet(fd_set &set) {
 		}
 	}
 	std::cout << RESET << std::endl;
+}
+
+bool	WebServer::_displayCurrentTime(void) {
+	std::time_t	time = std::time(NULL);
+	std::tm* tm = std::localtime(&time);
+	std::string	curTime = numToStr(tm->tm_hour) + ":" + numToStr(tm->tm_min) + ":" + numToStr(tm->tm_sec);
+	Logger::log(GRN, "[Server] - select blocking: ", curTime);
+	return true;
 }
 
 void	WebServer::_readContent(int fd, Client * client) {

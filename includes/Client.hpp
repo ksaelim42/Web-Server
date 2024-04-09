@@ -1,19 +1,18 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
+#include <signal.h>
+
 #include "Utils.hpp"
 #include "Struct.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-#include "CgiHandler.hpp"
 
 class Client
 {
 	private:
-		short int		_status;
 		parsedReq		_req;
 		HttpResponse	_res;
-		CgiHandler		_cgi;
 
 		// Parsing Request
 		void		_initReqParse(void);
@@ -36,6 +35,7 @@ class Client
 		// Setter
 	public:
 		int					sockFd;
+		short int			status;
 		pid_t				pid;
 		int					pipeIn;
 		int					pipeOut;
@@ -57,16 +57,14 @@ class Client
 		void		prtRequest(httpReq &);
 		int			openFile(void);
 		// Getter & Setter
-		void		setStatus(short int);
 		void		setReqType(reqType_e);
 		void		setResType(resType_e);
 		short int	getStatus(void) const;
 		reqType_e	getReqType(void) const;
 		resType_e	getResType(void) const;
+		parsedReq &	getRequest(void);
 
 		int		readFile(int fd, char* buffer);
-
-
 };
 
 #endif

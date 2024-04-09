@@ -10,6 +10,7 @@
 
 #include "Utils.hpp"
 #include "Client.hpp"
+#include "CgiHandler.hpp"
 
 class WebServer
 {
@@ -17,6 +18,7 @@ class WebServer
 		int						_fdMax;
 		fd_set					_readFds;
 		fd_set					_writeFds;
+		CgiHandler				_cgi;
 		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
@@ -33,7 +35,7 @@ class WebServer
 		int		_receiveRequest(Client &);
 		int		_sendResponse(Client &);
 		ssize_t	_unChunking(Client &);
-		int		_readContent(int, Client *);
+		void	_readContent(int, Client *);
 		// Manipulate Client
 		void	_fdSet(int, fd_set &);
 		void	_fdClear(int, fd_set &);
@@ -44,6 +46,7 @@ class WebServer
 		void	_timeOutMonitoring(void);
 		// Debugging
 		void	_prtFristSet(fd_set &);
+		bool	_displayCurrentTime(void);
 	public:
 		char*	buffer;
 

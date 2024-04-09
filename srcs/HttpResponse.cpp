@@ -1,6 +1,6 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse() : type(ERROR) {}
+HttpResponse::HttpResponse() : type(ERROR_RES) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Delete -----");
@@ -28,22 +28,6 @@ std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 	_listFile(req, body);
 	_headers["Content-Length"] = body.length();
 	return _createHeader(status , req) + CRLF + body;
-}
-
-int	HttpResponse::openFile(short int & status, parsedReq & req) {
-	int	fd;
-
-	fd = open(req.pathSrc.c_str(), O_RDONLY);
-	if (fd < 0) {
-		if (errno == ENOENT)	// 2 No such file or directory : 404
-			return status = 404, -1;
-		if (errno == EACCES)	// 13 Permission denied : 403
-			return status = 403, -1;
-		// EMFILE, ENFILE : Too many open file, File table overflow
-		// Server Error, May reach the limit of file descriptors : 500
-		return status = 500, -1;
-	}
-	return fd;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
@@ -82,7 +66,7 @@ void	HttpResponse::prtResponse(void) {
 	std::cout << CYN;
 	prtMap(_headers);
 	std::cout << "-----------------------------------------" << std::endl;
-	std::cout << _body << RESET << std::endl;
+	std::cout << body << RESET << std::endl;
 }
 
 // ************************************************************************** //

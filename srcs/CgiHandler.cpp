@@ -1,29 +1,12 @@
 #include "CgiHandler.hpp"
 
-CgiHandler::CgiHandler() {
-	_initCgi();
-}
+CgiHandler::CgiHandler() {}
 
-CgiHandler::~CgiHandler() {
-	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Destructor");
-	if (_pipeInFd[1] > 0 && fcntl(_pipeInFd[1], F_GETFL) != -1) {
-		_closePipe(_pipeInFd[1]);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", _pipeInFd[1], " was closed");
-	}
-	if (_pipeOutFd[0] > 0 && fcntl(_pipeOutFd[0], F_GETFL) != -1) {
-		_closePipe(_pipeOutFd[0]);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", _pipeOutFd[0], " was closed");
-	}
-	if (_pid != -1) {
-		kill(_pid, SIGKILL);
-		Logger::isLog(WARNING) && Logger::log(YEL, _pid, " was killed");
-	}
-}
+CgiHandler::~CgiHandler() {}
 
 void	CgiHandler::_initCgi() {
 	_pid = -1;
 	_isPost = 0;
-	_package = 1;
 	_pipeInFd[0] = -1;
 	_pipeInFd[1] = -1;
 	_pipeOutFd[0] = -1;
@@ -33,21 +16,21 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
+bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	_initCgi();
-	if (_checkCgiScript(status, req) == 0)
+	if (!_checkCgiScript(client.status, req))
 		return false;
 	if (!_initEnv(req))
 		return false;
 	if (!_createPipe()) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
-		return (status = 500, false);
+		return (client.status = 500, false);
 	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
-		return (_closeAllPipe(), status = 500, false);
+		return (_closeAllPipe(), client.status = 500, false);
 	}
 	if (_pid == 0) // Child Process
 		_childProcess(req);
@@ -55,54 +38,42 @@ bool	CgiHandler::sendRequest(short int & status, parsedReq & req) {
 		_closePipe(_pipeOutFd[1]);
 		if (_isPost) {
 			_closePipe(_pipeInFd[0]);
-			if (req.type == CHUNK)
-				return true;
-			_package = 1;
-			if (req.body.size()) {
-				write(_pipeInFd[1], req.body.c_str(), req.body.size());
-				req.bodySent += req.body.size();
-				req.body.clear();
-				_package++;
-				Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
-			}
-			if (req.bodySent >= req.bodySize) {
-				Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-				_closePipe(_pipeInFd[1]);
-				return req.type = RESPONSE, true;
-			}
+			client.pipeIn = _pipeInFd[1];
+			req.package = 1;
+			req.type = BODY;
 		}
 		else 
-			req.type = RESPONSE;
+			client.setResType(CGI_RES);
+		client.pid = _pid;
+		client.pipeOut = _pipeOutFd[0];
 	}
 	return true;
 }
 
-bool	CgiHandler::sendBody(const char * body, size_t & bufSize, parsedReq & req) {
+bool	CgiHandler::sendBody(Client & client, parsedReq & req, int fd) {
 	size_t	bytes;
 
-	if (bufSize) {
-		bytes = write(_pipeInFd[1], body, bufSize);
-		if (bytes < bufSize)
+	if (client.bufSize) {
+		bytes = write(fd, client.buffer, client.bufSize);
+		if (bytes < client.bufSize)
 			return false;
-		_package++;
+		req.package++;
 	}
+	Logger::isLog(WARNING) && req.type == CHUNK && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
+	Logger::isLog(WARNING) && req.type == BODY && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 	if (req.type == CHUNK) {
-		if (bufSize == 0) {
+		if (client.bufSize == 0) {
+			_closePipe(fd);
+			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			_closePipe(_pipeInFd[1]);
-			req.type = RESPONSE;
 		}
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", _package, "] sent ", bufSize, " Bytes");
-		req.body.clear();
-		req.bodySize = 0;
 	}
 	else {
-		req.bodySent += bufSize;
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", _package, "] sent ", req.bodySent, " out of ", req.bodySize);
+		req.bodySent += client.bufSize;
 		if (req.bodySent >= req.bodySize) {
+			_closePipe(fd);
+			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-			_closePipe(_pipeInFd[1]);
-			req.type = RESPONSE;
 		}
 	}
 	return true;

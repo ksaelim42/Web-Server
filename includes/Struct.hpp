@@ -38,6 +38,7 @@ enum resType_e {
 
 struct parsedReq {
 	reqType_e							type;
+	size_t								package;
 	uint64_t							bodySize;
 	uint64_t							bodySent;
 	Server								serv;
