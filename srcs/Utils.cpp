@@ -153,6 +153,24 @@ void	prtMap(std::map<std::string, std::string> & set) {
 // ------------------------------ Config Utils ------------------------------ //
 // ************************************************************************** //
 
+void	clearServer(Server &obj)
+{
+	obj.name.clear();
+	obj.port.clear();
+	obj.ipAddr.clear();
+	obj.root.clear();
+	obj.autoIndex = false;
+	obj.cgiPass = false;
+	obj.allowMethod = 0;
+	obj.cliBodySize = 0;
+	obj.retur.have = 0;
+	obj.retur.code = 0;
+	obj.retur.text.clear();
+	obj.location.clear();
+	obj.errPage.clear();
+	obj.index.clear();
+}
+
 void	clearLocation(Location &locStruct)
 {
 	locStruct.path.clear();
@@ -164,6 +182,60 @@ void	clearLocation(Location &locStruct)
 	locStruct.retur.have = 0;
 	locStruct.retur.code = 0;
 	locStruct.retur.text.clear();
+}
+
+void	printServers(std::vector<Server> servers)
+{
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		std::cout << "server_name: " << it->name << std::endl;
+		std::cout << "clien_body_size: " << it->cliBodySize << std::endl;
+		std::cout << "port: " << it->port << std::endl;
+		std::cout << "ip: " << it->ipAddr << std::endl;
+		std::cout << "root: " << it->root << std::endl;
+		std::cout << "autoindex: " << it->autoIndex << std::endl;
+		std::cout << "cgi: " << it->cgiPass << std::endl;
+		std::cout << "method: " << it->allowMethod << std::endl;
+		// return
+		std::cout << "return:" << std::endl;
+		std::cout << it->retur.have << std::endl;
+		std::cout << it->retur.code << std::endl;
+		std::cout << it->retur.text << std::endl;
+		// index
+		for (std::vector<std::string>::iterator index = it->index.begin(); index != it->index.end(); index++)
+			std::cout << *index << std::endl;
+		// error page
+		for (std::map<short int, std::string>::iterator errPage = it->errPage.begin(); errPage != it->errPage.end(); errPage++)
+			std::cout << errPage->first << " => " << errPage->second << std::endl;
+		
+		// locations
+		if (it->location.size() < 1)
+			continue ;
+		int	locSize = it->location.size();
+		for (int i = 0; i < locSize; i++)
+		{
+			std::cout << "#########LOCATION######### NO: " << i << std::endl;
+			std::cout << "path: " << it->location[i].path << std::endl;
+			std::cout << "root: " << it->location[i].root << std::endl;
+			std::cout << "allowMethod: " << it->location[i].allowMethod << std::endl;
+			std::cout << "autoIndex: " << it->location[i].autoIndex << std::endl;
+			std::cout << "cliBodySize: " << it->location[i].cliBodySize << std::endl;
+			std::cout << "cgiPass: " << it->location[i].cgiPass << std::endl;
+			// return
+			std::cout << "return :" << std::endl;
+			std::cout << it->location[i].retur.have << std::endl;
+			std::cout << it->location[i].retur.code << std::endl;
+			std::cout << it->location[i].retur.text << std::endl;
+			// index
+			std::cout << "INDEX :" << std::endl;
+			for (std::vector<std::string>::iterator index = it->location[i].index.begin(); index != it->location[i].index.end(); index++)
+				std::cout << *index << std::endl;
+			// std::cout << "end of location";
+			std::cout << std::endl;
+		}
+		// std::cout << "Done looping all locations" << std::endl;
+	}
+	// std::cout << "Finished" << std::endl;
 }
 
 void	printConfig(Server obj)

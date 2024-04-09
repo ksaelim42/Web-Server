@@ -12,7 +12,7 @@ class Server;
 struct return_t;
 struct Location;
 
-typedef unsigned long int uint64_t;
+// typedef unsigned long int uint64_t;
 
 bool		isHexChar(char &);
 bool		isHexStr(std::string &);
@@ -30,7 +30,9 @@ std::string	strCutTo(std::string &, std::string );
 std::string	findHeaderValue(std::map<std::string, std::string> &, std::string const &);
 short int	strToShortInt(std::string str);
 // config utils
+void	clearServer(Server &obj);
 void	clearLocation(Location &locStruct);
 void	printConfig(Server obj);
+void	printServers(std::vector<Server> servers);
 
 #endif
