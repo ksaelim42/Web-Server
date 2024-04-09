@@ -69,11 +69,12 @@ bool	WebServer::runServer(void) {
 					if (_acceptConnection(fd) < 0) // can't accept connection
 						continue;
 				}
-				else { 
-					if (_clients.count(fd) == 0)
-						continue;
+				else if (_clients.count(fd)) { // match client socket => read request
 					if (_receiveRequest(_clients[fd]) <= 0)
 						continue;
+				}
+				else if () {
+
 				}
 			}
 			else if (FD_ISSET(fd, &tmpWriteFds)) { // send data back to client

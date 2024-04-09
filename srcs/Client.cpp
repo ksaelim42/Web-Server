@@ -26,30 +26,28 @@ void	Client::parseRequest(char *buffer, size_t bufSize) {
 
 void	Client::genResponse(std::string & resMsg) {
 	_updateTime();
-	if (type == RESPONSE) {
-		if (_status == 200 && _req.method == "DELETE")
-			resMsg = _res.deleteResource(_status, _req);
-		else if (_req.redir || (_status >= 300 && _status < 400))
-			resMsg = _res.redirection(_status, _req);
-		else if (_status == 200 &&  _req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
-			resMsg = _res.autoIndex(_status, _req);
-		else if (_status == 200 && _req.serv.cgiPass) {
-			std::string	cgiMsg;
-			_cgi.receiveResponse(_status, cgiMsg);
-			resMsg = _res.cgiResponse(_status, _req, cgiMsg);
-		}
-		else if (_status >= 200 && _status < 300) {
-			type = OPEN_FILE;
-			// int fd = openFile(status, req);
-			// if (status >= 200 && status < 300)
-			// 	return _createHeader(status, req) + CRLF + _body;
-
-		}
-			resMsg = _res.staticContent(_status, _req);
-		if ((_status >= 400 && _status < 600))
-			resMsg = _res.errorPage(_status, _req);
+	if (type == RES_DEL)
+		resMsg = _res.deleteResource(_status, _req);
+	else if (type == RES_REDIR)
+		resMsg = _res.redirection(_status, _req);
+	else if (type == RES_AUTOINDEX)
+		resMsg = _res.autoIndex(_status, _req);
+	else if (_status == 200 && _req.serv.cgiPass) {
+		std::string	cgiMsg;
+		_cgi.receiveResponse(_status, cgiMsg);
+		resMsg = _res.cgiResponse(_status, _req, cgiMsg);
 	}
-	type = HEADER;
+	else if (_status >= 200 && _status < 300) {
+		type = OPEN_FILE;
+		// int fd = openFile(status, req);
+		// if (status >= 200 && status < 300)
+		// 	return _createHeader(status, req) + CRLF + _body;
+
+	}
+		resMsg = _res.staticContent(_status, _req);
+	if ((_status >= 400 && _status < 600))
+		resMsg = _res.errorPage(_status, _req);
+	type = HEADER; // ??
 	return;
 }
 
@@ -111,33 +109,37 @@ bool	Client::_parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
-		return type = RESPONSE, false;
+		return type = RES_ERR, false;
 	httpReq	reqHeader = storeReq(header);
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
 	if (!_checkRequest())
-		return type = RESPONSE, false;
+		return type = RES_ERR, false;
 	_parsePath(_req.uri);
 	if (!_urlEncoding(_req.path))
-		return type = RESPONSE, false;
+		return type = RES_ERR, false;
 	_matchLocation(serv->location);
 	if (_redirect())
-		return type = RESPONSE, true;
+		return type = RES_REDIR, true;
 	if (_req.method == "POST" && !_findBodySize())
-		return type = RESPONSE, false;
+		return type = RES_ERR, false;
 	if (!_findFile())
-		return type = RESPONSE, false;
+		return type = RES_ERR, false;
 	if (!_findType())
-		return type = RESPONSE, false;
-	if (_req.serv.cgiPass) {
-		if (_cgi.sendRequest(_status, _req, type))
-			return true;
-		else
-			return type = RESPONSE, false;
-	}
-	return type = RESPONSE, true;
+		return type = RES_ERR, false;
+	if (_req.serv.cgiPass) // TODO open pipe first
+		return type = CGI, true;
+	else if (_req.method == "DELETE")
+		return type = RES_DEL, true;
+	else if (_req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
+		return type = RES_AUTOINDEX, true;
+		// if (_cgi.sendRequest(_status, _req, type))
+		// 	return true;
+		// else
+		// 	return type = RESPONSE, false;
+	return type = RES_FILE, true;
 }
 
 bool	Client::_divideHeadBody(std::string & header) {
@@ -269,10 +271,11 @@ bool	Client::_checkVersion(std::string version) {
 
 bool	Client::_redirect(void) {
 	if (_req.serv.retur.have) {
-		_req.redir = 1;
 		_status = _req.serv.retur.code;
 		return true;
 	}
+	else if (_status >= 300 && _status < 400)
+		return true;
 	return false;
 }
 
