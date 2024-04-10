@@ -60,7 +60,10 @@ std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 
 void	HttpResponse::clear(void) {
 	_headers.clear();
+	type = ERROR_RES;
 	body.clear();
+	bodySize = 0;
+	bodySent = 0;
 }
 
 void	HttpResponse::prtResponse(void) {

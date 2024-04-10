@@ -16,21 +16,21 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-int	CgiHandler::createRequest(Client & client, parsedReq & req) {
+bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	_initCgi();
 	if (!_checkCgiScript(client.status, req))
-		return 0;
+		return false;
 	if (!_initEnv(req))
-		return 0;
+		return false;
 	if (!_createPipe()) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
-		return client.status = 500, 0;
+		return client.status = 500, false;
 	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
-		return _closeAllPipe(), client.status = 500, 0;
+		return _closeAllPipe(), client.status = 500, false;
 	}
 	if (_pid == 0) // Child Process
 		_childProcess(req);

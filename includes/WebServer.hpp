@@ -22,7 +22,7 @@ class WebServer
 		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
-		std::map<int, Client*>	_pipeFds;
+		// std::map<int, Client*>	Client::pipeFds;
 		struct timeval			_timeOut;
 
 		// Server initiation

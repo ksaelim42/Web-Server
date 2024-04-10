@@ -2,6 +2,8 @@
 
 int	g_state;
 
+std::map<int, Client*>	Client::pipeFds;
+
 WebServer::WebServer() {
 	buffer = new char[LARGEFILESIZE];
 }
@@ -49,7 +51,8 @@ bool	WebServer::runServer(void) {
 		timeOut = _timeOut;
 		_prtFristSet(tmpReadFds);
 		// select will make system motoring three set, block until some fd ready
-		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		// status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL);
 		Logger::isLog(DEBUG) && _displayCurrentTime();
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
@@ -71,8 +74,8 @@ bool	WebServer::runServer(void) {
 						continue;
 					_parsingRequest(_clients[fd]);
 				}
-				else if (_pipeFds.count(fd)) { // match File or CGI pipeOut => read File
-					_readContent(fd, _pipeFds[fd]);
+				else if (Client::pipeFds.count(fd)) { // match File or CGI pipeOut => read File
+					_readContent(fd, Client::pipeFds[fd]);
 					// if file read file if cgi pipe read cgi pipe
 				}
 				continue;
@@ -83,8 +86,8 @@ bool	WebServer::runServer(void) {
 						continue;
 					_fdSet(fd, _readFds);
 				}
-				else if (_pipeFds.count(fd)) { // match CGI pipeIn => write request
-					Client * client = _pipeFds[fd];
+				else if (Client::pipeFds.count(fd)) { // match CGI pipeIn => write request
+					Client * client = Client::pipeFds[fd];
 					_cgi.sendBody(*client, client->getRequest(), fd);
 					// sent cgi request
 				}
@@ -168,31 +171,24 @@ int	WebServer::_parsingRequest(Client & client) {
 		if (!client.parseHeader(client.buffer, client.bufSize))
 			client.setResType(ERROR_RES);
 		if (client.getReqType() == FILE_REQ) {
-			fd = client.openFile();
-			if (fd != -1) {
-				_addPipeFds(fd, client, PIPE_OUT);
-				_fdSet(fd, _readFds);
-			}
-			else
+			if (client.openFile(fd) < 0)
 				client.setResType(ERROR_RES);
+			else
+				_fdSet(fd, _readFds);
 		}
 		else if (client.getReqType() == CGI_REQ) {
 			if (!_cgi.createRequest(client, client.getRequest()))
 				client.setResType(ERROR_RES);
-			if (client.pipeIn != -1)
-				_pipeFds[client.pipeIn] = &client;
-			if (client.pipeOut != -1)
-				_pipeFds[client.pipeOut] = &client;
-			if (client.getReqType() == BODY) {
-				if (client.bufSize)
-					_fdSet(client.pipeIn, _writeFds);
-				else
-					_fdSet(client.sockFd, _readFds);
-			}
+			// if (client.getReqType() == BODY) {
+			// 	if (client.bufSize)
+			// 		_fdSet(client.getPipeIn(), _writeFds);
+			// 	else
+			// 		_fdSet(client.sockFd, _readFds);
+			// }
 		}
 	}
 	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
-		_fdSet(client.pipeIn, _writeFds);
+		_fdSet(client.getPipeIn(), _writeFds);
 		return 1;
 	}
 	if (client.getReqType() == RESPONSE) {
@@ -222,7 +218,7 @@ int	WebServer::_sendResponse(Client & client) {
 		return 0;
 	}
 	if (client.getResType() == BODY_RES)
-		_fdSet(client.pipeOut, _readFds);
+		_fdSet(client.getPipeOut(), _readFds);
 	else
 		_fdSet(client.sockFd, _readFds);
 	return 1;
@@ -295,7 +291,6 @@ bool	WebServer::_setPollFd(void) {
 	FD_ZERO(&_writeFds);
 	_timeOut.tv_sec = KEEPALIVETIME;
 	_timeOut.tv_usec = 0;
-	std::map<int, Client*>	Client::pipeFds;
 	for (size_t i = 0; i < _servs.size(); i++) {
 		_servs[i].initErrContent();
 		_fdSet(_servs[i].sockFd, _readFds);
@@ -445,32 +440,12 @@ bool	WebServer::_displayCurrentTime(void) {
 }
 
 void	WebServer::_readContent(int fd, Client * client) {
-	std::cout << "file fd: " << client->pipeOut << std::endl;
 	if (client->getReqType() == FILE_REQ) {
-		if (client->readFile(fd, this->buffer)) // return true if no content to read
-			_delPipeFds(fd);
+		client->readFile(fd, this->buffer);
 		_fdSet(client->sockFd, _writeFds);
 	}
 	else if (client->getReqType() == CGI_REQ) {
 		// call cgi
 	}
 	_fdClear(fd, _readFds);
-}
-
-void	WebServer::_addPipeFds(int fd, Client& client, pipe_e direct) {
-	_pipeFds[fd] = &client;
-	client.setPipe(fd, direct);
-}
-
-void	WebServer::_delPipeFds(int fd, Client& client, pipe_e direct) {
-	close(fd);
-	client.delPipe(fd, direct);
-	_pipeFds.erase(fd);
-}
-
-void	WebServer::_clearPipeFds(Client& client) {
-	if (_pipeFds.count(client.pipeIn))
-		_delPipeFds(client.pipeIn, client, PIPE_IN);
-	if (_pipeFds.count(client.pipeOut))
-		_delPipeFds(client.pipeOut, client, PIPE_OUT);
 }

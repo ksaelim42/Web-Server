@@ -61,7 +61,7 @@ class Client
 		void		genResponse(std::string &);
 		void		prtParsedReq(void);
 		void		prtRequest(httpReq &);
-		int			openFile(void);
+		int			openFile(int &);
 		// Getter & Setter
 		void		setReqType(reqType_e);
 		void		setResType(resType_e);
@@ -70,6 +70,8 @@ class Client
 		reqType_e	getReqType(void) const;
 		resType_e	getResType(void) const;
 		parsedReq &	getRequest(void);
+		int			getPipeIn(void) const;
+		int			getPipeOut(void) const;
 
 		bool	readFile(int, char* buffer);
 		void	closeFd(int &);

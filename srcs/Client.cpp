@@ -1,7 +1,7 @@
 #include "Client.hpp"
 
-Client::Client(void) : sockFd(-1), status(200), pid(-1)
-, pipeIn(-1), pipeOut(-1), bufSize(0), serv(NULL) {
+Client::Client(void) : _pipeIn(-1), _pipeOut(-1)
+, sockFd(-1), status(200), pid(-1), bufSize(0), serv(NULL) {
 	addrLen = sizeof(struct sockaddr_in);
 	_updateTime();
 	_req.type = HEADER;
@@ -12,17 +12,19 @@ Client::~Client(void) {
 		delPipeFd(_pipeIn, PIPE_IN);
 	if (_pipeOut != -1)
 		delPipeFd(_pipeOut, PIPE_OUT);
+	if (pid != -1) {
+		kill(pid, SIGKILL);
+		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
+	}
 }
 
 bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	_updateTime();
 	_initReqParse();
-	std::cout << RED << "bufsize: " << bufSize << std::endl; 
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
 		return false;
-	std::cout << RED << "After separate head body" << std::endl; // debug
 	httpReq	reqHeader = storeReq(header);
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
@@ -51,10 +53,6 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	return true;
 }
 
-	// else if (type == BODY || type == CHUNK) {
-	// 	if (_cgi.sendBody(buffer, bufSize, _req, type))
-	// 		return;
-
 void	Client::genResponse(std::string & resMsg) {
 	_updateTime();
 	if (_res.type == FILE_RES)
@@ -70,13 +68,13 @@ void	Client::genResponse(std::string & resMsg) {
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
 	
-	if (_res.type == FILE_RES || _res.type == BODY_RES) {
-		if (_req.bodySent >= _req.bodySize)
-			closeFd(pipeOut);
-		else
-			_res.type = BODY_RES;
-	}
-	if (_res.type != BODY_RES)
+	// if (_res.type == FILE_RES || _res.type == BODY_RES) {
+	// 	if (_req.bodySent >= _req.bodySize)
+	// 		closeFd(pipeOut);
+	// 	else
+	// 		_res.type = BODY_RES;
+	// }
+	// if (_res.type != BODY_RES)
 		_req.type = HEADER;
 	// else if (this->status == 200 && _req.serv.cgiPass) {
 	// 	std::string	cgiMsg;
@@ -127,6 +125,14 @@ void	Client::prtRequest(httpReq & request) {
 // ************************************************************************** //
 // ---------------------------- Setter & Getter ----------------------------- //
 // ************************************************************************** //
+
+int	Client::getPipeIn(void) const {
+	return this->_pipeIn;
+}
+
+int	Client::getPipeOut(void) const {
+	return this->_pipeOut;
+}
 
 short int	Client::getStatus(void) const {
 	return this->status;
@@ -389,9 +395,7 @@ void	Client::_updateTime(void) {
 	lastTimeConnected += KEEPALIVETIME;
 }
 
-int	Client::openFile(void) {
-	int	fd;
-
+int	Client::openFile(int & fd) {
 	fd = open(_req.pathSrc.c_str(), O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)	// 2 No such file or directory : 404
@@ -402,7 +406,9 @@ int	Client::openFile(void) {
 		// Server Error, May reach the limit of file descriptors : 500
 		return this->status = 500, -1;
 	}
-	_req.bodySize = _req.fileInfo.st_size;
+	_res.bodySize = _req.fileInfo.st_size;
+	std::cout << "Open file success fd: " << fd << std::endl; // debug
+	addPipeFd(fd, PIPE_OUT);
 	return fd;
 }
 
@@ -419,32 +425,12 @@ bool	Client::readFile(int fd, char* buffer) {
 		bytes = read(fd, buffer, LARGEFILESIZE);
 	_res.body.assign(buffer, bytes);
 	_res.bodySent += bytes;
+	std::cout << "Read file fd:" << fd << " success: " << bytes << std::endl;
 	if (_res.bodySent >= _res.bodySize) {
+		delPipeFd(fd, PIPE_OUT);
 		return true;
 	}
 	return false;
-}
-
-void	Client::closeFd(int & fd) {
-	close(fd);
-	fd = -1;
-}
-
-void	Client::_clearFds(void) {
-	_req.type = HEADER;
-	if (pipeIn > 0 && fcntl(pipeIn, F_GETFL) != -1) {
-		closeFd(pipeIn);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeIn, " was closed");
-	}
-	if (pipeOut > 0 && fcntl(pipeOut, F_GETFL) != -1) {
-		closeFd(pipeOut);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeOut, " was closed");
-	}
-	if (pid != -1) {
-		kill(pid, SIGKILL);
-		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
-		pid = -1;
-	}
 }
 
 void	Client::addPipeFd(int fd, pipe_e direct) {
@@ -456,7 +442,7 @@ void	Client::addPipeFd(int fd, pipe_e direct) {
 }
 
 void	Client::delPipeFd(int fd, pipe_e direct) {
-	if (pipeFds.cound(fd)) {
+	if (pipeFds.count(fd)) {
 		if (direct == PIPE_OUT)
 			_pipeOut = -1;
 		else
