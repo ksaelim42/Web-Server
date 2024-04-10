@@ -47,7 +47,7 @@ bool	WebServer::runServer(void) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
-		// _prtFristSet(tmpReadFds);
+		_prtFristSet(tmpReadFds);
 		// select will make system motoring three set, block until some fd ready
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
 		Logger::isLog(DEBUG) && _displayCurrentTime();
@@ -132,14 +132,17 @@ int	WebServer::_receiveRequest(Client & client) {
 
 	if (client.getReqType() == HEADER) { // header request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		_fdClear(client.sockFd, _readFds);
 		Logger::isLog(DEBUG) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.getReqType() == BODY) { // body request
 		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+		_fdClear(client.sockFd, _readFds);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else if (client.getReqType() == CHUNK) { // Chunk request
 		bytes = _unChunking(client);
+		_fdClear(client.sockFd, _readFds);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
 	else
@@ -155,19 +158,20 @@ int	WebServer::_receiveRequest(Client & client) {
 	Logger::isLog(ERROR) && Logger::log(CYN, "------------------------------");
 	client.buffer[bytes] = '\0';
 	client.bufSize = bytes;
-	_fdClear(client.sockFd, _readFds);
 	return 1;
 }
 
 int	WebServer::_parsingRequest(Client & client) {
+	int	fd;
+
 	if (client.getReqType() == HEADER) {
 		if (!client.parseHeader(client.buffer, client.bufSize))
 			client.setResType(ERROR_RES);
 		if (client.getReqType() == FILE_REQ) {
-			client.pipeOut = client.openFile();
-			if (client.pipeOut != -1) {
-				_pipeFds[client.pipeOut] = &client;
-				_fdSet(client.pipeOut, _readFds);
+			fd = client.openFile();
+			if (fd != -1) {
+				_addPipeFds(fd, client, PIPE_OUT);
+				_fdSet(fd, _readFds);
 			}
 			else
 				client.setResType(ERROR_RES);
@@ -206,6 +210,7 @@ int	WebServer::_sendResponse(Client & client) {
 
 	client.genResponse(_resMsg);
 	bytes = send(client.sockFd, _resMsg.c_str(), _resMsg.length(), MSG_DONTWAIT);
+	_fdClear(client.sockFd, _writeFds);
 	_resMsg.clear();
 	if (bytes < 0) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - Error to response data");
@@ -220,7 +225,6 @@ int	WebServer::_sendResponse(Client & client) {
 		_fdSet(client.pipeOut, _readFds);
 	else
 		_fdSet(client.sockFd, _readFds);
-	_fdClear(client.sockFd, _writeFds);
 	return 1;
 }
 
@@ -291,6 +295,7 @@ bool	WebServer::_setPollFd(void) {
 	FD_ZERO(&_writeFds);
 	_timeOut.tv_sec = KEEPALIVETIME;
 	_timeOut.tv_usec = 0;
+	std::map<int, Client*>	Client::pipeFds;
 	for (size_t i = 0; i < _servs.size(); i++) {
 		_servs[i].initErrContent();
 		_fdSet(_servs[i].sockFd, _readFds);
@@ -428,20 +433,44 @@ void	WebServer::_prtFristSet(fd_set &set) {
 }
 
 bool	WebServer::_displayCurrentTime(void) {
-	std::time_t	time = std::time(NULL);
-	std::tm* tm = std::localtime(&time);
-	std::string	curTime = numToStr(tm->tm_hour) + ":" + numToStr(tm->tm_min) + ":" + numToStr(tm->tm_sec);
-	Logger::log(GRN, "[Server] - select blocking: ", curTime);
+	std::time_t	rawTime;
+	struct tm*	timeInfo;
+	char		buffer[10];
+
+	std::time(&rawTime);
+	timeInfo = localtime(&rawTime);
+	std::strftime(buffer, sizeof(buffer), "%T", timeInfo);
+	Logger::log(GRN, "[Server] - select blocking: ", buffer);
 	return true;
 }
 
 void	WebServer::_readContent(int fd, Client * client) {
+	std::cout << "file fd: " << client->pipeOut << std::endl;
 	if (client->getReqType() == FILE_REQ) {
-		client->readFile(fd, this->buffer);
+		if (client->readFile(fd, this->buffer)) // return true if no content to read
+			_delPipeFds(fd);
 		_fdSet(client->sockFd, _writeFds);
 	}
 	else if (client->getReqType() == CGI_REQ) {
 		// call cgi
 	}
 	_fdClear(fd, _readFds);
+}
+
+void	WebServer::_addPipeFds(int fd, Client& client, pipe_e direct) {
+	_pipeFds[fd] = &client;
+	client.setPipe(fd, direct);
+}
+
+void	WebServer::_delPipeFds(int fd, Client& client, pipe_e direct) {
+	close(fd);
+	client.delPipe(fd, direct);
+	_pipeFds.erase(fd);
+}
+
+void	WebServer::_clearPipeFds(Client& client) {
+	if (_pipeFds.count(client.pipeIn))
+		_delPipeFds(client.pipeIn, client, PIPE_IN);
+	if (_pipeFds.count(client.pipeOut))
+		_delPipeFds(client.pipeOut, client, PIPE_OUT);
 }

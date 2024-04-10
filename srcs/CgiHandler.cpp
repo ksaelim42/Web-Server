@@ -16,21 +16,21 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
+int	CgiHandler::createRequest(Client & client, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
 	_initCgi();
 	if (!_checkCgiScript(client.status, req))
-		return false;
+		return 0;
 	if (!_initEnv(req))
-		return false;
+		return 0;
 	if (!_createPipe()) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
-		return (client.status = 500, false);
+		return client.status = 500, 0;
 	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
-		return (_closeAllPipe(), client.status = 500, false);
+		return _closeAllPipe(), client.status = 500, 0;
 	}
 	if (_pid == 0) // Child Process
 		_childProcess(req);
@@ -38,14 +38,14 @@ bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 		_closePipe(_pipeOutFd[1]);
 		if (_isPost) {
 			_closePipe(_pipeInFd[0]);
-			client.pipeIn = _pipeInFd[1];
+			client.addPipeFd(_pipeInFd[1], PIPE_IN);
 			req.package = 1;
 			req.type = BODY;
 		}
 		else 
 			client.setResType(CGI_RES);
 		client.pid = _pid;
-		client.pipeOut = _pipeOutFd[0];
+		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
 	}
 	return true;
 }

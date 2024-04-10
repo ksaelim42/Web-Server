@@ -93,13 +93,13 @@ int	main(int argc, char** argv)
 {
 	std::vector<Server>		servs;
 
-	if (!parsingConfig(argc, argv, servs))
-		return 1;
-	servs[0].prtServer();
-	// (void)argc;
-	// (void)argv;
-	// servs.push_back(createServer()); // TODO : gen by hand
-	// servs.push_back(createServer2()); // TODO : gen by hand
+	// if (!parsingConfig(argc, argv, servs))
+	// 	return 1;
+	// servs[0].prtServer();
+	(void)argc;
+	(void)argv;
+	servs.push_back(createServer()); // TODO : gen by hand
+	servs.push_back(createServer2()); // TODO : gen by hand
 	try {
 		Logger::setLevel(DEBUG);
 		WebServer	webserv;

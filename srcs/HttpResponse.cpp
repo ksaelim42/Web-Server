@@ -1,6 +1,7 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse() : type(ERROR_RES) {}
+HttpResponse::HttpResponse() : type(ERROR_RES)
+, bodySize(0), bodySent(0) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Delete -----");

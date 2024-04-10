@@ -35,6 +35,8 @@ class HttpResponse
 	public:
 		resType_e	type;
 		std::string	body;
+		uint64_t	bodySize;
+		uint64_t	bodySent;
 
 		HttpResponse();
 		std::string	deleteResource(short int &, parsedReq &);

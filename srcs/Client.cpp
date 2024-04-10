@@ -1,33 +1,28 @@
 #include "Client.hpp"
 
-Client::Client(void) {
-	_updateTime();
+Client::Client(void) : sockFd(-1), status(200), pid(-1)
+, pipeIn(-1), pipeOut(-1), bufSize(0), serv(NULL) {
 	addrLen = sizeof(struct sockaddr_in);
-	serv = NULL;
+	_updateTime();
+	_req.type = HEADER;
 }
 
 Client::~Client(void) {
-	if (pipeIn > 0 && fcntl(pipeIn, F_GETFL) != -1) {
-		close(pipeIn);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeIn, " was closed");
-	}
-	if (pipeOut > 0 && fcntl(pipeOut, F_GETFL) != -1) {
-		close(pipeOut);
-		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeOut, " was closed");
-	}
-	if (pid != -1) {
-		kill(pid, SIGKILL);
-		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
-	}
+	if (_pipeIn != -1)
+		delPipeFd(_pipeIn, PIPE_IN);
+	if (_pipeOut != -1)
+		delPipeFd(_pipeOut, PIPE_OUT);
 }
 
 bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	_updateTime();
 	_initReqParse();
+	std::cout << RED << "bufsize: " << bufSize << std::endl; 
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
 		return false;
+	std::cout << RED << "After separate head body" << std::endl; // debug
 	httpReq	reqHeader = storeReq(header);
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
@@ -76,14 +71,13 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.autoIndex(this->status, _req);
 	
 	if (_res.type == FILE_RES || _res.type == BODY_RES) {
-		if (_req.bodySent >= _req.bodySize) {
-			close(pipeOut);
-			pipeOut = -1;
-			_req.type = HEADER;
-		}
+		if (_req.bodySent >= _req.bodySize)
+			closeFd(pipeOut);
 		else
 			_res.type = BODY_RES;
 	}
+	if (_res.type != BODY_RES)
+		_req.type = HEADER;
 	// else if (this->status == 200 && _req.serv.cgiPass) {
 	// 	std::string	cgiMsg;
 	// 	_cgi.receiveResponse(this->status, cgiMsg);
@@ -164,11 +158,11 @@ void	Client::setResType(resType_e type) {
 // ************************************************************************** //
 
 void	Client::_initReqParse(void) {
-	this->status = 200;
-	pipeIn = -1;
-	pipeOut = -1;
-	pid = -1;
-	bufSize = 0;
+	// this->status = 200;
+	// pipeIn = -1;
+	// pipeOut = -1;
+	// pid = -1;
+	// bufSize = 0;
 	_req.type = HEADER;
 	_req.package = 0;
 	_req.bodySize = 0;
@@ -412,18 +406,62 @@ int	Client::openFile(void) {
 	return fd;
 }
 
-int	Client::readFile(int fd, char* buffer) {
+bool	Client::readFile(int fd, char* buffer) {
 	ssize_t	bytes;
 
-	if (_req.bodySize < _req.bodySent + LARGEFILESIZE) {
-		bytes = read(fd, buffer, _req.bodySize);
-		_res.body.assign(buffer, bytes);
-	}
-	else {
+	if (_res.bodySent == 0)
+		_res.type = FILE_RES;
+	else
+		_res.type = BODY_RES;
+	if (_res.bodySize <= _res.bodySent + LARGEFILESIZE)
+		bytes = read(fd, buffer, _res.bodySize);
+	else
 		bytes = read(fd, buffer, LARGEFILESIZE);
-		_res.body.assign(buffer, bytes);
+	_res.body.assign(buffer, bytes);
+	_res.bodySent += bytes;
+	if (_res.bodySent >= _res.bodySize) {
+		return true;
 	}
-	_req.bodySent += bytes;
-	setResType(FILE_RES);
-	return true;
+	return false;
+}
+
+void	Client::closeFd(int & fd) {
+	close(fd);
+	fd = -1;
+}
+
+void	Client::_clearFds(void) {
+	_req.type = HEADER;
+	if (pipeIn > 0 && fcntl(pipeIn, F_GETFL) != -1) {
+		closeFd(pipeIn);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeIn, " was closed");
+	}
+	if (pipeOut > 0 && fcntl(pipeOut, F_GETFL) != -1) {
+		closeFd(pipeOut);
+		Logger::isLog(WARNING) && Logger::log(YEL, "fd: ", pipeOut, " was closed");
+	}
+	if (pid != -1) {
+		kill(pid, SIGKILL);
+		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
+		pid = -1;
+	}
+}
+
+void	Client::addPipeFd(int fd, pipe_e direct) {
+	if (direct == PIPE_OUT)
+		_pipeOut = fd;
+	else
+		_pipeIn = fd;
+	pipeFds[fd] = this;
+}
+
+void	Client::delPipeFd(int fd, pipe_e direct) {
+	if (pipeFds.cound(fd)) {
+		if (direct == PIPE_OUT)
+			_pipeOut = -1;
+		else
+			_pipeIn = -1;
+		close(fd);
+		pipeFds.erase(fd);
+	}
 }
