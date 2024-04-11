@@ -68,7 +68,7 @@ server {
 
 server {
 	client_max_body_size    2200;
-	listen            1400;
+	listen            1800;
 	server_name        testwebserv3;
 	root            /var/www/html;
 	index            index.html second_index.htm;

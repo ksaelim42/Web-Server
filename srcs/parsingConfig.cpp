@@ -297,6 +297,8 @@ int main(int ac, char **av)
 			clearServer(obj);
 		}
 	}
+	if (!scanPorts(servers))
+		return 0;
 	// exit (0);
 	printServers(servers);
 	// printConfig(obj);

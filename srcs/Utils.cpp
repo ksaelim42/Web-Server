@@ -184,6 +184,20 @@ void	clearLocation(Location &locStruct)
 	locStruct.retur.text.clear();
 }
 
+bool	scanPorts(std::vector<Server> servers)
+{
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)
+	{
+		std::vector<Server>::iterator end = servers.end();
+		for (std::vector<Server>::iterator start = it + 1; start != end; start++)
+		{
+			if (it->port == start->port)
+				return (std::cout << "Error: Servers must not have the same ports" << std::endl, false);
+		}
+	}
+	return true;
+}
+
 void	printServers(std::vector<Server> servers)
 {
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); it++)

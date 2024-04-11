@@ -32,6 +32,8 @@ short int	strToShortInt(std::string str);
 // config utils
 void	clearServer(Server &obj);
 void	clearLocation(Location &locStruct);
+bool	scanPorts(std::vector<Server> servers);
+// bool	scanPorts(std::string key, std::string value, std::vector<std::string> &ports);
 void	printConfig(Server obj);
 void	printServers(std::vector<Server> servers);
 
