@@ -154,7 +154,6 @@ bool	CgiHandler::_checkCgiScript(short int & status, parsedReq & req) {
 	// Check file is exist
 	if (access(req.pathSrc.c_str(), F_OK) != 0) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - No such file or directory");
-		status = 404;
 		return false;
 	}
 	// Check permission

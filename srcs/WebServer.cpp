@@ -443,7 +443,7 @@ void	WebServer::_readContent(int fd, Client * client) {
 		_fdSet(client->sockFd, _writeFds);
 	}
 	else if (client->getReqType() == CGI_REQ) {
-		_cgi.receiveResponse();
+		// _cgi.receiveResponse();
 		// call cgi
 	}
 	_fdClear(fd, _readFds);
