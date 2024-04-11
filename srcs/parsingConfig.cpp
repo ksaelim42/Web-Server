@@ -53,7 +53,7 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		obj.retur.have = false;
 		if (!value.empty())
 		{
-			short int status;
+			short int status = 0;
 
 			obj.retur.have = true;
 			status = strToShortInt(valueVec[0]);
@@ -138,7 +138,7 @@ bool storeLocation(Location &locStruct, std::string key, std::string value, std:
 		locStruct.retur.have = false;
 		if (!value.empty())
 		{
-			short int status;
+			short int status = 0;
 
 			locStruct.retur.have = true;
 			status = strToShortInt(valueVec[0]);
