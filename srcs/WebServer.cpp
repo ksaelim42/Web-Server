@@ -179,12 +179,10 @@ int	WebServer::_parsingRequest(Client & client) {
 		else if (client.getReqType() == CGI_REQ) {
 			if (!_cgi.createRequest(client, client.getRequest()))
 				client.setResType(ERROR_RES);
-			// if (client.getReqType() == BODY) {
-			// 	if (client.bufSize)
-			// 		_fdSet(client.getPipeIn(), _writeFds);
-			// 	else
-			// 		_fdSet(client.sockFd, _readFds);
-			// }
+			if (client.bufSize)
+				_fdSet(client.getPipeIn(), _writeFds);
+			else
+				_fdSet(client.sockFd, _readFds);
 		}
 	}
 	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
@@ -445,6 +443,7 @@ void	WebServer::_readContent(int fd, Client * client) {
 		_fdSet(client->sockFd, _writeFds);
 	}
 	else if (client->getReqType() == CGI_REQ) {
+		_cgi.receiveResponse();
 		// call cgi
 	}
 	_fdClear(fd, _readFds);

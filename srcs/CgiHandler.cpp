@@ -40,7 +40,10 @@ bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 			_closePipe(_pipeInFd[0]);
 			client.addPipeFd(_pipeInFd[1], PIPE_IN);
 			req.package = 1;
-			req.type = BODY;
+			if (req.bodyType == CHUNKED_ENCODE)
+				req.type = CHUNK;
+			else
+				req.type = BODY;
 		}
 		else 
 			client.setResType(CGI_RES);

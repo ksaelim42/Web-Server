@@ -36,11 +36,17 @@ enum resType_e {
 	BODY_RES
 };
 
+enum bodyType_e {
+	NONE_ENCODE,
+	CHUNKED_ENCODE
+};
+
 struct parsedReq {
 	reqType_e							type;
 	size_t								package;
 	uint64_t							bodySize;
 	uint64_t							bodySent;
+	bodyType_e							bodyType;
 	Server								serv;
 	std::string							method;
 	std::string							uri;		// original path that get from request

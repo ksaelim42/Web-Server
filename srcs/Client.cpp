@@ -166,6 +166,7 @@ void	Client::_initRequest(void) {
 	_req.package = 0;
 	_req.bodySize = 0;
 	_req.bodySent = 0;
+	_req.bodyType = NONE_ENCODE;
 	_req.serv = *serv;
 	_req.pathSrc = "";
 	_res.clear();
@@ -363,7 +364,7 @@ bool	Client::_findBodySize(void) {
 			return this->status = 501, false;
 		}
 		std::cout << MAG << "Chunk Request" << RESET << std::endl;
-		_req.type = CHUNK;
+		_req.bodyType = CHUNKED_ENCODE;
 		return true;
 	}
 	if (_req.headers.count("Content-Length")) {
@@ -372,7 +373,7 @@ bool	Client::_findBodySize(void) {
 			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Entity Too Large");
 			return this->status = 413, false;
 		}
-		_req.type = BODY;
+		_req.bodyType = NONE_ENCODE;
 		return true;
 	}
 	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Length Required");
