@@ -1,19 +1,7 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   parsingConfig.cpp                                  :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/03/13 11:14:49 by prachman          #+#    #+#             */
-/*   Updated: 2024/04/08 16:48:59 by prachman         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 // #include "parsingConfig.hpp"
 #include "../includes/parsingConfig.hpp"
 
-void storeDirectives(Server &obj, std::string key, std::string value, std::vector<std::string> valueVec)
+bool storeDirectives(Server &obj, std::string key, std::string value, std::vector<std::string> valueVec)
 {
 	if (key == "server_name")
 		obj.name = value;
@@ -30,7 +18,7 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 
 		maxSize = strToNum(value);
 		if (maxSize > UINT64_MAX) //? mac printed out 'error', not sure if linux will do the same
-			return;				  // ! more later
+			return false;
 		obj.cliBodySize = maxSize;
 	}
 	else if (key == "autoindex")
@@ -69,6 +57,11 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 
 			obj.retur.have = true;
 			status = strToShortInt(valueVec[0]);
+			if (status < 100 || status > 599)
+			{
+				std::cout << "Return status must not be less than 1xx or more than 5xx" << std::endl;
+				return false;
+			}
 			obj.retur.code = status;
 			obj.retur.text = valueVec[1];
 		}
@@ -93,9 +86,10 @@ void storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 			obj.errPage[errStatus] = valueVec[valuePos];
 		}
 	}
+	return true;
 }
 
-void storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
+bool storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
 {
 	if (key == "location")
 		locStruct.path = value;
@@ -107,7 +101,7 @@ void storeLocation(Location &locStruct, std::string key, std::string value, std:
 
 		maxSize = strToNum(value);
 		if (maxSize > UINT64_MAX) //? mac printed out 'error', not sure if linux will do the same
-			return;				  // ! more later
+			return false;
 		locStruct.cliBodySize = maxSize;
 	}
 	else if (key == "autoindex")
@@ -148,6 +142,11 @@ void storeLocation(Location &locStruct, std::string key, std::string value, std:
 
 			locStruct.retur.have = true;
 			status = strToShortInt(valueVec[0]);
+			if (status < 100 || status > 599)
+			{
+				std::cout << "Return status must not be less than 1xx or more than 5xx" << std::endl;
+				return false;
+			}
 			locStruct.retur.code = status;
 			locStruct.retur.text = valueVec[1];
 		}
@@ -158,9 +157,10 @@ void storeLocation(Location &locStruct, std::string key, std::string value, std:
 		for (size_t i = 0; i < valueVec.size(); i++)
 			locStruct.index.push_back(valueVec[i]);
 	}
+	return true;
 }
 
-void setValue(Server &obj, Location &locStruct, std::string key, std::string value, bool isLocation)
+bool setValue(Server &obj, Location &locStruct, std::string key, std::string value, bool isLocation)
 {
 	std::string manyCase[] = {"index", "limit_except", "error_page", "return"};
 	std::vector<std::string> valueVec;
@@ -186,31 +186,39 @@ void setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		}
 	}
 	if (isLocation)
-		storeLocation(locStruct, key, value, valueVec);
+	{
+		if (!storeLocation(locStruct, key, value, valueVec))
+			return false;
+	}
 	else
-		storeDirectives(obj, key, value, valueVec);
+	{
+		if (!storeDirectives(obj, key, value, valueVec))
+			return false;
+	}
+	return true;
 }
 
-bool getLocation(Server &obj, Location &locStruct, std::string key, std::string value, bool &isLocation)
+int getLocation(Server &obj, Location &locStruct, std::string key, std::string value, bool &isLocation)
 {
 	if (key != "location" && !isLocation)
-		return false;
+		return 0;
 	// remove { from the path
 	for (size_t i = 0; i < value.length(); i++)
 	{
 		if (value[i] == '{')
 			value.erase(value.begin() + i);
 	}
-	isLocation = true;
+	isLocation = 1;
 	if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 	{
-		isLocation = false;
+		isLocation = 0;
 		obj.location.push_back(locStruct);
 		clearLocation(locStruct);
-		return false;
+		return 0;
 	}
-	setValue(obj, locStruct, key, value, 1);
-	return true;
+	if (!setValue(obj, locStruct, key, value, 1))
+		return 2;
+	return 1;
 }
 
 std::string getValue(std::string value, std::string key, std::string line, int &i)
@@ -249,31 +257,51 @@ std::string	getKey(std::string key, std::string line, int &i)
 	return key;
 }
 
-// int main(int ac, char **av)
-// {
-// 	std::ifstream configFile;
-// 	std::string tmp;
-// 	std::map<std::string, std::string> mapConfig;
-// 	Server obj;
-// 	Location locStruct;
-// 	bool isLocation = false;
+int main(int ac, char **av)
+{
+	std::ifstream configFile;
+	std::string tmp;
+	Server obj;
+	Location locStruct;
+	std::vector<Server> servers;
+	bool isLocation = false;
+	bool firstServer = true;
 
-// 	if (ac != 2)
-// 		return (std::cout << "must have 2 arguments" << std::endl, 0);
-// 	configFile.open(av[1]);
-// 	if (!configFile.is_open())
-// 		return (std::cout << "cannot open config file" << std::endl, 0);
-// 	while (std::getline(configFile, tmp))
-// 	{
-// 		int i = 0;
-// 		std::string key;
-// 		std::string value;
+	if (ac != 2)
+		return (std::cout << "must have 2 arguments" << std::endl, 0);
+	configFile.open(av[1]);
+	if (!configFile.is_open())
+		return (std::cout << "cannot open config file" << std::endl, 0);
+	while (std::getline(configFile, tmp))
+	{
+		int i = 0;
+		int	isSetLocation = 0;
+		std::string key;
+		std::string value;
 
-// 		key = getKey(key, tmp, i);
-// 		value = getValue(value, key, tmp, i);
-// 		if (getLocation(obj, locStruct, key, value, isLocation))
-// 			continue;
-// 		setValue(obj, locStruct, key, value, 0);
-// 	}
-// 	printConfig(obj);
-// }
+		key = getKey(key, tmp, i);
+		if (key == "server" && firstServer)
+		{
+			firstServer = false;
+			continue;
+		}
+		value = getValue(value, key, tmp, i);
+		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
+		if (isSetLocation == 1)
+			continue;
+		else if (isSetLocation == 2)
+			return 0;
+		if (!setValue(obj, locStruct, key, value, 0))
+			return 0;
+		if (key == "server" || configFile.eof())
+		{
+			servers.push_back(obj);
+			clearServer(obj);
+		}
+	}
+	if (!scanPorts(servers))
+		return 0;
+	// exit (0);
+	printServers(servers);
+	// printConfig(obj);
+}
