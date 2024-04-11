@@ -40,6 +40,7 @@ class Server // don't forget to create vector to store this class as it may have
 {
 	private:
 		std::map<std::string, std::string>	_mimeType; //! no need
+		std::map<short int, std::string>	_errPageBody;
 
 		void	_initErrPage(void);
 		void	_initMineTypeDefault(void);
@@ -63,9 +64,10 @@ class Server // don't forget to create vector to store this class as it may have
 
 		void		clearLocation(void);
 		void		prtServer(void);
+		void		initErrPageBody(void);
 		std::string	getMimeType(const std::string & extension) const;
-		std::string	getErrContent(short int &) const;
-		void		initErrContent(void);
+		std::string	getErrPagePath(short int) const;
+		std::string	getErrPageBody(short int) const;
 };
 
 

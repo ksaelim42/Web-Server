@@ -50,6 +50,7 @@ class HttpResponse
 		void		prtResponse(void);
 
 		static std::string	getStatusText(short int);
+		std::string	getType(void) const;
 };
 
 #endif

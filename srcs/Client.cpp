@@ -1,27 +1,20 @@
 #include "Client.hpp"
 
 Client::Client(void) : _pipeIn(-1), _pipeOut(-1)
-, sockFd(-1), status(200), pid(-1), bufSize(0), serv(NULL) {
+, sockFd(-1), pid(-1), bufSize(0), serv(NULL) {
 	addrLen = sizeof(struct sockaddr_in);
 	_updateTime();
 	_req.type = HEADER;
 }
 
 Client::~Client(void) {
-	if (_pipeIn != -1)
-		delPipeFd(_pipeIn, PIPE_IN);
-	if (_pipeOut != -1)
-		delPipeFd(_pipeOut, PIPE_OUT);
-	if (pid != -1) {
-		kill(pid, SIGKILL);
-		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
-	}
+	clearPipeFd();
 }
 
 bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
 	_updateTime();
-	_initReqParse();
+	_initRequest();
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
 		return false;
@@ -30,6 +23,7 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
+	// std::cout << YEL << _req.uri << RESET << std::endl; //debug
 	if (!_checkRequest())
 		return false;
 	_parsePath(_req.uri);
@@ -54,6 +48,8 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 }
 
 void	Client::genResponse(std::string & resMsg) {
+	std::cout << YEL << "res type: " << _res.getType() << RESET << std::endl;
+	std::cout << YEL << "status: " << status << RESET << std::endl;
 	_updateTime();
 	if (_res.type == FILE_RES)
 		resMsg = _res.staticContent(this->status, _req);
@@ -67,6 +63,7 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.redirection(this->status, _req);
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
+	// std::cout << resMsg << std::endl; // debug
 	
 	// if (_res.type == FILE_RES || _res.type == BODY_RES) {
 	// 	if (_req.bodySent >= _req.bodySize)
@@ -75,7 +72,7 @@ void	Client::genResponse(std::string & resMsg) {
 	// 		_res.type = BODY_RES;
 	// }
 	// if (_res.type != BODY_RES)
-		_req.type = HEADER;
+	_req.type = HEADER;
 	// else if (this->status == 200 && _req.serv.cgiPass) {
 	// 	std::string	cgiMsg;
 	// 	_cgi.receiveResponse(this->status, cgiMsg);
@@ -163,13 +160,9 @@ void	Client::setResType(resType_e type) {
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
 
-void	Client::_initReqParse(void) {
-	// this->status = 200;
-	// pipeIn = -1;
-	// pipeOut = -1;
-	// pid = -1;
-	// bufSize = 0;
-	_req.type = HEADER;
+void	Client::_initRequest(void) {
+	this->status = 200;
+	clearPipeFd();
 	_req.package = 0;
 	_req.bodySize = 0;
 	_req.bodySent = 0;
@@ -340,7 +333,7 @@ bool	Client::_findFile(void) {
 		Logger::isLog(DEBUG) && Logger::log(MAG, "[Request] - Find path success, Path: ", _req.pathSrc);
 		return true;
 	}
-	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Fine not found");
+	Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - File not found");
 	return (this->status = 404, false);
 }
 
@@ -449,5 +442,16 @@ void	Client::delPipeFd(int fd, pipe_e direct) {
 			_pipeIn = -1;
 		close(fd);
 		pipeFds.erase(fd);
+	}
+}
+
+void	Client::clearPipeFd(void) {
+	if (_pipeIn != -1)
+		delPipeFd(_pipeIn, PIPE_IN);
+	if (_pipeOut != -1)
+		delPipeFd(_pipeOut, PIPE_OUT);
+	if (pid != -1) {
+		kill(pid, SIGKILL);
+		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
 	}
 }

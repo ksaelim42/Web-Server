@@ -292,7 +292,7 @@ bool	WebServer::_setPollFd(void) {
 	_timeOut.tv_sec = KEEPALIVETIME;
 	_timeOut.tv_usec = 0;
 	for (size_t i = 0; i < _servs.size(); i++) {
-		_servs[i].initErrContent();
+		_servs[i].initErrPageBody();
 		_fdSet(_servs[i].sockFd, _readFds);
 		Logger::isLog(INFO) && Logger::log(WHT, "Run server name: ", _servs[i].name, ":", _servs[i].port);
 	}

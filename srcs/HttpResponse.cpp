@@ -4,7 +4,7 @@ HttpResponse::HttpResponse() : type(ERROR_RES)
 , bodySize(0), bodySent(0) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Delete -----");
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Delete resource");
 	if (access(req.pathSrc.c_str(), F_OK) != 0)
 		return status = 404, "";
 	if (access(req.pathSrc.c_str(), W_OK) != 0)
@@ -12,32 +12,30 @@ std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	if (remove(req.pathSrc.c_str()) != 0)
 		return status = 503, "";
 	status = 204;
-	_headers["Content-Length"] = "0";
+	body = "";
 	return _createHeader(status , req) + CRLF;
 }
 
 std::string	HttpResponse::redirection(short int & status, parsedReq & req) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Redirection -----");
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Redirection");
 	body = req.serv.retur.text;
 	req.pathSrc = req.serv.retur.text;
-	_headers["Content-Length"] = body.length();
 	return _createHeader(status , req) + CRLF + body;
 }
 
 std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Auto Index -----");
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Auto Index");
 	_listFile(req, body);
-	_headers["Content-Length"] = body.length();
 	return _createHeader(status , req) + CRLF + body;
 }
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Static -----");
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Static Content");
 	return _createHeader(status, req) + CRLF + body;
 }
 
 std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response CGI-Script -----");
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - CGI-Script");
 	std::string	cgiHeader;
 
 	if (status != 200)
@@ -53,8 +51,9 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std:
 }
 
 std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
-	Logger::isLog(WARNING) && Logger::log(MAG, "----- Response Error Page -----");
-	body = req.serv.getErrContent(status);
+	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Error Page");
+	req.pathSrc = req.serv.getErrPagePath(status);
+	body = req.serv.getErrPageBody(status);
 	return _createHeader(status , req) + CRLF + body;
 }
 
@@ -107,7 +106,9 @@ std::string	HttpResponse::_createHeader(short int & status, parsedReq & req) {
 }
 
 std::string	HttpResponse::_getContentLength(parsedReq & req) {
-	return numToStr(req.fileInfo.st_size);
+	if (this->type == FILE_RES)
+		return (numToStr(req.fileInfo.st_size));
+	return (numToStr(body.length()));
 }
 
 std::string	HttpResponse::_getContentType(parsedReq & req) {
@@ -281,4 +282,23 @@ short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeadMsg) {
 	}
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Inspect CGI heasers success -----");
 	return 200;
+}
+
+std::string	HttpResponse::getType(void) const {
+	if (this->type == ERROR_RES)
+		return "ERROR_RES";
+	else if (this->type == REDIRECT_RES)
+		return "REDIRECT_RES";
+	else if (this->type == DELETE_RES)
+		return "DELETE_RES";
+	else if (this->type == AUTOINDEX_RES)
+		return "AUTOINDEX_RES";
+	else if (this->type == FILE_RES)
+		return "FILE_RES";
+	else if (this->type == CGI_RES)
+		return "CGI_RES";
+	else if (this->type == BODY_RES)
+		return "BODY_RES";
+	else
+		return "Non type";
 }

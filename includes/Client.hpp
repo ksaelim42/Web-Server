@@ -22,7 +22,7 @@ class Client
 		int				_pipeOut;
 
 		// Parsing Request
-		void		_initReqParse(void);
+		void		_initRequest(void);
 		bool		_parseHeader(char *, size_t &);
 		bool		_divideHeadBody(std::string &);
 		bool		_parsePath(std::string);
@@ -38,7 +38,6 @@ class Client
 		bool		_findType(void);
 		bool		_findBodySize(void);
 		// Time Out
-		void		_clearFds(void);
 		void		_updateTime(void);
 		// Setter
 	public:
@@ -74,9 +73,9 @@ class Client
 		int			getPipeOut(void) const;
 
 		bool	readFile(int, char* buffer);
-		void	closeFd(int &);
 		void	addPipeFd(int, pipe_e);
 		void	delPipeFd(int, pipe_e);
+		void	clearPipeFd(void);
 };
 
 #endif

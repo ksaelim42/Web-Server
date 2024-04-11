@@ -20,7 +20,7 @@ Server::Server(void) {
 
 Server::~Server(void) {}
 
-void	Server::initErrContent(void) {
+void	Server::initErrPageBody(void) {
 	std::ifstream		inputFile;
 	std::stringstream	buffer;
 
@@ -30,10 +30,12 @@ void	Server::initErrContent(void) {
 		if (inputFile.is_open()) {
 			buffer << inputFile.rdbuf();
 			inputFile.close();
-			it->second = buffer.str();
+			_errPageBody[it->first] = buffer.str();
+			buffer.str("");
+			buffer.clear();
 		}
 		else
-			it->second = "Something went wrong";
+			_errPageBody[it->first] = "Something went wrong";
 	}
 }
 
@@ -50,10 +52,18 @@ std::string	Server::getMimeType(const std::string & extension) const {
 	return it->second;
 }
 
-std::string	Server::getErrContent(short int & errCode) const {
+std::string	Server::getErrPagePath(short int errCode) const {
 	std::map<short int, std::string>::const_iterator	it;
 	it = errPage.find(errCode);
 	if (it != errPage.end())
+		return it->second;
+	return "";
+}
+
+std::string	Server::getErrPageBody(short int errCode) const {
+	std::map<short int, std::string>::const_iterator	it;
+	it = _errPageBody.find(errCode);
+	if (it != _errPageBody.end())
 		return it->second;
 	return "Something went wrong";
 }
