@@ -57,35 +57,54 @@ Server	createServer2(void) {
 	return serv;
 }
 
-bool parsingConfig(int ac, char **av, std::vector<Server> & servs)
+bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 {
 	std::ifstream configFile;
 	std::string tmp;
-	std::map<std::string, std::string> mapConfig;
 	Server obj;
 	Location locStruct;
+	// std::vector<Server> servers;
 	bool isLocation = false;
+	bool firstServer = true;
 
 	if (ac != 2)
-		return (std::cout << "must have 2 arguments" << std::endl, false);
+		return (std::cout << "must have 2 arguments" << std::endl, 0);
 	configFile.open(av[1]);
 	if (!configFile.is_open())
-		return (std::cout << "cannot open config file" << std::endl, false);
+		return (std::cout << "cannot open config file" << std::endl, 0);
 	while (std::getline(configFile, tmp))
 	{
 		int i = 0;
+		int	isSetLocation = 0;
 		std::string key;
 		std::string value;
 
 		key = getKey(key, tmp, i);
-		value = getValue(value, key, tmp, i);
-		if (getLocation(obj, locStruct, key, value, isLocation)) {
+		if (key == "server" && firstServer)
+		{
+			firstServer = false;
 			continue;
 		}
-		setValue(obj, locStruct, key, value, 0);
+		value = getValue(value, key, tmp, i);
+		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
+		if (isSetLocation == 1)
+			continue;
+		else if (isSetLocation == 2)
+			return 0;
+		if (!setValue(obj, locStruct, key, value, 0))
+			return 0;
+		if (key == "server" || configFile.eof())
+		{
+			servers.push_back(obj);
+			clearServer(obj);
+		}
 	}
+	if (!scanPorts(servers))
+		return 0;
+	// exit (0);
+	printServers(servers);
 	// printConfig(obj);
-	servs.push_back(obj);
+	// servs.push_back(servers);
 	return true;
 }
 
@@ -93,13 +112,13 @@ int	main(int argc, char** argv)
 {
 	std::vector<Server>		servs;
 
-	// if (!parsingConfig(argc, argv, servs))
-	// 	return 1;
+	if (!parsingConfig(argc, argv, servs))
+		return 1;
 	// servs[0].prtServer();
-	(void)argc;
-	(void)argv;
-	servs.push_back(createServer()); // TODO : gen by hand
-	servs.push_back(createServer2()); // TODO : gen by hand
+	// (void)argc;
+	// (void)argv;
+	// servs.push_back(createServer()); // TODO : gen by hand
+	// servs.push_back(createServer2()); // TODO : gen by hand
 	try {
 		Logger::setLevel(DEBUG);
 		WebServer	webserv;
