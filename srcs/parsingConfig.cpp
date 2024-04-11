@@ -136,6 +136,7 @@ bool storeLocation(Location &locStruct, std::string key, std::string value, std:
 	else if (key == "return")
 	{
 		locStruct.retur.have = false;
+		locStruct.retur.code = 0;
 		if (!value.empty())
 		{
 			short int status;
@@ -213,7 +214,7 @@ int getLocation(Server &obj, Location &locStruct, std::string key, std::string v
 	{
 		isLocation = 0;
 		obj.location.push_back(locStruct);
-		clearLocation(locStruct);
+		locStruct = clearLocation(obj);
 		return 0;
 	}
 	if (!setValue(obj, locStruct, key, value, 1))
@@ -257,51 +258,52 @@ std::string	getKey(std::string key, std::string line, int &i)
 	return key;
 }
 
-// int main(int ac, char **av)
-// {
-// 	std::ifstream configFile;
-// 	std::string tmp;
-// 	Server obj;
-// 	Location locStruct;
-// 	std::vector<Server> servers;
-// 	bool isLocation = false;
-// 	bool firstServer = true;
+int main(int ac, char **av)
+{
+	std::ifstream configFile;
+	std::string tmp;
+	Server obj;
+	Location locStruct = clearLocation(obj);
+	std::vector<Server> servers;
+	bool isLocation = false;
+	bool firstServer = true;
 
-// 	if (ac != 2)
-// 		return (std::cout << "must have 2 arguments" << std::endl, 0);
-// 	configFile.open(av[1]);
-// 	if (!configFile.is_open())
-// 		return (std::cout << "cannot open config file" << std::endl, 0);
-// 	while (std::getline(configFile, tmp))
-// 	{
-// 		int i = 0;
-// 		int	isSetLocation = 0;
-// 		std::string key;
-// 		std::string value;
+	if (ac != 2)
+		return (std::cout << "must have 2 arguments" << std::endl, 0);
+	configFile.open(av[1]);
+	if (!configFile.is_open())
+		return (std::cout << "cannot open config file" << std::endl, 0);
+	while (std::getline(configFile, tmp))
+	{
+		int i = 0;
+		int	isSetLocation = 0;
+		std::string key;
+		std::string value;
 
-// 		key = getKey(key, tmp, i);
-// 		if (key == "server" && firstServer)
-// 		{
-// 			firstServer = false;
-// 			continue;
-// 		}
-// 		value = getValue(value, key, tmp, i);
-// 		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
-// 		if (isSetLocation == 1)
-// 			continue;
-// 		else if (isSetLocation == 2)
-// 			return 0;
-// 		if (!setValue(obj, locStruct, key, value, 0))
-// 			return 0;
-// 		if (key == "server" || configFile.eof())
-// 		{
-// 			servers.push_back(obj);
-// 			clearServer(obj);
-// 		}
-// 	}
-// 	if (!scanPorts(servers))
-// 		return 0;
-// 	// exit (0);
-// 	printServers(servers);
-// 	// printConfig(obj);
-// }
+		key = getKey(key, tmp, i);
+		if (key == "server" && firstServer)
+		{
+			firstServer = false;
+			continue;
+		}
+		value = getValue(value, key, tmp, i);
+		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
+		if (isSetLocation == 1)
+			continue;
+		else if (isSetLocation == 2)
+			return 0;
+		if (!setValue(obj, locStruct, key, value, 0))
+			return 0;
+		if (key == "server" || configFile.eof())
+		{
+			servers.push_back(obj);
+			// clearServer(obj);
+			Server obj;
+		}
+	}
+	if (!scanPorts(servers))
+		return 0;
+	// exit (0);
+	printServers(servers);
+	// printConfig(obj);
+}
