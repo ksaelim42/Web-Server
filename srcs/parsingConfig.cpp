@@ -209,6 +209,8 @@ int getLocation(Server &obj, Location &locStruct, std::string key, std::string v
 		if (value[i] == '{')
 			value.erase(value.begin() + i);
 	}
+	std::cout << obj.name << std::endl;
+	std::cout << isLocation << std::endl;
 	isLocation = 1;
 	if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 	{
@@ -297,8 +299,7 @@ int main(int ac, char **av)
 		if (key == "server" || configFile.eof())
 		{
 			servers.push_back(obj);
-			// clearServer(obj);
-			Server obj;
+			clearServer(obj);
 		}
 	}
 	if (!scanPorts(servers))

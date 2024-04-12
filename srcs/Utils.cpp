@@ -155,20 +155,40 @@ void	prtMap(std::map<std::string, std::string> & set) {
 
 void	clearServer(Server &obj)
 {
-	obj.name.clear();
-	obj.port.clear();
-	obj.ipAddr.clear();
-	obj.root.clear();
+	Server	defServer;
+
+	obj.name = defServer.name;
+	obj.port = defServer.port;
+	obj.ipAddr = defServer.ipAddr;
+	obj.root = defServer.root;
+	obj.allowMethod = defServer.allowMethod;
+	obj.cliBodySize = defServer.cliBodySize;
+	obj.index = defServer.index;
 	obj.autoIndex = false;
 	obj.cgiPass = false;
-	obj.allowMethod = 0;
-	obj.cliBodySize = 0;
 	obj.retur.have = 0;
 	obj.retur.code = 0;
 	obj.retur.text.clear();
 	obj.location.clear();
-	obj.errPage.clear();
-	obj.index.clear();
+	obj.initMineTypeDefault();
+	obj.initErrPage();
+	
+
+	// obj.name.clear();
+	// obj.port.clear();
+	// obj.ipAddr.clear();
+	// obj.root.clear();
+	// obj.autoIndex = false;
+	// obj.cgiPass = false;
+	// obj.allowMethod = 0;
+	// obj.cliBodySize = 0;
+	// obj.retur.have = 0;
+	// obj.retur.code = 0;
+	// obj.retur.text.clear();
+	// obj.location.clear();
+	// obj.errPage.clear();
+	// obj.index.clear();
+	// obj.initMineTypeDefault();
 }
 
 Location	clearLocation(Server const & server)
@@ -224,7 +244,7 @@ void	printServers(std::vector<Server> servers)
 		std::cout << "root: " << it->root << std::endl;
 		std::cout << "autoindex: " << it->autoIndex << std::endl;
 		std::cout << "cgi: " << it->cgiPass << std::endl;
-		std::cout << "method: " << it->allowMethod << std::endl;
+		std::cout << "allowMethod: " << it->allowMethod << std::endl;
 		// return
 		std::cout << "return:" << std::endl;
 		std::cout << "have: " << it->retur.have << std::endl;
