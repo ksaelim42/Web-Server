@@ -1,5 +1,5 @@
-#ifndef CGITEST_HPP
-# define CGITEST_HPP
+#ifndef HEADER_HPP
+# define HEADER_HPP
 
 #include <unistd.h>		// pipe, fork, read, write
 #include <fcntl.h>		// check fd is open
@@ -32,20 +32,19 @@ class CgiHandler
 		int			_pipeOutFd[2];
 		bool		_isPost;
 
+		void	_prtErr(std::string);
+		void	_prtMsg(std::string);
+
 		bool	_createPipe(void);
 		bool	_gotoCgiDir(std::string ,std::string &);
 		void	_closeAllPipe(void);
-		void	_closePipe(int &fd);
-		void	_prtErr(std::string);
-		void	_prtMsg(std::string);
-		void	_childProcess(std::string path);
+		void	_closePipe(int &);
+		void	_childProcess(std::string);
 		bool	_parentProcess(void);
 	public:
 		bool	execute(std::string);
 		// bool	sendBody(const char *, size_t &, parsedReq &, type_e &);
 		// bool	receiveResponse(short int &, std::string &);
-		int		getFdIn(void);
-		int		getFdOut(void);
 };
 
 #endif

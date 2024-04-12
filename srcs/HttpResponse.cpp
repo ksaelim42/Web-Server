@@ -34,19 +34,16 @@ std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	return _createHeader(status, req) + CRLF + body;
 }
 
-std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
+std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - CGI-Script");
 	std::string	cgiHeader;
 
+	status = _parseCgiHeader(body, cgiHeader);
 	if (status != 200)
-		return "";
-	status = _parseCgiHeader(cgiMsg, cgiHeader);
-	if (status != 200)
-		return "";
+		return errorPage(status, req);
 	status = _inspectCgiHeaders(cgiHeader);
 	if (status != 200)
-		return "";
-	body = cgiMsg;
+		return errorPage(status, req);
 	return _createHeader(status , req) + CRLF + body;
 }
 

@@ -16,8 +16,9 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
+bool	CgiHandler::createRequest(Client & client) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
+	parsedReq&	req = client.getRequest();
 	_initCgi();
 	if (!_checkCgiScript(client.status, req))
 		return false;
@@ -45,36 +46,40 @@ bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 			else
 				req.type = BODY;
 		}
-		else 
-			client.setResType(CGI_RES);
 		client.pid = _pid;
 		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
+		std::cout << YEL << "create pid: " << _pid << RESET << std::endl; // debug
 	}
 	return true;
 }
 
-bool	CgiHandler::sendBody(Client & client, parsedReq & req, int fd) {
-	size_t	bytes;
+bool	CgiHandler::sendBody(Client & client, int fd) {
+	ssize_t		bytes;
+	parsedReq&	req = client.getRequest();
 
 	if (client.bufSize) {
 		bytes = write(fd, client.buffer, client.bufSize);
-		if (bytes < client.bufSize)
+		if (bytes < 0) {
+			client.status = 502;
+			client.delPipeFd(fd, PIPE_IN);
+			client.setResType(ERROR_RES);
 			return false;
+		}
 		req.package++;
 	}
-	Logger::isLog(WARNING) && req.type == CHUNK && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
-	Logger::isLog(WARNING) && req.type == BODY && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 	if (req.type == CHUNK) {
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
 		if (client.bufSize == 0) {
-			_closePipe(fd);
+			client.delPipeFd(fd, PIPE_IN);
 			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
 	}
 	else {
 		req.bodySent += client.bufSize;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
-			_closePipe(fd);
+			client.delPipeFd(fd, PIPE_IN);
 			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
@@ -82,37 +87,30 @@ bool	CgiHandler::sendBody(Client & client, parsedReq & req, int fd) {
 	return true;
 }
 
-bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
-	int		WaitStat;
-	ssize_t	bytesRead;
-	char	buffer[BUFFERSIZE];
+bool	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
+	int				WaitStat;
+	ssize_t			bytes;
+	HttpResponse&	res = client.getResponse();
 
-	waitpid(_pid, &WaitStat, 0);
-	_pid = -1;
+	waitpid(client.pid, &WaitStat, 0);
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
-	if (WaitStat != 0)
-		return (status = 502, false);
-	cgiMsg.clear();
-	while (true) {
-		bytesRead = read(_pipeOutFd[0], buffer, BUFFERSIZE - 1);
-		if (bytesRead == 0)
-			break;
-		else if (bytesRead < 0)
-			return (status = 502, false);
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytesRead, " Bytes");
-		buffer[bytesRead] = '\0';
-		cgiMsg += buffer;
+	if (WaitStat != 0) {
+		client.status = 502;
+		client.delPipeFd(fd, PIPE_OUT);
+		client.setResType(ERROR_RES);
+		return false;
 	}
-	_closePipe(_pipeOutFd[0]);
-	return (status = 200, true);
-}
-
-int	CgiHandler::getFdIn(void) {
-	return _pipeInFd[1];
-}
-
-int	CgiHandler::getFdOut(void) {
-	return _pipeOutFd[0];
+	if (res.bodySent == 0)
+		res.type = CGI_RES;
+	else
+		res.type = BODY_RES;
+	bytes = read(fd, buffer, LARGEFILESIZE);
+	res.body.assign(buffer, bytes);
+	res.bodySent += bytes;
+	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytes, " Bytes");
+	if (res.bodySent >= res.bodySize)
+		client.delPipeFd(fd, PIPE_OUT);
+	return true;
 }
 
 // ************************************************************************** //

@@ -1,7 +1,7 @@
-#include "Cgitest.hpp"
+#include "header.hpp"
 
 int	main(void) {
 	CgiHandler	cgi;
 
-	cgi.execute("./hello.py");
+	cgi.execute("./script.py");
 }

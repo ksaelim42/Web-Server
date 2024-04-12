@@ -43,9 +43,8 @@ class HttpResponse
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);
 		std::string	staticContent(short int &, parsedReq &);
-		std::string	cgiResponse(short int &,  parsedReq &, std::string &);
+		std::string	cgiResponse(short int &,  parsedReq &);
 		std::string	errorPage(short int &, parsedReq &);
-		int			openFile(short int &, parsedReq &);
 		void		clear(void);
 		void		prtResponse(void);
 

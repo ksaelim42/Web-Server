@@ -84,12 +84,9 @@ bool	WebServer::runServer(void) {
 				if (_clients.count(fd)) { // match client socket => send response
 					if (_sendResponse(_clients[fd]) <= 0)
 						continue;
-					_fdSet(fd, _readFds);
 				}
-				else if (Client::pipeFds.count(fd)) { // match CGI pipeIn => write request
-					Client * client = Client::pipeFds[fd];
-					_cgi.sendBody(*client, client->getRequest(), fd);
-					// sent cgi request
+				else if (Client::pipeFds.count(fd)) { // match CGI pipeIn => write request to CGI
+					_writeContent(fd, Client::pipeFds[fd]);
 				}
 				continue;
 			}
@@ -177,12 +174,12 @@ int	WebServer::_parsingRequest(Client & client) {
 				_fdSet(fd, _readFds);
 		}
 		else if (client.getReqType() == CGI_REQ) {
-			if (!_cgi.createRequest(client, client.getRequest()))
+			if (!_cgi.createRequest(client))
 				client.setResType(ERROR_RES);
 			if (client.bufSize)
 				_fdSet(client.getPipeIn(), _writeFds);
 			else
-				_fdSet(client.sockFd, _readFds);
+				_fdSet(client.getPipeOut(), _readFds);
 		}
 	}
 	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
@@ -440,11 +437,23 @@ bool	WebServer::_displayCurrentTime(void) {
 void	WebServer::_readContent(int fd, Client * client) {
 	if (client->getReqType() == FILE_REQ) {
 		client->readFile(fd, this->buffer);
-		_fdSet(client->sockFd, _writeFds);
 	}
 	else if (client->getReqType() == CGI_REQ) {
-		// _cgi.receiveResponse();
-		// call cgi
+		_cgi.receiveResponse(*client, fd, this->buffer);
 	}
 	_fdClear(fd, _readFds);
+	_fdSet(client->sockFd, _writeFds);
+}
+
+void	WebServer::_writeContent(int fd, Client * client) {
+	_cgi.sendBody(*client, fd);
+	if (client->getReqType() == RESPONSE) {
+		if (client->getResType() == CGI_RES)
+			_fdSet(client->getPipeOut(), _readFds);
+		else
+			_fdSet(client->sockFd, _writeFds);
+	}
+	else
+			_fdSet(client->sockFd, _readFds);
+	_fdClear(fd, _writeFds);
 }

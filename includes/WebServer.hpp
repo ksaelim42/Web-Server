@@ -36,6 +36,7 @@ class WebServer
 		int		_sendResponse(Client &);
 		ssize_t	_unChunking(Client &);
 		void	_readContent(int, Client *);
+		void	_writeContent(int, Client *);
 		// Manipulate Client
 		void	_fdSet(int, fd_set &);
 		void	_fdClear(int, fd_set &);

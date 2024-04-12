@@ -53,6 +53,8 @@ void	Client::genResponse(std::string & resMsg) {
 	_updateTime();
 	if (_res.type == FILE_RES)
 		resMsg = _res.staticContent(this->status, _req);
+	if (_res.type == CGI_RES)
+		resMsg = _res.cgiResponse(this->status, _req);
 	else if (_res.type == BODY_RES)
 		resMsg = _res.body;
 	else if (_res.type == ERROR_RES)
@@ -64,30 +66,8 @@ void	Client::genResponse(std::string & resMsg) {
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
 	// std::cout << resMsg << std::endl; // debug
-	
-	// if (_res.type == FILE_RES || _res.type == BODY_RES) {
-	// 	if (_req.bodySent >= _req.bodySize)
-	// 		closeFd(pipeOut);
-	// 	else
-	// 		_res.type = BODY_RES;
-	// }
-	// if (_res.type != BODY_RES)
-	_req.type = HEADER;
-	// else if (this->status == 200 && _req.serv.cgiPass) {
-	// 	std::string	cgiMsg;
-	// 	_cgi.receiveResponse(this->status, cgiMsg);
-	// 	resMsg = _res.cgiResponse(this->status, _req, cgiMsg);
-	// }
-	// else if (this->status >= 200 && this->status < 300) {
-	// 	type = OPEN_FILE;
-		// int fd = openFile(status, req);
-		// if (status >= 200 && status < 300)
-		// 	return _createHeader(status, req) + CRLF + _body;
-
-	// }
-	// 	resMsg = _res.staticContent(this->status, _req);
-	// if ((this->status >= 400 && this->status < 600))
-	// 	resMsg = _res.errorPage(this->status, _req);
+	if (_res.type != BODY_RES)
+		_req.type = HEADER;
 	return;
 }
 
@@ -145,6 +125,10 @@ resType_e	Client::getResType(void) const {
 
 parsedReq &	Client::getRequest(void) {
 	return this->_req;
+}
+
+HttpResponse &	Client::getResponse(void) {
+	return this->_res;
 }
 
 void	Client::setReqType(reqType_e type) {
@@ -413,13 +397,13 @@ bool	Client::readFile(int fd, char* buffer) {
 		_res.type = FILE_RES;
 	else
 		_res.type = BODY_RES;
-	if (_res.bodySize <= _res.bodySent + LARGEFILESIZE)
-		bytes = read(fd, buffer, _res.bodySize);
-	else
-		bytes = read(fd, buffer, LARGEFILESIZE);
+	// if (_res.bodySize <= _res.bodySent + LARGEFILESIZE)
+	// 	bytes = read(fd, buffer, _res.bodySize);
+	// else
+	bytes = read(fd, buffer, LARGEFILESIZE);
 	_res.body.assign(buffer, bytes);
 	_res.bodySent += bytes;
-	std::cout << "Read file fd:" << fd << " success: " << bytes << std::endl;
+	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Receive Data form File: ", bytes, " Bytes");
 	if (_res.bodySent >= _res.bodySize) {
 		delPipeFd(fd, PIPE_OUT);
 		return true;

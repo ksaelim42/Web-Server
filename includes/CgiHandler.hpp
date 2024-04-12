@@ -28,16 +28,14 @@ class CgiHandler
 		bool	_createPipe(void);
 		bool	_gotoCgiDir(std::string &);
 		void	_closeAllPipe(void);
-		void	_closePipe(int &fd);
+		void	_closePipe(int &);
 		void	_childProcess(parsedReq &);
 	public:
 		CgiHandler();
 		~CgiHandler();
-		bool	createRequest(Client &, parsedReq &);
-		bool	sendBody(Client &, parsedReq &, int fd);
-		bool	receiveResponse(short int &, std::string &);
-		int		getFdIn(void);
-		int		getFdOut(void);
+		bool	createRequest(Client &);
+		bool	sendBody(Client &, int);
+		bool	receiveResponse(Client &, int, char*);
 };
 
 #endif

@@ -64,13 +64,13 @@ class Client
 		// Getter & Setter
 		void		setReqType(reqType_e);
 		void		setResType(resType_e);
-		void		setResponse(short int);
 		short int	getStatus(void) const;
+		int			getPipeIn(void) const;
+		int			getPipeOut(void) const;
 		reqType_e	getReqType(void) const;
 		resType_e	getResType(void) const;
 		parsedReq &	getRequest(void);
-		int			getPipeIn(void) const;
-		int			getPipeOut(void) const;
+		HttpResponse &	getResponse(void);
 
 		bool	readFile(int, char* buffer);
 		void	addPipeFd(int, pipe_e);

@@ -1,4 +1,4 @@
-#include "Cgitest.hpp"
+#include "header.hpp"
 
 bool	CgiHandler::execute(std::string path) {
 	std::cout << YEL << "[CGI] - Start" << RESET << std::endl;
@@ -129,6 +129,9 @@ bool	CgiHandler::_createPipe(void) {
 			return false;
 		}
 	}
+	fcntl(_pipeOutFd[0], F_SETFL, O_NONBLOCK);
+	fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK);
+		// _prtErr("Non-Blocking i/o fail");
 	return true;
 }
 
@@ -156,6 +159,7 @@ void	CgiHandler::_childProcess(std::string path) {
 	args[0] = strdup("/usr/bin/python3");
 	args[1] = strdup(fileCgi.c_str());
 	args[2] = NULL;
+	// sleep(2); // test
 	if (execve(args[0], args, NULL) == -1)
 		exit(errno);
 }
@@ -185,19 +189,26 @@ bool	CgiHandler::_parentProcess(void) {
 	ssize_t	bytesRead;
 	char	buffer[100000];
 
+	// if (fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK) < 0)
+	// 	_prtErr("Non-Blocking i/o fail");
 	_closePipe(_pipeOutFd[1]);
-	waitpid(_pid, &WaitStat, 0);
+	// waitpid(_pid, &WaitStat, 0);
+	waitpid(_pid, &WaitStat, WNOHANG);
+	sleep(2);
 	std::cout << YEL << "[CGI] - Pid Status: " << WaitStat << RESET << std::endl;
 	if (WaitStat != 0)
 		return (_prtErr("Wait error"), false);
 	while (true) {
-		bytesRead = read(_pipeOutFd[0], buffer, 100000 - 1);
+		std::cout << "reading..." << std::endl;
+		bytesRead = read(_pipeOutFd[0], buffer, 10 - 1);
 		if (bytesRead == 0)
 			break;
 		else if (bytesRead < 0)
 			return (_prtErr("Read Error"), false);
 		std::cout << YEL << "[CGI] - Receive Data form Cgi-script: " << bytesRead << " Bytes" << RESET << std::endl;
 		buffer[bytesRead] = '\0';
+		std::cout << buffer << std::endl;
+		// sleep(2);
 	}
 	_closePipe(_pipeOutFd[0]);
 	return true;
