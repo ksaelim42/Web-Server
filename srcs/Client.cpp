@@ -48,8 +48,8 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 }
 
 void	Client::genResponse(std::string & resMsg) {
-	std::cout << YEL << "res type: " << _res.getType() << RESET << std::endl;
-	std::cout << YEL << "status: " << status << RESET << std::endl;
+	// std::cout << YEL << "res type: " << _res.getType() << RESET << std::endl; TODO
+	// std::cout << YEL << "status: " << status << RESET << std::endl; TODO
 	_updateTime();
 	if (_res.type == FILE_RES)
 		resMsg = _res.staticContent(this->status, _req);
@@ -65,7 +65,7 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.redirection(this->status, _req);
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
-	// std::cout << resMsg << std::endl; // debug
+	// std::cout << resMsg << std::endl; // TODO
 	if (_res.type != BODY_RES)
 		_req.type = HEADER;
 	return;

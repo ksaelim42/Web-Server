@@ -46,9 +46,10 @@ bool	CgiHandler::createRequest(Client & client) {
 			else
 				req.type = BODY;
 		}
+		else
+			req.type = CGI_REQ;
 		client.pid = _pid;
 		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
-		std::cout << YEL << "create pid: " << _pid << RESET << std::endl; // debug
 	}
 	return true;
 }

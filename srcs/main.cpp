@@ -19,7 +19,7 @@ uint64_t cliSize, return_t retur, bool cgiPass) {
 Server	createServer(void) {
 	Server	serv;
 	serv.name = "localhost";
-	serv.port = "8014";
+	serv.port = "8015";
 	serv.root = "docs/myPage";
 	std::vector<std::string>	index;
 	return_t	retur;
@@ -120,7 +120,7 @@ int	main(int argc, char** argv)
 	servs.push_back(createServer()); // TODO : gen by hand
 	servs.push_back(createServer2()); // TODO : gen by hand
 	try {
-		Logger::setLevel(DEBUG);
+		Logger::setLevel(WARNING);
 		WebServer	webserv;
 
 		webserv.initServer(servs);

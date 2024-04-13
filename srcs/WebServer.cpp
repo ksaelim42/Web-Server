@@ -49,7 +49,7 @@ bool	WebServer::runServer(void) {
 		tmpReadFds = _readFds; // because select will modified fd_set
 		tmpWriteFds = _writeFds; // because select will modified fd_set
 		timeOut = _timeOut;
-		_prtFristSet(tmpReadFds);
+		// _prtFristSet(tmpReadFds);
 		// select will make system motoring three set, block until some fd ready
 		// status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL);
@@ -174,11 +174,14 @@ int	WebServer::_parsingRequest(Client & client) {
 		else if (client.getReqType() == CGI_REQ) {
 			if (!_cgi.createRequest(client))
 				client.setResType(ERROR_RES);
-			std::cout << "bufSize: " << client.bufSize << std::endl; // debug
-			if (client.bufSize)
-				_fdSet(client.getPipeIn(), _writeFds);
-			else
+			if (client.getReqType() == CGI_REQ) 
 				_fdSet(client.getPipeOut(), _readFds);
+			else {
+				if (client.bufSize)
+					_fdSet(client.getPipeIn(), _writeFds);
+				else
+					_fdSet(client.sockFd, _readFds);
+			}
 		}
 	}
 	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
