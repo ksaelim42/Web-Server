@@ -201,23 +201,30 @@ bool setValue(Server &obj, Location &locStruct, std::string key, std::string val
 
 int getLocation(Server &obj, Location &locStruct, std::string key, std::string value, bool &isLocation)
 {
+	static int firstLoc = 0;
+
 	if (key != "location" && !isLocation)
 		return 0;
 	// remove { from the path
-	for (size_t i = 0; i < value.length(); i++)
+	for (size_t i = 0; i < value.length() && key == "location"; i++)
 	{
 		if (value[i] == '{')
 			value.erase(value.begin() + i);
 	}
-	std::cout << obj.name << std::endl;
-	std::cout << isLocation << std::endl;
 	isLocation = 1;
 	if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 	{
 		isLocation = 0;
+		firstLoc = 0;
 		obj.location.push_back(locStruct);
 		locStruct = clearLocation(obj);
 		return 0;
+	}
+	// set location values to default as according to the server
+	if (firstLoc == 0)
+	{
+		locStruct = clearLocation(obj);
+		firstLoc = 1;
 	}
 	if (!setValue(obj, locStruct, key, value, 1))
 		return 2;
@@ -265,7 +272,7 @@ int main(int ac, char **av)
 	std::ifstream configFile;
 	std::string tmp;
 	Server obj;
-	Location locStruct = clearLocation(obj);
+	Location locStruct;
 	std::vector<Server> servers;
 	bool isLocation = false;
 	bool firstServer = true;
@@ -308,3 +315,5 @@ int main(int ac, char **av)
 	printServers(servers);
 	// printConfig(obj);
 }
+
+// ! contexts that are not showing in the location should base their value from the server's directives
