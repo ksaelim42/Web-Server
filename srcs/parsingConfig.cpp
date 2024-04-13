@@ -239,15 +239,22 @@ std::string getValue(std::string value, std::string key, std::string line, int &
 			i++;
 		// copy value(s)
 		while (line[i])
+		{
+			if (line[i] == ';' || line[i] == '#')
+			{
+				i++;
+				break;
+			}
 			value += line[i++];
+		}
 	}
-	// remove ; from the value
-	for (int j = 0; j < value[j]; j++)
+	// remove ; and /r from the value
+	for (int j = 0; j < value[j]; j++) //? we could use find() here
 	{
-		if (value[j] == ';')
-			value.erase(value.begin() + j);
 		if (value[j] == '\r')
 			value.erase(value.begin() + j);
+		// if (value[j] == ';' || value[j] == '\r')
+		// 	value.erase(value.begin() + j);
 	}
 	return value;
 }
