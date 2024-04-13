@@ -8,3 +8,4 @@ try.c
 settings.json
 mytest
 docs/myPage/upload/*
+!docs/myPage/upload/.placeholder
