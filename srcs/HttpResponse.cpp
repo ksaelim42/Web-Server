@@ -5,12 +5,18 @@ HttpResponse::HttpResponse() : type(ERROR_RES)
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Delete resource");
-	if (access(req.pathSrc.c_str(), F_OK) != 0)
-		return status = 404, "";
-	if (access(req.pathSrc.c_str(), W_OK) != 0)
-		return status = 403, "";
-	if (remove(req.pathSrc.c_str()) != 0)
-		return status = 503, "";
+	if (access(req.pathSrc.c_str(), F_OK) != 0) {
+		status = 404;
+		return errorPage(status, req);
+	}
+	if (access(req.pathSrc.c_str(), W_OK) != 0) {
+		status = 403;
+		return errorPage(status, req);
+	}
+	if (remove(req.pathSrc.c_str()) != 0) {
+		status = 503;
+		return errorPage(status, req);
+	}
 	status = 204;
 	body = "";
 	return _createHeader(status , req) + CRLF;

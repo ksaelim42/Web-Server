@@ -3,7 +3,7 @@
 Client::Client(void) : _pipeIn(-1), _pipeOut(-1)
 , sockFd(-1), pid(-1), bufSize(0), serv(NULL) {
 	addrLen = sizeof(struct sockaddr_in);
-	_updateTime();
+	updateTime();
 	_req.type = HEADER;
 }
 
@@ -13,7 +13,6 @@ Client::~Client(void) {
 
 bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	Logger::isLog(WARNING) && Logger::log(BLU, "[Request] - Parsing Header");
-	_updateTime();
 	_initRequest();
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
@@ -23,7 +22,6 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
-	// std::cout << YEL << _req.uri << RESET << std::endl; //debug
 	if (!_checkRequest())
 		return false;
 	_parsePath(_req.uri);
@@ -47,10 +45,7 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	return true;
 }
 
-void	Client::genResponse(std::string & resMsg) {
-	// std::cout << YEL << "res type: " << _res.getType() << RESET << std::endl; TODO
-	// std::cout << YEL << "status: " << status << RESET << std::endl; TODO
-	_updateTime();
+void	Client::genResponse(void) {
 	if (_res.type == FILE_RES) {
 		if (!_res.isBody)
 			resMsg = _res.staticContent(this->status, _req);
@@ -71,39 +66,47 @@ void	Client::genResponse(std::string & resMsg) {
 		resMsg = _res.redirection(this->status, _req);
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
-	// std::cout << resMsg << std::endl; // TODO
 	std::cout << "pipeOut: " << getPipeOut() << std::endl; // TODO
-	// sleep(1);
 	if (getPipeOut() < 0)
 		_req.type = HEADER;
 }
 
-void	Client::prtParsedReq(void) {
-	std::cout <<  "--- Parsed Request ---" << std::endl;
-	std::cout << "status: " << this->status << std::endl;
-	std::cout << "method: " << _req.method << std::endl;
-	std::cout << "uri: " << _req.uri << std::endl;
-	std::cout << "version: " << _req.version << std::endl;
-	std::cout << "pathSrc: " << _req.pathSrc << std::endl;
-	std::cout << "path: " << _req.path << std::endl;
-	std::cout << "pathInfo: " << _req.pathInfo << std::endl;
-	std::cout << "queryStr: " << _req.queryStr << std::endl;
-	std::cout << "fragment: " << _req.fragment << std::endl;
-	std::cout << "body: " << _req.body << std::endl;
-	prtMap(_req.headers);
-	std::cout <<  "--- Parsed Server ---" << RESET << std::endl;
-	_req.serv.prtServer();
+int	Client::openFile(void) {
+	int	fd;
+
+	fd = open(_req.pathSrc.c_str(), O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT)	// 2 No such file or directory : 404
+			return this->status = 404, -1;
+		if (errno == EACCES)	// 13 Permission denied : 403
+			return this->status = 403, -1;
+		// EMFILE, ENFILE : Too many open file, File table overflow
+		// Server Error, May reach the limit of file descriptors : 500
+		return this->status = 500, -1;
+	}
+	_res.bodySize = _req.fileInfo.st_size;
+	addPipeFd(fd, PIPE_OUT);
+	setResType(FILE_RES);
+	return fd;
 }
 
-void	Client::prtRequest(httpReq & request) {
-	std::cout << BBLU <<  "--- HTTP Header ---" << BLU << std::endl;
-	std::cout << "method: " << request.method;
-	std::cout << ", path: " << request.srcPath;
-	std::cout << ", version: " << request.version << std::endl;
-	prtMap(request.headers);
-	std::cout << BBLU <<  "--- HTTP Body---" << BLU << std::endl;
-    std::cout << request.body << std::endl;
-	std::cout << BBLU <<  "********************" << RESET << std::endl;
+bool	Client::readFile(int fd, char* buffer) {
+	ssize_t	bytes;
+
+	bytes = read(fd, buffer, LARGEFILESIZE);
+	_res.body.assign(buffer, bytes);
+	_res.bodySent += bytes;
+	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Read Data form File ", _res.bodySent, " Bytes out of ", _res.bodySize, "Bytes");
+	if (_res.bodySent >= _res.bodySize) {
+		delPipeFd(fd, PIPE_OUT);
+		return true;
+	}
+	return false;
+}
+
+void	Client::updateTime(void) {
+	std::time(&lastTimeConnected);		// get current time.
+	lastTimeConnected += KEEPALIVETIME;
 }
 
 // ************************************************************************** //
@@ -118,8 +121,13 @@ int	Client::getPipeOut(void) const {
 	return this->_pipeOut;
 }
 
-short int	Client::getStatus(void) const {
-	return this->status;
+void	Client::setReqType(reqType_e type) {
+	_req.type = type;
+}
+
+void	Client::setResType(resType_e type) {
+	_req.type = RESPONSE;
+	_res.type = type;
 }
 
 reqType_e	Client::getReqType(void) const {
@@ -138,15 +146,6 @@ HttpResponse &	Client::getResponse(void) {
 	return this->_res;
 }
 
-void	Client::setReqType(reqType_e type) {
-	_req.type = type;
-}
-
-void	Client::setResType(resType_e type) {
-	_req.type = RESPONSE;
-	_res.type = type;
-}
-
 // ************************************************************************** //
 // ---------------------------- Parsing Request ----------------------------- //
 // ************************************************************************** //
@@ -154,6 +153,7 @@ void	Client::setResType(resType_e type) {
 void	Client::_initRequest(void) {
 	this->status = 200;
 	clearPipeFd();
+	resMsg.clear();
 	_req.package = 0;
 	_req.bodySize = 0;
 	_req.bodySent = 0;
@@ -372,47 +372,8 @@ bool	Client::_findBodySize(void) {
 }
 
 // ************************************************************************** //
-// -------------------------------- Time Out -------------------------------- //
+// --------------------------------- Pipe Fd -------------------------------- //
 // ************************************************************************** //
-
-void	Client::_updateTime(void) {
-	std::time(&lastTimeConnected);		// get current time.
-	lastTimeConnected += KEEPALIVETIME;
-}
-
-int	Client::openFile(void) {
-	int	fd;
-
-	fd = open(_req.pathSrc.c_str(), O_RDONLY);
-	if (fd < 0) {
-		if (errno == ENOENT)	// 2 No such file or directory : 404
-			return this->status = 404, -1;
-		if (errno == EACCES)	// 13 Permission denied : 403
-			return this->status = 403, -1;
-		// EMFILE, ENFILE : Too many open file, File table overflow
-		// Server Error, May reach the limit of file descriptors : 500
-		return this->status = 500, -1;
-	}
-	_res.bodySize = _req.fileInfo.st_size;
-	std::cout << "Open file success fd: " << fd << std::endl; // debug
-	addPipeFd(fd, PIPE_OUT);
-	setResType(FILE_RES);
-	return fd;
-}
-
-bool	Client::readFile(int fd, char* buffer) {
-	ssize_t	bytes;
-
-	bytes = read(fd, buffer, LARGEFILESIZE);
-	_res.body.assign(buffer, bytes);
-	_res.bodySent += bytes;
-	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Read Data form File ", _res.bodySent, " Bytes out of", _res.bodySize, "Bytes");
-	if (_res.bodySent >= _res.bodySize) {
-		delPipeFd(fd, PIPE_OUT);
-		return true;
-	}
-	return false;
-}
 
 void	Client::addPipeFd(int fd, pipe_e direct) {
 	if (direct == PIPE_OUT)
@@ -440,6 +401,38 @@ void	Client::clearPipeFd(void) {
 		delPipeFd(_pipeOut, PIPE_OUT);
 	if (pid != -1) {
 		kill(pid, SIGKILL);
-		Logger::isLog(WARNING) && Logger::log(YEL, pid, " was killed");
+		Logger::isLog(DEBUG) && Logger::log(YEL, pid, " was killed");
 	}
+}
+
+// ************************************************************************** //
+// -------------------------------- Debugging ------------------------------- //
+// ************************************************************************** //
+
+void	Client::prtParsedReq(void) {
+	std::cout <<  "--- Parsed Request ---" << std::endl;
+	std::cout << "status: " << this->status << std::endl;
+	std::cout << "method: " << _req.method << std::endl;
+	std::cout << "uri: " << _req.uri << std::endl;
+	std::cout << "version: " << _req.version << std::endl;
+	std::cout << "pathSrc: " << _req.pathSrc << std::endl;
+	std::cout << "path: " << _req.path << std::endl;
+	std::cout << "pathInfo: " << _req.pathInfo << std::endl;
+	std::cout << "queryStr: " << _req.queryStr << std::endl;
+	std::cout << "fragment: " << _req.fragment << std::endl;
+	std::cout << "body: " << _req.body << std::endl;
+	prtMap(_req.headers);
+	std::cout <<  "--- Parsed Server ---" << RESET << std::endl;
+	_req.serv.prtServer();
+}
+
+void	Client::prtRequest(httpReq & request) {
+	std::cout << BBLU <<  "--- HTTP Header ---" << BLU << std::endl;
+	std::cout << "method: " << request.method;
+	std::cout << ", path: " << request.srcPath;
+	std::cout << ", version: " << request.version << std::endl;
+	prtMap(request.headers);
+	std::cout << BBLU <<  "--- HTTP Body---" << BLU << std::endl;
+    std::cout << request.body << std::endl;
+	std::cout << BBLU <<  "********************" << RESET << std::endl;
 }

@@ -26,7 +26,7 @@ class Client
 		bool		_parseHeader(char *, size_t &);
 		bool		_divideHeadBody(std::string &);
 		bool		_parsePath(std::string);
-		bool		_urlEncoding(std::string & path);
+		bool		_urlEncoding(std::string &);
 		bool		_matchLocation(std::vector<Location>);
 		// Check Header
 		bool		_checkRequest(void);
@@ -37,15 +37,13 @@ class Client
 		bool		_findFile(void);
 		bool		_findType(void);
 		bool		_findBodySize(void);
-		// Time Out
-		void		_updateTime(void);
-		// Setter
 	public:
 		int					sockFd;
 		short int			status;
 		pid_t				pid;
 		char				buffer[BUFFERSIZE];
 		size_t				bufSize;
+		std::string			resMsg;
 		std::string			IPaddr;
 		Server *			serv;
 		socklen_t			addrLen;
@@ -57,25 +55,26 @@ class Client
 		Client(void);
 		~Client(void);
 		bool		parseHeader(char *, size_t &);
-		void		genResponse(std::string &);
-		void		prtParsedReq(void);
-		void		prtRequest(httpReq &);
+		void		genResponse(void);
 		int			openFile(void);
+		bool		readFile(int, char*);
+		void		updateTime(void);
 		// Getter & Setter
-		void		setReqType(reqType_e);
-		void		setResType(resType_e);
-		short int	getStatus(void) const;
-		int			getPipeIn(void) const;
-		int			getPipeOut(void) const;
-		reqType_e	getReqType(void) const;
-		resType_e	getResType(void) const;
-		parsedReq &	getRequest(void);
-		HttpResponse &	getResponse(void);
-
-		bool	readFile(int, char* buffer);
+		int				getPipeIn(void) const;
+		int				getPipeOut(void) const;
+		void			setReqType(reqType_e);
+		void			setResType(resType_e);
+		reqType_e		getReqType(void) const;
+		resType_e		getResType(void) const;
+		parsedReq&		getRequest(void);
+		HttpResponse&	getResponse(void);
+		// Pipe Fd
 		void	addPipeFd(int, pipe_e);
 		void	delPipeFd(int, pipe_e);
 		void	clearPipeFd(void);
+		// debugging
+		void	prtParsedReq(void);
+		void	prtRequest(httpReq &);
 };
 
 #endif

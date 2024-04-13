@@ -19,10 +19,8 @@ class WebServer
 		fd_set					_readFds;
 		fd_set					_writeFds;
 		CgiHandler				_cgi;
-		std::string				_resMsg;
 		std::vector<Server>		_servs;
 		std::map<int, Client>	_clients;
-		// std::map<int, Client*>	Client::pipeFds;
 		struct timeval			_timeOut;
 
 		// Server initiation
@@ -45,10 +43,6 @@ class WebServer
 		bool	_matchServer(int);
 		Server*	_getServer(int);
 		void	_timeOutMonitoring(void);
-		// Manipulate Pipe
-		void	_addPipeFds(int , Client &, pipe_e);
-		void	_delPipeFds(int , Client &, pipe_e);
-		void	_clearPipeFds(Client &);
 		// Debugging
 		void	_prtFristSet(fd_set &);
 		bool	_displayCurrentTime(void);

@@ -48,6 +48,7 @@ bool	CgiHandler::createRequest(Client & client) {
 		}
 		else
 			client.setResType(CGI_RES);
+		Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - fork child pid: ", _pid);
 		client.pid = _pid;
 		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
 	}
@@ -64,17 +65,18 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 			client.status = 502;
 			client.delPipeFd(fd, PIPE_IN);
 			client.setResType(ERROR_RES);
+			Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error writing");
 			return false;
 		}
 		req.package++;
 	}
 	if (req.type == CHUNK) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
-		if (client.bufSize == 0) {
-			client.delPipeFd(fd, PIPE_IN);
-			client.setResType(CGI_RES);
-			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-		}
+		// if (client.bufSize == 0) {
+			// client.delPipeFd(fd, PIPE_IN);
+			// client.setResType(CGI_RES);
+			// Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
+		// }
 	}
 	else {
 		req.bodySent += client.bufSize;
