@@ -54,7 +54,7 @@ bool	CgiHandler::createRequest(Client & client) {
 }
 
 bool	CgiHandler::sendBody(Client & client, int fd) {
-	ssize_t		bytes;
+	ssize_t		bytes = 0;
 	parsedReq&	req = client.getRequest();
 
 	if (client.bufSize) {
@@ -71,7 +71,7 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
 		if (client.bufSize == 0) {
 			client.delPipeFd(fd, PIPE_IN);
-			client.setResType(CGI_RES);
+			req.type = CGI_REQ;
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
 	}
@@ -80,7 +80,7 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
 			client.delPipeFd(fd, PIPE_IN);
-			client.setResType(CGI_RES);
+			req.type = CGI_REQ;
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
 	}
@@ -141,7 +141,7 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env["REMOTE_HOST"] = "";					// host name of client that request
 	_env["REMOTE_IDENT"] = "";					// empty
 	_env["REMOTE_USER"] = "";					// empty
-	// HTTP protocal Env
+	// HTTP protocol Env
 	std::map<std::string, std::string>::const_iterator	it;
 	for (it = req.headers.begin(); it != req.headers.end(); it++)
 		_env[toProtoEnv(it->first)] = it->second; 

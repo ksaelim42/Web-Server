@@ -60,7 +60,7 @@ class Client
 		void		genResponse(std::string &);
 		void		prtParsedReq(void);
 		void		prtRequest(httpReq &);
-		int			openFile(int &);
+		int			openFile(void);
 		// Getter & Setter
 		void		setReqType(reqType_e);
 		void		setResType(resType_e);

@@ -373,7 +373,9 @@ void	Client::_updateTime(void) {
 	lastTimeConnected += KEEPALIVETIME;
 }
 
-int	Client::openFile(int & fd) {
+int	Client::openFile(void) {
+	int	fd;
+
 	fd = open(_req.pathSrc.c_str(), O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)	// 2 No such file or directory : 404
@@ -397,9 +399,6 @@ bool	Client::readFile(int fd, char* buffer) {
 		_res.type = FILE_RES;
 	else
 		_res.type = BODY_RES;
-	// if (_res.bodySize <= _res.bodySent + LARGEFILESIZE)
-	// 	bytes = read(fd, buffer, _res.bodySize);
-	// else
 	bytes = read(fd, buffer, LARGEFILESIZE);
 	_res.body.assign(buffer, bytes);
 	_res.bodySent += bytes;

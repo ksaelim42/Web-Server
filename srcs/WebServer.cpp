@@ -121,7 +121,7 @@ int	WebServer::_acceptConnection(int & serverFd) {
 		if (!client.serv) // if There aren't server open
 			return _disconnectClient(client.sockFd), -1;
 		_clients[client.sockFd] = client;
-		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Aceept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
+		Logger::isLog(INFO) && Logger::log(WHT, "[Server] - Accept client fd: ", client.sockFd, ", addr: ", client.IPaddr);
 	}
 	_fdSet(client.sockFd, _readFds);
 	return client.sockFd;
@@ -162,20 +162,19 @@ int	WebServer::_receiveRequest(Client & client) {
 }
 
 int	WebServer::_parsingRequest(Client & client) {
-	int	fd;
-
 	if (client.getReqType() == HEADER) {
 		if (!client.parseHeader(client.buffer, client.bufSize))
 			client.setResType(ERROR_RES);
 		if (client.getReqType() == FILE_REQ) {
-			if (client.openFile(fd) < 0)
+			if (client.openFile() < 0)
 				client.setResType(ERROR_RES);
 			else
-				_fdSet(fd, _readFds);
+				_fdSet(client.getPipeOut(), _readFds);
 		}
 		else if (client.getReqType() == CGI_REQ) {
 			if (!_cgi.createRequest(client))
 				client.setResType(ERROR_RES);
+			std::cout << "bufSize: " << client.bufSize << std::endl; // debug
 			if (client.bufSize)
 				_fdSet(client.getPipeIn(), _writeFds);
 			else
@@ -447,13 +446,11 @@ void	WebServer::_readContent(int fd, Client * client) {
 
 void	WebServer::_writeContent(int fd, Client * client) {
 	_cgi.sendBody(*client, fd);
-	if (client->getReqType() == RESPONSE) {
-		if (client->getResType() == CGI_RES)
-			_fdSet(client->getPipeOut(), _readFds);
-		else
-			_fdSet(client->sockFd, _writeFds);
-	}
+	if (client->getReqType() == CGI_REQ)
+		_fdSet(client->getPipeOut(), _readFds);
+	else if (client->getReqType() == RESPONSE)
+		_fdSet(client->sockFd, _writeFds);
 	else
-			_fdSet(client->sockFd, _readFds);
+		_fdSet(client->sockFd, _readFds);
 	_fdClear(fd, _writeFds);
 }

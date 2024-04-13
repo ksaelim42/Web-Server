@@ -10,6 +10,9 @@ form = cgi.FieldStorage()
 first_name = form.getvalue('fname')
 last_name = form.getvalue('lname')
 
+# import sys
+# print(f"cgi-script: first: {first_name},last: {last_name}", file=sys.stderr)
+
 # Response Message
 print("Content-Type: text/html")
 
