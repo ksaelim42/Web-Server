@@ -34,6 +34,7 @@ class HttpResponse
 		short int	_inspectCgiHeaders(std::string &);
 	public:
 		resType_e	type;
+		bool		isBody;
 		std::string	body;
 		uint64_t	bodySize;
 		uint64_t	bodySent;

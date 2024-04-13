@@ -40,14 +40,14 @@ bool	CgiHandler::createRequest(Client & client) {
 		if (_isPost) {
 			_closePipe(_pipeInFd[0]);
 			client.addPipeFd(_pipeInFd[1], PIPE_IN);
-			req.package = 1;
+			req.package = 0;
 			if (req.bodyType == CHUNKED_ENCODE)
 				req.type = CHUNK;
 			else
 				req.type = BODY;
 		}
 		else
-			req.type = CGI_REQ;
+			client.setResType(CGI_RES);
 		client.pid = _pid;
 		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
 	}
@@ -72,7 +72,7 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
 		if (client.bufSize == 0) {
 			client.delPipeFd(fd, PIPE_IN);
-			req.type = CGI_REQ;
+			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
 	}
@@ -81,7 +81,7 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
 			client.delPipeFd(fd, PIPE_IN);
-			req.type = CGI_REQ;
+			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
 	}
@@ -94,6 +94,7 @@ bool	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
 	HttpResponse&	res = client.getResponse();
 
 	waitpid(client.pid, &WaitStat, 0);
+	client.pid = -1; // TODO make it non-blocking i/o
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
 	if (WaitStat != 0) {
 		client.status = 502;
@@ -101,10 +102,6 @@ bool	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
 		client.setResType(ERROR_RES);
 		return false;
 	}
-	if (res.bodySent == 0)
-		res.type = CGI_RES;
-	else
-		res.type = BODY_RES;
 	bytes = read(fd, buffer, LARGEFILESIZE);
 	res.body.assign(buffer, bytes);
 	res.bodySent += bytes;

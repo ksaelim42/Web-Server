@@ -168,20 +168,21 @@ int	WebServer::_parsingRequest(Client & client) {
 		if (client.getReqType() == FILE_REQ) {
 			if (client.openFile() < 0)
 				client.setResType(ERROR_RES);
-			else
-				_fdSet(client.getPipeOut(), _readFds);
 		}
 		else if (client.getReqType() == CGI_REQ) {
 			if (!_cgi.createRequest(client))
 				client.setResType(ERROR_RES);
-			if (client.getReqType() == CGI_REQ) 
-				_fdSet(client.getPipeOut(), _readFds);
-			else {
+			if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
 				if (client.bufSize)
 					_fdSet(client.getPipeIn(), _writeFds);
 				else
 					_fdSet(client.sockFd, _readFds);
+				return 1;
 			}
+		}
+		if (client.getResType() == FILE_RES || client.getResType() == CGI_RES) {
+			_fdSet(client.getPipeOut(), _readFds);
+			return 1;
 		}
 	}
 	else if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
@@ -214,10 +215,10 @@ int	WebServer::_sendResponse(Client & client) {
 		_disconnectClient(client.sockFd);
 		return 0;
 	}
-	if (client.getResType() == BODY_RES)
-		_fdSet(client.getPipeOut(), _readFds);
-	else
+	if (client.getPipeOut() < 0)
 		_fdSet(client.sockFd, _readFds);
+	else
+		_fdSet(client.getPipeOut(), _readFds);
 	return 1;
 }
 
@@ -437,10 +438,10 @@ bool	WebServer::_displayCurrentTime(void) {
 }
 
 void	WebServer::_readContent(int fd, Client * client) {
-	if (client->getReqType() == FILE_REQ) {
+	if (client->getResType() == FILE_RES) {
 		client->readFile(fd, this->buffer);
 	}
-	else if (client->getReqType() == CGI_REQ) {
+	else if (client->getResType() == CGI_RES) {
 		_cgi.receiveResponse(*client, fd, this->buffer);
 	}
 	_fdClear(fd, _readFds);
@@ -449,10 +450,12 @@ void	WebServer::_readContent(int fd, Client * client) {
 
 void	WebServer::_writeContent(int fd, Client * client) {
 	_cgi.sendBody(*client, fd);
-	if (client->getReqType() == CGI_REQ)
-		_fdSet(client->getPipeOut(), _readFds);
-	else if (client->getReqType() == RESPONSE)
-		_fdSet(client->sockFd, _writeFds);
+	if (client->getReqType() == RESPONSE) {
+		if (client->getResType() == CGI_RES)
+			_fdSet(client->getPipeOut(), _readFds);
+		else // Error
+			_fdSet(client->sockFd, _writeFds);
+	}
 	else
 		_fdSet(client->sockFd, _readFds);
 	_fdClear(fd, _writeFds);

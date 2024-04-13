@@ -1,7 +1,7 @@
 #include "HttpResponse.hpp"
 
 HttpResponse::HttpResponse() : type(ERROR_RES)
-, bodySize(0), bodySent(0) {}
+, isBody(0), body(""), bodySize(0), bodySent(0) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Delete resource");
@@ -31,6 +31,7 @@ std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Static Content");
+	isBody = true;
 	return _createHeader(status, req) + CRLF + body;
 }
 
@@ -44,6 +45,7 @@ std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req) {
 	status = _inspectCgiHeaders(cgiHeader);
 	if (status != 200)
 		return errorPage(status, req);
+	isBody = true;
 	return _createHeader(status , req) + CRLF + body;
 }
 
@@ -57,6 +59,7 @@ std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 void	HttpResponse::clear(void) {
 	_headers.clear();
 	type = ERROR_RES;
+	isBody = false;
 	body.clear();
 	bodySize = 0;
 	bodySent = 0;
@@ -294,8 +297,6 @@ std::string	HttpResponse::getType(void) const {
 		return "FILE_RES";
 	else if (this->type == CGI_RES)
 		return "CGI_RES";
-	else if (this->type == BODY_RES)
-		return "BODY_RES";
 	else
 		return "Non type";
 }

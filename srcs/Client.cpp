@@ -51,12 +51,18 @@ void	Client::genResponse(std::string & resMsg) {
 	// std::cout << YEL << "res type: " << _res.getType() << RESET << std::endl; TODO
 	// std::cout << YEL << "status: " << status << RESET << std::endl; TODO
 	_updateTime();
-	if (_res.type == FILE_RES)
-		resMsg = _res.staticContent(this->status, _req);
-	if (_res.type == CGI_RES)
-		resMsg = _res.cgiResponse(this->status, _req);
-	else if (_res.type == BODY_RES)
-		resMsg = _res.body;
+	if (_res.type == FILE_RES) {
+		if (!_res.isBody)
+			resMsg = _res.staticContent(this->status, _req);
+		else
+			resMsg = _res.body;
+	}
+	else if (_res.type == CGI_RES) {
+		if (!_res.isBody)
+			resMsg = _res.cgiResponse(this->status, _req);
+		else
+			resMsg = _res.body;
+	}
 	else if (_res.type == ERROR_RES)
 		resMsg = _res.errorPage(this->status, _req);
 	else if (_res.type == DELETE_RES)
@@ -66,9 +72,10 @@ void	Client::genResponse(std::string & resMsg) {
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
 	// std::cout << resMsg << std::endl; // TODO
-	if (_res.type != BODY_RES)
+	std::cout << "pipeOut: " << getPipeOut() << std::endl; // TODO
+	// sleep(1);
+	if (getPipeOut() < 0)
 		_req.type = HEADER;
-	return;
 }
 
 void	Client::prtParsedReq(void) {
@@ -389,20 +396,17 @@ int	Client::openFile(void) {
 	_res.bodySize = _req.fileInfo.st_size;
 	std::cout << "Open file success fd: " << fd << std::endl; // debug
 	addPipeFd(fd, PIPE_OUT);
+	setResType(FILE_RES);
 	return fd;
 }
 
 bool	Client::readFile(int fd, char* buffer) {
 	ssize_t	bytes;
 
-	if (_res.bodySent == 0)
-		_res.type = FILE_RES;
-	else
-		_res.type = BODY_RES;
 	bytes = read(fd, buffer, LARGEFILESIZE);
 	_res.body.assign(buffer, bytes);
 	_res.bodySent += bytes;
-	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Receive Data form File: ", bytes, " Bytes");
+	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Read Data form File ", _res.bodySent, " Bytes out of", _res.bodySize, "Bytes");
 	if (_res.bodySent >= _res.bodySize) {
 		delPipeFd(fd, PIPE_OUT);
 		return true;
