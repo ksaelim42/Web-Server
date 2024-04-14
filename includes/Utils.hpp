@@ -31,7 +31,8 @@ std::string	findHeaderValue(std::map<std::string, std::string> &, std::string co
 short int	strToShortInt(std::string str);
 // config utils
 void	clearServer(Server &obj);
-void	clearLocation(Location &locStruct);
+// void	clearLocation(Location &locStruct);
+Location	clearLocation(Server const & server);
 bool	scanPorts(std::vector<Server> servers);
 // bool	scanPorts(std::string key, std::string value, std::vector<std::string> &ports);
 void	printConfig(Server obj);
