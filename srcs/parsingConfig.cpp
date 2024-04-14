@@ -322,5 +322,3 @@ int main(int ac, char **av)
 	printServers(servers);
 	// printConfig(obj);
 }
-
-// ! contexts that are not showing in the location should base their value from the server's directives
