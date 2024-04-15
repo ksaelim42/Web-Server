@@ -38,6 +38,7 @@ class WebServer
 		// Manipulate Client
 		void	_fdSet(int, fd_set &);
 		void	_fdClear(int, fd_set &);
+		void	_clearClientPipeFd(Client &);
 		void	_disconnectClient(int);
 		void	_disconnectAllClient(void);
 		bool	_matchServer(int);

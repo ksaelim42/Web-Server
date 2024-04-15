@@ -51,8 +51,8 @@ bool	WebServer::runServer(void) {
 		timeOut = _timeOut;
 		// _prtFristSet(tmpReadFds);
 		// select will make system motoring three set, block until some fd ready
-		// status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
-		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL);
+		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
+		// status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL);
 		// Logger::isLog(DEBUG) && _displayCurrentTime();
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
@@ -392,9 +392,17 @@ Server*	WebServer::_getServer(int fd) {
 	Logger::isLog(DEBUG) && Logger::log(RED, "[Server] - There aren't server in list");
 	return NULL;
 }
+void	WebServer::_clearClientPipeFd(Client & client) {
+	if (client.getPipeOut() != -1)
+		_fdClear(client.getPipeOut(), _readFds);
+	if (client.getPipeIn() != -1)
+		_fdClear(client.getPipeIn(), _readFds);
+	client.clearPipeFd();
+}
 
 void	WebServer::_disconnectClient(int client_fd) {
 	if (_clients.count(client_fd)) {
+		_clearClientPipeFd(_clients[client_fd]);
 		_fdClear(client_fd, _readFds);
 		_fdClear(client_fd, _writeFds);
 		close(client_fd);
@@ -406,6 +414,7 @@ void	WebServer::_disconnectClient(int client_fd) {
 void	WebServer::_disconnectAllClient(void) {
 	std::map<int, Client>::iterator	it;
 	for (it = _clients.begin(); it != _clients.end(); it++) {
+		_clearClientPipeFd(it->second);
 		_fdClear(it->second.sockFd, _readFds);
 		_fdClear(it->second.sockFd, _writeFds);
 		close(it->second.sockFd);

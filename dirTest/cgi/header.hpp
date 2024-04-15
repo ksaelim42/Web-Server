@@ -36,6 +36,7 @@ class CgiHandler
 		void	_prtMsg(std::string);
 
 		bool	_createPipe(void);
+		bool	_setNonBlocking(void);
 		bool	_gotoCgiDir(std::string ,std::string &);
 		void	_closeAllPipe(void);
 		void	_closePipe(int &);

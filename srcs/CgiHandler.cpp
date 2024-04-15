@@ -28,6 +28,10 @@ bool	CgiHandler::createRequest(Client & client) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
 		return client.status = 500, false;
 	}
+	if (!_setNonBlocking()) {
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for setting Non-blocking I/O");
+		return _closeAllPipe(), client.status = 500, false;
+	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
@@ -36,9 +40,9 @@ bool	CgiHandler::createRequest(Client & client) {
 	if (_pid == 0) // Child Process
 		_childProcess(req);
 	else { // Parent Process
-		_closePipe(_pipeOutFd[1]);
+		close(_pipeOutFd[1]);
 		if (_isPost) {
-			_closePipe(_pipeInFd[0]);
+			close(_pipeInFd[0]);
 			client.addPipeFd(_pipeInFd[1], PIPE_IN);
 			req.package = 0;
 			if (req.bodyType == CHUNKED_ENCODE)
@@ -95,6 +99,7 @@ bool	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
 	ssize_t			bytes;
 	HttpResponse&	res = client.getResponse();
 
+	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Response");
 	waitpid(client.pid, &WaitStat, 0);
 	client.pid = -1; // TODO make it non-blocking i/o
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
@@ -192,6 +197,20 @@ bool	CgiHandler::_createPipe(void) {
 	return true;
 }
 
+bool	CgiHandler::_setNonBlocking(void) {
+	if (fcntl(_pipeOutFd[0], F_SETFL, O_NONBLOCK) < 0)
+		return false;
+	if (fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK) < 0)
+		return false;
+	if (_isPost) {
+		if (fcntl(_pipeInFd[0], F_SETFL, O_NONBLOCK) < 0)
+			return false;
+		if (fcntl(_pipeInFd[1], F_SETFL, O_NONBLOCK) < 0)
+			return false;
+	}
+	return true;
+}
+
 bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	std::size_t	found = srcPath.find_last_of("/");
 	if (found != std::string::npos) {
@@ -205,31 +224,29 @@ bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	return true;
 }
 
-void	CgiHandler::_closePipe(int &fd) {
-	close(fd);
-	fd = -1;
+void	CgiHandler::_closePipe(int (&pipeFd)[2]) {
+	close(pipeFd[0]);
+	close(pipeFd[1]);
+	// pipeFd[0] = -1;
+	// pipeFd[1] = -1;
 }
 
 void	CgiHandler::_closeAllPipe(void) {
 	if (_isPost) {
-		_closePipe(_pipeInFd[0]);
-		_closePipe(_pipeInFd[1]);
+		_closePipe(_pipeInFd);
 	}
-	_closePipe(_pipeOutFd[0]);
-	_closePipe(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd);
 }
 
 void CgiHandler::_childProcess(parsedReq & req) {
 	if (_isPost) { // if post method will take input from std::in
 		dup2(_pipeInFd[0], STDIN_FILENO);
-		_closePipe(_pipeInFd[1]);
-		_closePipe(_pipeInFd[0]);
+		_closePipe(_pipeInFd);
 	}
 	if (!_gotoCgiDir(req.pathSrc))
 		exit(errno);
 	dup2(_pipeOutFd[1], STDOUT_FILENO);
-	_closePipe(_pipeOutFd[0]);
-	_closePipe(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd);
 	char *args[3];
 	args[0] = strdup(_cgiProgramPath);
 	args[1] = strdup(_cgiFileName);

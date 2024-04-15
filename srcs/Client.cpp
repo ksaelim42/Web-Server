@@ -74,7 +74,7 @@ void	Client::genResponse(void) {
 int	Client::openFile(void) {
 	int	fd;
 
-	fd = open(_req.pathSrc.c_str(), O_RDONLY);
+	fd = open(_req.pathSrc.c_str(), O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
 		if (errno == ENOENT)	// 2 No such file or directory : 404
 			return this->status = 404, -1;
@@ -402,6 +402,7 @@ void	Client::clearPipeFd(void) {
 	if (pid != -1) {
 		kill(pid, SIGKILL);
 		Logger::isLog(DEBUG) && Logger::log(YEL, pid, " was killed");
+		pid = -1;
 	}
 }
 
