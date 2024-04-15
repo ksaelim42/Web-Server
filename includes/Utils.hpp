@@ -12,7 +12,7 @@ class Server;
 struct return_t;
 struct Location;
 
-typedef unsigned long long int uint64_t;
+typedef unsigned long int uint64_t;
 
 bool		isHexChar(char &);
 bool		isHexStr(std::string &);
