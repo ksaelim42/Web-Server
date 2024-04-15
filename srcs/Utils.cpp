@@ -155,34 +155,69 @@ void	prtMap(std::map<std::string, std::string> & set) {
 
 void	clearServer(Server &obj)
 {
-	obj.name.clear();
-	obj.port.clear();
-	obj.ipAddr.clear();
-	obj.root.clear();
+	Server	defServer;
+
+	obj.name = defServer.name;
+	obj.port = defServer.port;
+	obj.ipAddr = defServer.ipAddr;
+	obj.root = defServer.root;
+	obj.allowMethod = defServer.allowMethod;
+	obj.cliBodySize = defServer.cliBodySize;
+	obj.index = defServer.index;
 	obj.autoIndex = false;
 	obj.cgiPass = false;
-	obj.allowMethod = 0;
-	obj.cliBodySize = 0;
 	obj.retur.have = 0;
 	obj.retur.code = 0;
 	obj.retur.text.clear();
 	obj.location.clear();
-	obj.errPage.clear();
-	obj.index.clear();
+	obj.initMineTypeDefault();
+	obj.initErrPage();
+	
+
+	// obj.name.clear();
+	// obj.port.clear();
+	// obj.ipAddr.clear();
+	// obj.root.clear();
+	// obj.autoIndex = false;
+	// obj.cgiPass = false;
+	// obj.allowMethod = 0;
+	// obj.cliBodySize = 0;
+	// obj.retur.have = 0;
+	// obj.retur.code = 0;
+	// obj.retur.text.clear();
+	// obj.location.clear();
+	// obj.errPage.clear();
+	// obj.index.clear();
+	// obj.initMineTypeDefault();
 }
 
-void	clearLocation(Location &locStruct)
+Location	clearLocation(Server const & server)
 {
-	locStruct.path.clear();
-	locStruct.root.clear();
-	locStruct.index.clear();
-	locStruct.allowMethod = 0;
-	locStruct.autoIndex = false;
-	locStruct.cliBodySize = 0;
-	locStruct.retur.have = 0;
-	locStruct.retur.code = 0;
-	locStruct.retur.text.clear();
+	Location loc;
+
+	loc.cgiPass = false;
+	loc.autoIndex = false;
+	loc.allowMethod = server.allowMethod; // get server
+	loc.cliBodySize = server.cliBodySize; // get server
+	loc.path.clear();
+	loc.root = server.root; // get server
+	loc.index = server.index; // get server
+	loc.retur = server.retur; // get server
+	return loc;
 }
+
+// void	clearLocation(Location &locStruct)
+// {
+// 	locStruct.path.clear();
+// 	locStruct.root.clear();
+// 	locStruct.index.clear();
+// 	locStruct.allowMethod = 0;
+// 	locStruct.autoIndex = false;
+// 	locStruct.cliBodySize = 0;
+// 	locStruct.retur.have = 0;
+// 	locStruct.retur.code = 0;
+// 	locStruct.retur.text.clear();
+// }
 
 bool	scanPorts(std::vector<Server> servers)
 {
@@ -209,12 +244,12 @@ void	printServers(std::vector<Server> servers)
 		std::cout << "root: " << it->root << std::endl;
 		std::cout << "autoindex: " << it->autoIndex << std::endl;
 		std::cout << "cgi: " << it->cgiPass << std::endl;
-		std::cout << "method: " << it->allowMethod << std::endl;
+		std::cout << "allowMethod: " << it->allowMethod << std::endl;
 		// return
 		std::cout << "return:" << std::endl;
-		std::cout << it->retur.have << std::endl;
-		std::cout << it->retur.code << std::endl;
-		std::cout << it->retur.text << std::endl;
+		std::cout << "have: " << it->retur.have << std::endl;
+		std::cout << "code: " <<  it->retur.code << std::endl;
+		std::cout << "text: " << it->retur.text << std::endl;
 		// index
 		for (std::vector<std::string>::iterator index = it->index.begin(); index != it->index.end(); index++)
 			std::cout << *index << std::endl;
@@ -237,9 +272,9 @@ void	printServers(std::vector<Server> servers)
 			std::cout << "cgiPass: " << it->location[i].cgiPass << std::endl;
 			// return
 			std::cout << "return :" << std::endl;
-			std::cout << it->location[i].retur.have << std::endl;
-			std::cout << it->location[i].retur.code << std::endl;
-			std::cout << it->location[i].retur.text << std::endl;
+			std::cout << "have: " << it->location[i].retur.have << std::endl;
+			std::cout << "code: " << it->location[i].retur.code << std::endl;
+			std::cout << "text: " << it->location[i].retur.text << std::endl;
 			// index
 			std::cout << "INDEX :" << std::endl;
 			for (std::vector<std::string>::iterator index = it->location[i].index.begin(); index != it->location[i].index.end(); index++)

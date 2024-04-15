@@ -68,6 +68,13 @@ class Server // don't forget to create vector to store this class as it may have
 		std::string	getMimeType(const std::string & extension) const;
 		std::string	getErrPagePath(short int) const;
 		std::string	getErrPageBody(short int) const;
+
+		void	initMineTypeDefault() {
+			_initMineTypeDefault();
+		}
+		void	initErrPage() {
+			_initErrPage();
+		}
 };
 
 

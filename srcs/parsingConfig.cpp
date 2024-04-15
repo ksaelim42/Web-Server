@@ -53,7 +53,7 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		obj.retur.have = false;
 		if (!value.empty())
 		{
-			short int status;
+			short int status = 0;
 
 			obj.retur.have = true;
 			status = strToShortInt(valueVec[0]);
@@ -136,9 +136,10 @@ bool storeLocation(Location &locStruct, std::string key, std::string value, std:
 	else if (key == "return")
 	{
 		locStruct.retur.have = false;
+		locStruct.retur.code = 0;
 		if (!value.empty())
 		{
-			short int status;
+			short int status = 0;
 
 			locStruct.retur.have = true;
 			status = strToShortInt(valueVec[0]);
@@ -200,10 +201,12 @@ bool setValue(Server &obj, Location &locStruct, std::string key, std::string val
 
 int getLocation(Server &obj, Location &locStruct, std::string key, std::string value, bool &isLocation)
 {
+	static int firstLoc = 0;
+
 	if (key != "location" && !isLocation)
 		return 0;
 	// remove { from the path
-	for (size_t i = 0; i < value.length(); i++)
+	for (size_t i = 0; i < value.length() && key == "location"; i++)
 	{
 		if (value[i] == '{')
 			value.erase(value.begin() + i);
@@ -212,9 +215,16 @@ int getLocation(Server &obj, Location &locStruct, std::string key, std::string v
 	if (key[0] == '}') // when read the line with } will result in key with length of 2. Therefore, use char as a condition
 	{
 		isLocation = 0;
+		firstLoc = 0;
 		obj.location.push_back(locStruct);
-		clearLocation(locStruct);
+		locStruct = clearLocation(obj);
 		return 0;
+	}
+	// set location values to default as according to the server
+	if (firstLoc == 0)
+	{
+		locStruct = clearLocation(obj);
+		firstLoc = 1;
 	}
 	if (!setValue(obj, locStruct, key, value, 1))
 		return 2;
@@ -229,15 +239,22 @@ std::string getValue(std::string value, std::string key, std::string line, int &
 			i++;
 		// copy value(s)
 		while (line[i])
+		{
+			if (line[i] == ';' || line[i] == '#')
+			{
+				i++;
+				break;
+			}
 			value += line[i++];
+		}
 	}
-	// remove ; from the value
-	for (int j = 0; j < value[j]; j++)
+	// remove ; and /r from the value
+	for (int j = 0; j < value[j]; j++) //? we could use find() here
 	{
-		if (value[j] == ';')
-			value.erase(value.begin() + j);
 		if (value[j] == '\r')
 			value.erase(value.begin() + j);
+		// if (value[j] == ';' || value[j] == '\r')
+		// 	value.erase(value.begin() + j);
 	}
 	return value;
 }
@@ -257,51 +274,51 @@ std::string	getKey(std::string key, std::string line, int &i)
 	return key;
 }
 
-// int main(int ac, char **av)
-// {
-// 	std::ifstream configFile;
-// 	std::string tmp;
-// 	Server obj;
-// 	Location locStruct;
-// 	std::vector<Server> servers;
-// 	bool isLocation = false;
-// 	bool firstServer = true;
+int main(int ac, char **av)
+{
+	std::ifstream configFile;
+	std::string tmp;
+	Server obj;
+	Location locStruct;
+	std::vector<Server> servers;
+	bool isLocation = false;
+	bool firstServer = true;
 
-// 	if (ac != 2)
-// 		return (std::cout << "must have 2 arguments" << std::endl, 0);
-// 	configFile.open(av[1]);
-// 	if (!configFile.is_open())
-// 		return (std::cout << "cannot open config file" << std::endl, 0);
-// 	while (std::getline(configFile, tmp))
-// 	{
-// 		int i = 0;
-// 		int	isSetLocation = 0;
-// 		std::string key;
-// 		std::string value;
+	if (ac != 2)
+		return (std::cout << "must have 2 arguments" << std::endl, 0);
+	configFile.open(av[1]);
+	if (!configFile.is_open())
+		return (std::cout << "cannot open config file" << std::endl, 0);
+	while (std::getline(configFile, tmp))
+	{
+		int i = 0;
+		int	isSetLocation = 0;
+		std::string key;
+		std::string value;
 
-// 		key = getKey(key, tmp, i);
-// 		if (key == "server" && firstServer)
-// 		{
-// 			firstServer = false;
-// 			continue;
-// 		}
-// 		value = getValue(value, key, tmp, i);
-// 		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
-// 		if (isSetLocation == 1)
-// 			continue;
-// 		else if (isSetLocation == 2)
-// 			return 0;
-// 		if (!setValue(obj, locStruct, key, value, 0))
-// 			return 0;
-// 		if (key == "server" || configFile.eof())
-// 		{
-// 			servers.push_back(obj);
-// 			clearServer(obj);
-// 		}
-// 	}
-// 	if (!scanPorts(servers))
-// 		return 0;
-// 	// exit (0);
-// 	printServers(servers);
-// 	// printConfig(obj);
-// }
+		key = getKey(key, tmp, i);
+		if (key == "server" && firstServer)
+		{
+			firstServer = false;
+			continue;
+		}
+		value = getValue(value, key, tmp, i);
+		isSetLocation = getLocation(obj, locStruct, key, value, isLocation);
+		if (isSetLocation == 1)
+			continue;
+		else if (isSetLocation == 2)
+			return 0;
+		if (!setValue(obj, locStruct, key, value, 0))
+			return 0;
+		if (key == "server" || configFile.eof())
+		{
+			servers.push_back(obj);
+			clearServer(obj);
+		}
+	}
+	if (!scanPorts(servers))
+		return 0;
+	// exit (0);
+	printServers(servers);
+	// printConfig(obj);
+}
