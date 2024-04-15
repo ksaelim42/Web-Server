@@ -92,7 +92,14 @@ int	Client::openFile(void) {
 bool	Client::readFile(int fd, char* buffer) {
 	ssize_t	bytes;
 
+	std::cout << RED << "Got it: " << fd << RESET << std::endl; // TODO
 	bytes = read(fd, buffer, LARGEFILESIZE);
+	if (bytes == -1) {
+		this->status = 403;
+		delPipeFd(fd, PIPE_OUT);
+		setResType(ERROR_RES);
+		return false;
+	}
 	_res.body.assign(buffer, bytes);
 	_res.bodySent += bytes;
 	Logger::isLog(WARNING) && Logger::log(MAG, "[Request] - Read Data form File ", _res.bodySent, " Bytes out of ", _res.bodySize, "Bytes");

@@ -112,6 +112,12 @@ ssize_t	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
 	if (status == 0)
 		return 0;
 	bytes = read(fd, buffer, LARGEFILESIZE);
+	if (bytes == -1) {
+		client.status = 502;
+		client.delPipeFd(fd, PIPE_OUT);
+		client.setResType(ERROR_RES);
+		return false;
+	}
 	res.body.assign(buffer, bytes);
 	res.bodySent += bytes;
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytes, " Bytes");
