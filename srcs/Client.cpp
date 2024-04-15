@@ -66,7 +66,6 @@ void	Client::genResponse(void) {
 		resMsg = _res.redirection(this->status, _req);
 	else if (_res.type == AUTOINDEX_RES)
 		resMsg = _res.autoIndex(this->status, _req);
-	std::cout << "pipeOut: " << getPipeOut() << std::endl; // TODO
 	if (getPipeOut() < 0)
 		_req.type = HEADER;
 }

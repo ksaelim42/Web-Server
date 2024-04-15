@@ -94,28 +94,32 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 	return true;
 }
 
-bool	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
-	int				WaitStat;
+ssize_t	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
+	int				WaitStat = 0;
+	int				status = 0;
 	ssize_t			bytes;
 	HttpResponse&	res = client.getResponse();
 
-	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Response");
-	waitpid(client.pid, &WaitStat, 0);
-	client.pid = -1; // TODO make it non-blocking i/o
-	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
+	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Response");
+	status = waitpid(client.pid, &WaitStat, WNOHANG);
+	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
 	if (WaitStat != 0) {
 		client.status = 502;
 		client.delPipeFd(fd, PIPE_OUT);
 		client.setResType(ERROR_RES);
-		return false;
+		return -1;
 	}
+	if (status == 0)
+		return 0;
 	bytes = read(fd, buffer, LARGEFILESIZE);
 	res.body.assign(buffer, bytes);
 	res.bodySent += bytes;
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytes, " Bytes");
-	if (res.bodySent >= res.bodySize)
+	if (res.bodySent >= res.bodySize) {
+		client.pid = -1;
 		client.delPipeFd(fd, PIPE_OUT);
-	return true;
+	}
+	return bytes;
 }
 
 // ************************************************************************** //

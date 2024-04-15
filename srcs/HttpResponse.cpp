@@ -214,7 +214,7 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 	body += "<title>Index of " + req.path +" </title>\n";
 	body += "</head>\n";
 	body += "<body>\n";
-	body += "<h1>Index of " + req.path + " </h1>\n"; // :TODO fix name
+	body += "<h1>Index of " + req.path + " </h1>\n";
 	body += "<hr>\n";
 	body += "<pre>\n";
 	dir = opendir(req.pathSrc.c_str());

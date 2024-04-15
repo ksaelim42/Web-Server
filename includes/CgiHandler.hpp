@@ -36,7 +36,7 @@ class CgiHandler
 		~CgiHandler();
 		bool	createRequest(Client &);
 		bool	sendBody(Client &, int);
-		bool	receiveResponse(Client &, int, char*);
+		ssize_t	receiveResponse(Client &, int, char*);
 };
 
 #endif

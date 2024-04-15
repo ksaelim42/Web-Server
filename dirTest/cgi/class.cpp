@@ -1,7 +1,6 @@
 #include "header.hpp"
 
 bool	CgiHandler::execute(std::string path) {
-	std::cout << YEL << "[CGI] - Start" << RESET << std::endl;
 	_isPost = 0;
 	if (!_createPipe())
 		return _prtErr("[CGI] - Error for create Pipe"), false;
@@ -12,8 +11,10 @@ bool	CgiHandler::execute(std::string path) {
 		return _prtErr("[CGI] - Error for fork child"), false;
 	if (_pid == 0)
 		_childProcess(path);
-	else
+	else {
+		std::cout << YEL << "[CGI] - Start pid: " << _pid << RESET << std::endl;
 		_parentProcess();
+	}
 	return true;
 }
 
@@ -55,9 +56,6 @@ bool	CgiHandler::_createPipe(void) {
 			return false;
 		}
 	}
-	fcntl(_pipeOutFd[0], F_SETFL, O_NONBLOCK);
-	fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK);
-		// _prtErr("Non-Blocking i/o fail");
 	return true;
 }
 
@@ -105,20 +103,26 @@ void	CgiHandler::_childProcess(std::string path) {
 }
 
 bool	CgiHandler::_parentProcess(void) {
-	int		WaitStat = 0;
+	int		WaitStat = 5;
 	ssize_t	bytesRead;
 	char	buffer[100000];
+	int		status;
 
 	_closePipe(_pipeOutFd[1]);
 	usleep(1000);
 	// waitpid(_pid, &WaitStat, 0);
 	while (true) {
-		waitpid(_pid, &WaitStat, WNOHANG);
+		// sleep(1);
+		status = waitpid(_pid, &WaitStat, WNOHANG);
+		std::cout << "pid: " << _pid << ", status: " << status << std::endl;
 		std::cout << YEL << "[CGI] - Pid Status: " << WaitStat << RESET << std::endl;
 		if (WaitStat != 0)
 			return (_prtErr("Wait error"), false);
+		if (status == 0)
+			continue;
 		std::cout << "reading..." << std::endl;
-		bytesRead = read(_pipeOutFd[0], buffer, 10 - 1);
+		bytesRead = read(_pipeOutFd[0], buffer, 10000 - 1);
+		std::cout << bytesRead << std::endl;
 		if (bytesRead == 0)
 			break;
 		else if (bytesRead < 0)
@@ -126,7 +130,6 @@ bool	CgiHandler::_parentProcess(void) {
 		std::cout << YEL << "[CGI] - Receive Data form Cgi-script: " << bytesRead << " Bytes" << RESET << std::endl;
 		buffer[bytesRead] = '\0';
 		std::cout << buffer << std::endl;
-		// sleep(2);
 	}
 	_closePipe(_pipeOutFd[0]);
 	return true;

@@ -279,7 +279,8 @@ void	WebServer::_readContent(int fd, Client * client) {
 		client->readFile(fd, this->buffer);
 	}
 	else if (client->getResType() == CGI_RES) {
-		_cgi.receiveResponse(*client, fd, this->buffer);
+		if (_cgi.receiveResponse(*client, fd, this->buffer) == 0)
+			return;
 	}
 	_fdClear(fd, _readFds);
 	_fdSet(client->sockFd, _writeFds);
