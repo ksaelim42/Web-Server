@@ -430,8 +430,16 @@ void	WebServer::_timeOutMonitoring(void) {
 	std::time(&currentTime);
 	std::map<int, Client>::iterator	it;
 	for (it = _clients.begin(); it != _clients.end(); it++) {
-		if (it->second.lastTimeConnected < currentTime)
-			fdList.push_back(it->second.sockFd);
+		if (it->second.lastTimeConnected < currentTime) {
+			if (it->second.pid != -1) {
+				_clearClientPipeFd(it->second);
+				it->second.status = 504;
+				it->second.setResType(ERROR_RES);
+				_fdSet(it->second.sockFd, _writeFds);
+			}
+			else
+				fdList.push_back(it->second.sockFd);
+		}
 	}
 	for (size_t i = 0; i < fdList.size(); i++)
 		_disconnectClient(fdList[i]);
