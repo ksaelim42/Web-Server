@@ -16,11 +16,19 @@ uint64_t cliSize, return_t retur, bool cgiPass) {
 	return loc;
 }
 
+void	setErrPages(std::string root, std::map<short int, std::string> & errPage) {
+	errPage[400] = root + "/" + "page/40x.html";
+	errPage[403] = root + "/" + "page/40x.html";
+	errPage[404] = root + "/" + "page/40x.html";
+	errPage[405] = root + "/" + "page/40x.html";
+}
+
 Server	createServer(void) {
 	Server	serv;
 	serv.name = "localhost";
-	serv.port = "8014";
+	serv.port = "8004";
 	serv.root = "docs/myPage";
+	setErrPages(serv.root, serv.errPage);
 	std::vector<std::string>	index;
 	return_t	retur;
 	retur.have = 0;
@@ -110,6 +118,9 @@ int	main(int argc, char** argv)
 
 	if (!parsingConfig(argc, argv, servs))
 		return 1;
+	std::cout << "size of server: " << servs.size() << std::endl;
+	// std::cout << "MimeType: " << servs[0].getMimeType("html") << std::endl;
+	// exit(0);
 	// servs[0].prtServer();
 	// (void)argc;
 	// (void)argv;

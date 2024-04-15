@@ -83,7 +83,7 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		for (size_t i = 0; i < valuePos; i++)
 		{
 			errStatus = strToShortInt(valueVec[i]);
-			obj.errPage[errStatus] = valueVec[valuePos];
+			obj.errPage[errStatus] = obj.root + "/" + valueVec[valuePos];
 		}
 	}
 	return true;
@@ -91,8 +91,16 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 
 bool storeLocation(Location &locStruct, std::string key, std::string value, std::vector<std::string> valueVec)
 {
-	if (key == "location")
+	if (key == "location") {
+		size_t	num = 0;
+		for (size_t i = 0; value[i]; i++) {
+			if (isspace(value[i]))
+				num = i;
+		}
+		value.erase(value.begin() + num);
 		locStruct.path = value;
+
+	}
 	else if (key == "root")
 		locStruct.root = value;
 	else if (key == "client_max_body_size")

@@ -33,7 +33,7 @@ enum resType_e {
 	AUTOINDEX_RES,
 	FILE_RES,
 	CGI_RES,
-	BODY_RES
+	SUCCESS_RES
 };
 
 enum bodyType_e {

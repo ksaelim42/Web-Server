@@ -16,8 +16,9 @@ void	CgiHandler::_initCgi() {
 	_env.clear();
 }
 
-bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
+bool	CgiHandler::createRequest(Client & client) {
 	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Start");
+	parsedReq&	req = client.getRequest();
 	_initCgi();
 	if (!_checkCgiScript(client.status, req))
 		return false;
@@ -27,6 +28,10 @@ bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
 		return client.status = 500, false;
 	}
+	if (!_setNonBlocking()) {
+		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for setting Non-blocking I/O");
+		return _closeAllPipe(), client.status = 500, false;
+	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
@@ -35,46 +40,53 @@ bool	CgiHandler::createRequest(Client & client, parsedReq & req) {
 	if (_pid == 0) // Child Process
 		_childProcess(req);
 	else { // Parent Process
-		_closePipe(_pipeOutFd[1]);
+		close(_pipeOutFd[1]);
 		if (_isPost) {
-			_closePipe(_pipeInFd[0]);
+			close(_pipeInFd[0]);
 			client.addPipeFd(_pipeInFd[1], PIPE_IN);
-			req.package = 1;
+			req.package = 0;
 			if (req.bodyType == CHUNKED_ENCODE)
 				req.type = CHUNK;
 			else
 				req.type = BODY;
 		}
-		else 
+		else
 			client.setResType(CGI_RES);
+		Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - fork child pid: ", _pid);
 		client.pid = _pid;
 		client.addPipeFd(_pipeOutFd[0], PIPE_OUT);
 	}
 	return true;
 }
 
-bool	CgiHandler::sendBody(Client & client, parsedReq & req, int fd) {
-	size_t	bytes;
+bool	CgiHandler::sendBody(Client & client, int fd) {
+	ssize_t		bytes = 0;
+	parsedReq&	req = client.getRequest();
 
 	if (client.bufSize) {
 		bytes = write(fd, client.buffer, client.bufSize);
-		if (bytes < client.bufSize)
+		if (bytes < 0) {
+			client.status = 502;
+			client.delPipeFd(fd, PIPE_IN);
+			client.setResType(ERROR_RES);
+			Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error writing");
 			return false;
+		}
 		req.package++;
 	}
-	Logger::isLog(WARNING) && req.type == CHUNK && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
-	Logger::isLog(WARNING) && req.type == BODY && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 	if (req.type == CHUNK) {
-		if (client.bufSize == 0) {
-			_closePipe(fd);
-			client.setResType(CGI_RES);
-			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-		}
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
+		// if (client.bufSize == 0) {
+			// client.delPipeFd(fd, PIPE_IN);
+			// client.setResType(CGI_RES);
+			// Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
+		// }
 	}
 	else {
 		req.bodySent += client.bufSize;
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
-			_closePipe(fd);
+			client.delPipeFd(fd, PIPE_IN);
 			client.setResType(CGI_RES);
 			Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
 		}
@@ -82,37 +94,38 @@ bool	CgiHandler::sendBody(Client & client, parsedReq & req, int fd) {
 	return true;
 }
 
-bool	CgiHandler::receiveResponse(short int & status, std::string & cgiMsg) {
-	int		WaitStat;
-	ssize_t	bytesRead;
-	char	buffer[BUFFERSIZE];
+ssize_t	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
+	int				WaitStat = 0;
+	int				status = 0;
+	ssize_t			bytes;
+	HttpResponse&	res = client.getResponse();
 
-	waitpid(_pid, &WaitStat, 0);
-	_pid = -1;
-	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
-	if (WaitStat != 0)
-		return (status = 502, false);
-	cgiMsg.clear();
-	while (true) {
-		bytesRead = read(_pipeOutFd[0], buffer, BUFFERSIZE - 1);
-		if (bytesRead == 0)
-			break;
-		else if (bytesRead < 0)
-			return (status = 502, false);
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytesRead, " Bytes");
-		buffer[bytesRead] = '\0';
-		cgiMsg += buffer;
+	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Response");
+	status = waitpid(client.pid, &WaitStat, WNOHANG);
+	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
+	if (WaitStat != 0) {
+		client.status = 502;
+		client.delPipeFd(fd, PIPE_OUT);
+		client.setResType(ERROR_RES);
+		return -1;
 	}
-	_closePipe(_pipeOutFd[0]);
-	return (status = 200, true);
-}
-
-int	CgiHandler::getFdIn(void) {
-	return _pipeInFd[1];
-}
-
-int	CgiHandler::getFdOut(void) {
-	return _pipeOutFd[0];
+	if (status == 0)
+		return 0;
+	bytes = read(fd, buffer, LARGEFILESIZE);
+	if (bytes == -1) {
+		client.status = 502;
+		client.delPipeFd(fd, PIPE_OUT);
+		client.setResType(ERROR_RES);
+		return false;
+	}
+	res.body.assign(buffer, bytes);
+	res.bodySent += bytes;
+	Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Receive Data form Cgi-script: ", bytes, " Bytes");
+	if (res.bodySent >= res.bodySize) {
+		client.pid = -1;
+		client.delPipeFd(fd, PIPE_OUT);
+	}
+	return bytes;
 }
 
 // ************************************************************************** //
@@ -143,7 +156,7 @@ bool	CgiHandler::_initEnv(parsedReq & req) {
 	_env["REMOTE_HOST"] = "";					// host name of client that request
 	_env["REMOTE_IDENT"] = "";					// empty
 	_env["REMOTE_USER"] = "";					// empty
-	// HTTP protocal Env
+	// HTTP protocol Env
 	std::map<std::string, std::string>::const_iterator	it;
 	for (it = req.headers.begin(); it != req.headers.end(); it++)
 		_env[toProtoEnv(it->first)] = it->second; 
@@ -194,6 +207,20 @@ bool	CgiHandler::_createPipe(void) {
 	return true;
 }
 
+bool	CgiHandler::_setNonBlocking(void) {
+	if (fcntl(_pipeOutFd[0], F_SETFL, O_NONBLOCK) < 0)
+		return false;
+	if (fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK) < 0)
+		return false;
+	if (_isPost) {
+		if (fcntl(_pipeInFd[0], F_SETFL, O_NONBLOCK) < 0)
+			return false;
+		if (fcntl(_pipeInFd[1], F_SETFL, O_NONBLOCK) < 0)
+			return false;
+	}
+	return true;
+}
+
 bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	std::size_t	found = srcPath.find_last_of("/");
 	if (found != std::string::npos) {
@@ -207,31 +234,29 @@ bool	CgiHandler::_gotoCgiDir(std::string & srcPath) {
 	return true;
 }
 
-void	CgiHandler::_closePipe(int &fd) {
-	close(fd);
-	fd = -1;
+void	CgiHandler::_closePipe(int (&pipeFd)[2]) {
+	close(pipeFd[0]);
+	close(pipeFd[1]);
+	// pipeFd[0] = -1;
+	// pipeFd[1] = -1;
 }
 
 void	CgiHandler::_closeAllPipe(void) {
 	if (_isPost) {
-		_closePipe(_pipeInFd[0]);
-		_closePipe(_pipeInFd[1]);
+		_closePipe(_pipeInFd);
 	}
-	_closePipe(_pipeOutFd[0]);
-	_closePipe(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd);
 }
 
 void CgiHandler::_childProcess(parsedReq & req) {
 	if (_isPost) { // if post method will take input from std::in
 		dup2(_pipeInFd[0], STDIN_FILENO);
-		_closePipe(_pipeInFd[1]);
-		_closePipe(_pipeInFd[0]);
+		_closePipe(_pipeInFd);
 	}
 	if (!_gotoCgiDir(req.pathSrc))
 		exit(errno);
 	dup2(_pipeOutFd[1], STDOUT_FILENO);
-	_closePipe(_pipeOutFd[0]);
-	_closePipe(_pipeOutFd[1]);
+	_closePipe(_pipeOutFd);
 	char *args[3];
 	args[0] = strdup(_cgiProgramPath);
 	args[1] = strdup(_cgiFileName);

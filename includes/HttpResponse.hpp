@@ -34,6 +34,7 @@ class HttpResponse
 		short int	_inspectCgiHeaders(std::string &);
 	public:
 		resType_e	type;
+		bool		isBody;
 		std::string	body;
 		uint64_t	bodySize;
 		uint64_t	bodySent;
@@ -43,9 +44,8 @@ class HttpResponse
 		std::string	redirection(short int &, parsedReq &);
 		std::string	autoIndex(short int &, parsedReq &);
 		std::string	staticContent(short int &, parsedReq &);
-		std::string	cgiResponse(short int &,  parsedReq &, std::string &);
+		std::string	cgiResponse(short int &,  parsedReq &);
 		std::string	errorPage(short int &, parsedReq &);
-		int			openFile(short int &, parsedReq &);
 		void		clear(void);
 		void		prtResponse(void);
 

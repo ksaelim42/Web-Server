@@ -113,6 +113,7 @@ void	Server::_initErrPage(void) {
 	errPage[501] = "docs/errorPage/501.html";
 	errPage[502] = "docs/errorPage/502.html";
 	errPage[503] = "docs/errorPage/503.html";
+	errPage[504] = "docs/errorPage/504.html";
 	errPage[505] = "docs/errorPage/505.html";
 }
 

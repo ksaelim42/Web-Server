@@ -1,16 +1,22 @@
 #include "HttpResponse.hpp"
 
 HttpResponse::HttpResponse() : type(ERROR_RES)
-, bodySize(0), bodySent(0) {}
+, isBody(0), body(""), bodySize(0), bodySent(0) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Delete resource");
-	if (access(req.pathSrc.c_str(), F_OK) != 0)
-		return status = 404, "";
-	if (access(req.pathSrc.c_str(), W_OK) != 0)
-		return status = 403, "";
-	if (remove(req.pathSrc.c_str()) != 0)
-		return status = 503, "";
+	if (access(req.pathSrc.c_str(), F_OK) != 0) {
+		status = 404;
+		return errorPage(status, req);
+	}
+	if (access(req.pathSrc.c_str(), W_OK) != 0) {
+		status = 403;
+		return errorPage(status, req);
+	}
+	if (remove(req.pathSrc.c_str()) != 0) {
+		status = 503;
+		return errorPage(status, req);
+	}
 	status = 204;
 	body = "";
 	return _createHeader(status , req) + CRLF;
@@ -31,22 +37,21 @@ std::string	HttpResponse::autoIndex(short int & status, parsedReq & req) {
 
 std::string	HttpResponse::staticContent(short int & status, parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - Static Content");
+	isBody = true;
 	return _createHeader(status, req) + CRLF + body;
 }
 
-std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req, std::string & cgiMsg) {
+std::string	HttpResponse::cgiResponse(short int & status,  parsedReq & req) {
 	Logger::isLog(DEBUG) && Logger::log(MAG, "[Response] - CGI-Script");
 	std::string	cgiHeader;
 
+	status = _parseCgiHeader(body, cgiHeader);
 	if (status != 200)
-		return "";
-	status = _parseCgiHeader(cgiMsg, cgiHeader);
-	if (status != 200)
-		return "";
+		return errorPage(status, req);
 	status = _inspectCgiHeaders(cgiHeader);
 	if (status != 200)
-		return "";
-	body = cgiMsg;
+		return errorPage(status, req);
+	isBody = true;
 	return _createHeader(status , req) + CRLF + body;
 }
 
@@ -60,6 +65,7 @@ std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 void	HttpResponse::clear(void) {
 	_headers.clear();
 	type = ERROR_RES;
+	isBody = false;
 	body.clear();
 	bodySize = 0;
 	bodySent = 0;
@@ -171,6 +177,8 @@ std::string	HttpResponse::getStatusText(short int statusCode) {
 			return "Bad Gateway";
 		case 503:
 			return "Service Unavailable";
+		case 504:
+			return "Gateway Timeout";
 		case 505:
 			return "HTTP Version Not Supported";
 		default:
@@ -206,7 +214,7 @@ short int	HttpResponse::_listFile(parsedReq & req, std::string & body) {
 	body += "<title>Index of " + req.path +" </title>\n";
 	body += "</head>\n";
 	body += "<body>\n";
-	body += "<h1>Index of " + req.path + " </h1>\n"; // :TODO fix name
+	body += "<h1>Index of " + req.path + " </h1>\n";
 	body += "<hr>\n";
 	body += "<pre>\n";
 	dir = opendir(req.pathSrc.c_str());
@@ -297,8 +305,6 @@ std::string	HttpResponse::getType(void) const {
 		return "FILE_RES";
 	else if (this->type == CGI_RES)
 		return "CGI_RES";
-	else if (this->type == BODY_RES)
-		return "BODY_RES";
 	else
 		return "Non type";
 }
