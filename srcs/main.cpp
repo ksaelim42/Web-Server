@@ -63,7 +63,6 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 	std::string tmp;
 	Server obj;
 	Location locStruct;
-	// std::vector<Server> servers;
 	bool isLocation = false;
 	bool firstServer = true;
 
@@ -101,10 +100,7 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 	}
 	if (!scanPorts(servers))
 		return 0;
-	// exit (0);
 	printServers(servers);
-	// printConfig(obj);
-	// servs.push_back(servers);
 	return true;
 }
 
