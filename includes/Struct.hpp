@@ -23,7 +23,8 @@ enum reqType_e {
 	CHUNK,
 	FILE_REQ,
 	CGI_REQ,
-	RESPONSE
+	RESPONSE,
+	DISCARD_DATA
 };
 
 enum resType_e {

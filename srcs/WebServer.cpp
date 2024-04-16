@@ -146,6 +146,9 @@ int	WebServer::_receiveRequest(Client & client) {
 		_fdClear(client.sockFd, _readFds);
 		Logger::isLog(WARNING) && Logger::log(BLU, "[Server] - Receive data ", bytes, " Bytes from client fd: ", client.sockFd);
 	}
+	else if (client.getReqType() == DISCARD_DATA) {
+		bytes = recv(client.sockFd, client.buffer, BUFFERSIZE - 1, MSG_DONTWAIT);
+	}
 	else
 		return 0;
 	if (bytes == -1) {
@@ -214,7 +217,7 @@ int	WebServer::_sendResponse(Client & client) {
 	if (client.resMsg.length())
 		return 1;
 	_fdClear(client.sockFd, _writeFds);
-	if (client.getResType() == ERROR_RES) {
+	if (client.getReqType() == RESPONSE && client.getResType() == ERROR_RES) {
 		_disconnectClient(client.sockFd);
 		return 0;
 	}

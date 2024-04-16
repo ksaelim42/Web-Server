@@ -58,8 +58,13 @@ void	Client::genResponse(void) {
 		else
 			resMsg = _res.body;
 	}
-	else if (_res.type == ERROR_RES)
+	else if (_res.type == ERROR_RES) {
 		resMsg = _res.errorPage(this->status, _req);
+		if (this->status == 413 && _req.bodySize) {
+			_req.type = DISCARD_DATA;
+			return ;
+		}
+	}
 	else if (_res.type == DELETE_RES)
 		resMsg = _res.deleteResource(this->status, _req);
 	else if (_res.type == REDIRECT_RES)
