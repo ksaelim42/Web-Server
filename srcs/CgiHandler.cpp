@@ -67,23 +67,17 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 		bytes = write(fd, client.buffer, client.bufSize);
 		if (bytes < 0) {
 			client.status = 502;
-			client.delPipeFd(fd, PIPE_IN);
 			client.setResType(ERROR_RES);
 			Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error writing");
 			return false;
 		}
+		req.bodySent += client.bufSize;
 		req.package++;
 	}
 	if (req.type == CHUNK) {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
-		// if (client.bufSize == 0) {
-			// client.delPipeFd(fd, PIPE_IN);
-			// client.setResType(CGI_RES);
-			// Logger::isLog(DEBUG) && Logger::log(YEL, "[CGI] - Success for sent pagekage -----");
-		// }
 	}
 	else {
-		req.bodySent += client.bufSize;
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
 		if (req.bodySent >= req.bodySize) {
 			client.delPipeFd(fd, PIPE_IN);

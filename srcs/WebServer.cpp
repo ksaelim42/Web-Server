@@ -259,8 +259,12 @@ ssize_t	WebServer::_unChunking(Client & client) {
 			return 1;
 		}
 	}
-	else if (chunkSize > BUFFERSIZE - 1)
-		return client.status = 413, client.setResType(ERROR_RES), 1;
+	else if (chunkSize > BUFFERSIZE - 1 || client.isSizeTooLarge(chunkSize)) {
+		client.status = 413;
+		client.clearPipeFd();
+		client.setResType(ERROR_RES);
+		return 1;
+	}
 	count = recv(client.sockFd, buf, 2, MSG_DONTWAIT);
 	if (count < 2 || buf[0] != '\r' || buf[1] != '\n')
 		return client.status = 400, client.setResType(ERROR_RES), 1;
@@ -294,8 +298,10 @@ void	WebServer::_writeContent(int fd, Client * client) {
 	if (client->getReqType() == RESPONSE) {
 		if (client->getResType() == CGI_RES)
 			_fdSet(client->getPipeOut(), _readFds);
-		else // Error response
+		else { // Error response
+			client->clearPipeFd();
 			_fdSet(client->sockFd, _writeFds);
+		}
 	}
 	else
 		_fdSet(client->sockFd, _readFds);

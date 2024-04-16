@@ -119,6 +119,12 @@ void	Client::updateTime(void) {
 	lastTimeConnected += KEEPALIVETIME;
 }
 
+bool	Client::isSizeTooLarge(ssize_t bytes) {
+	if (_req.bodySent + bytes > _req.serv.cliBodySize)
+		return true;
+	return false;
+}
+
 // ************************************************************************** //
 // ---------------------------- Setter & Getter ----------------------------- //
 // ************************************************************************** //

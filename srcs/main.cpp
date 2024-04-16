@@ -132,7 +132,7 @@ int	main(int argc, char** argv)
 	// servs.push_back(createServer()); // TODO : gen by hand
 	// servs.push_back(createServer2()); // TODO : gen by hand
 	try {
-		Logger::setLevel(DEBUG);
+		Logger::setLevel(WARNING);
 		WebServer	webserv;
 
 		webserv.initServer(servs);

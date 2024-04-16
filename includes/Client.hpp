@@ -59,6 +59,7 @@ class Client
 		int			openFile(void);
 		bool		readFile(int, char*);
 		void		updateTime(void);
+		bool		isSizeTooLarge(ssize_t);
 		// Getter & Setter
 		int				getPipeIn(void) const;
 		int				getPipeOut(void) const;
