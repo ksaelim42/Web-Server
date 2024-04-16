@@ -92,7 +92,6 @@ int	Client::openFile(void) {
 bool	Client::readFile(int fd, char* buffer) {
 	ssize_t	bytes;
 
-	std::cout << RED << "Got it: " << fd << RESET << std::endl; // TODO
 	bytes = read(fd, buffer, LARGEFILESIZE);
 	if (bytes == -1) {
 		this->status = 403;
