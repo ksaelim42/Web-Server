@@ -18,6 +18,7 @@ bool		isHexChar(char &);
 bool		isHexStr(std::string &);
 void		free2Dstr(char** &);
 void		prtMap(std::map<std::string, std::string> &);
+void		prtMap(std::map<short int, std::string> &);
 char*		strdup(std::string);
 char**		aopArgs(std::vector<std::string> &);
 char**		aopEnv(std::map<std::string, std::string> &);

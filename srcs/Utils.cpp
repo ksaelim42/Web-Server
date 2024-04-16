@@ -149,6 +149,12 @@ void	prtMap(std::map<std::string, std::string> & set) {
 		std::cout << it->first << ": " << it->second << std::endl;
 }
 
+void	prtMap(std::map<short int, std::string> & set) {
+	std::map<short int, std::string>::const_iterator	it;
+	for (it = set.begin(); it != set.end(); it++)
+		std::cout << it->first << ": " << it->second << std::endl;
+}
+
 // ************************************************************************** //
 // ------------------------------ Config Utils ------------------------------ //
 // ************************************************************************** //

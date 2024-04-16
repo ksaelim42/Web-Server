@@ -123,6 +123,7 @@ int	main(int argc, char** argv)
 	if (!parsingConfig(argc, argv, servs))
 		return 1;
 	std::cout << "size of server: " << servs.size() << std::endl;
+	prtMap(servs[0].errPage);
 	// std::cout << "MimeType: " << servs[0].getMimeType("html") << std::endl;
 	// exit(0);
 	// servs[0].prtServer();
