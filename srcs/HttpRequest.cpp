@@ -6,18 +6,17 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:00 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/14 16:12:07 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/17 20:19:57 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
 
-httpReq	storeReq(std::string rawReq)
+bool	storeReq(std::string rawReq, httpReq &reqData)
 {
 	std::vector<std::string>	headVec;
 	std::vector<std::string>	tailVec;
 	std::vector<std::string>	vecStartLine;
-	httpReq 					reqData;
 	int							count = 0;
 
 	for (int i = 0; rawReq[i] != '\n'; i++) count++;
@@ -28,6 +27,8 @@ httpReq	storeReq(std::string rawReq)
 			tmp += rawReq[i++];
 		vecStartLine.push_back(tmp);
 	}
+	if (vecStartLine.size() != 3)
+		return false;
 	reqData.method = vecStartLine[0];
 	reqData.srcPath = vecStartLine[1];
 	reqData.version = vecStartLine[2];
@@ -59,12 +60,11 @@ httpReq	storeReq(std::string rawReq)
 	if (headVec.size() != tailVec.size())
 	{
 		std::cout << "Error: Something went wrong when trying to store the request" << std::endl;
-		exit(1); //!should not be exit but return 400
+		return false;
 	}
 	for (size_t i = 0; i < headVec.size(); i++) 
 		reqData.headers[headVec[i]] = tailVec[i];
-	
-	return reqData;
+	return true;
 }
 
 int	scanStartLine(httpReq reqData)

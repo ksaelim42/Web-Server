@@ -6,7 +6,7 @@
 /*   By: prachman <prachman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 11:10:04 by prachman          #+#    #+#             */
-/*   Updated: 2024/03/04 21:20:59 by prachman         ###   ########.fr       */
+/*   Updated: 2024/04/17 20:20:59 by prachman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,6 @@ struct httpReq
 	std::map<std::string, std::string> headers;
 };
 
-httpReq	storeReq(std::string rawReq);
+bool	storeReq(std::string rawReq, httpReq &reqData);
 
 #endif

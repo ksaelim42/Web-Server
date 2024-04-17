@@ -17,7 +17,12 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	std::string	header(buffer, bufSize);
 	if (!_divideHeadBody(header))
 		return false;
-	httpReq	reqHeader = storeReq(header);
+	httpReq	reqHeader;
+	if (!storeReq(header, reqHeader))
+	{
+		status = 400;
+		return false;
+	}
 	_req.method = reqHeader.method;
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
