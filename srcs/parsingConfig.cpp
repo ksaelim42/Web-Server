@@ -9,8 +9,23 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		obj.root = value;
 	else if (key == "listen")
 	{
-		obj.ipAddr = "0.0.0.0";
+		std::size_t	found  = value.find(":");
+		if (found == std::string::npos)
+			obj.ipAddr = "0.0.0.0";
+		else {
+			obj.ipAddr = strCutTo(value, ":");
+		}
+
 		obj.port = value;
+		int	portNumber = strToNum(obj.port);
+		if (portNumber < 1 || portNumber > 65535) {
+			std::cout << "Port must not be less than 1 or more than 65535" << std::endl;
+			return false;
+		}
+		if (obj.port.length() > 5) {
+			std::cout << "Port must not be less than 1 or more than 65535" << std::endl;
+			return false;
+		}
 	}
 	else if (key == "client_max_body_size")
 	{

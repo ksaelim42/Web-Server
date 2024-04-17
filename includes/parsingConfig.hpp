@@ -7,6 +7,7 @@
 #include <map>
 #include <stdint.h>
 
+#include "Utils.hpp"
 #include "Server.hpp"
 
 bool    setValue(Server &obj, Location &locStruct, std::string key, std::string value, bool isLocation);

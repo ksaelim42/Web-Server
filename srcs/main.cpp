@@ -108,7 +108,7 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 	}
 	if (!scanPorts(servers))
 		return 0;
-	printServers(servers);
+	// printServers(servers);
 	return true;
 }
 
@@ -118,17 +118,8 @@ int	main(int argc, char** argv)
 
 	if (!parsingConfig(argc, argv, servs))
 		return 1;
-	std::cout << "size of server: " << servs.size() << std::endl;
-	prtMap(servs[0].errPage);
-	// std::cout << "MimeType: " << servs[0].getMimeType("html") << std::endl;
-	// exit(0);
-	// servs[0].prtServer();
-	// (void)argc;
-	// (void)argv;
-	// servs.push_back(createServer()); // TODO : gen by hand
-	// servs.push_back(createServer2()); // TODO : gen by hand
 	try {
-		Logger::setLevel(DEBUG);
+		Logger::setLevel(INFO);
 		WebServer	webserv;
 
 		webserv.initServer(servs);
