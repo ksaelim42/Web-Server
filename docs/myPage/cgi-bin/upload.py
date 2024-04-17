@@ -27,6 +27,8 @@ else:
 
 print("Content-Type: text/html")
 
+print("Status: 201 Created")
+
 print("")
 
 print("<!DOCTYPE html>")

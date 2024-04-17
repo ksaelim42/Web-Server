@@ -130,6 +130,13 @@ std::string	strCutTo(std::string & str, std::string lim) {
 	return word;
 }
 
+std::string	strClearFrontSpace(std::string & str) {
+	size_t	i = 0;
+	while (std::isspace(str[i]))
+		i++;
+	return str.substr(i);
+}
+
 // Finding special header in map headers
 std::string	findHeaderValue(std::map<std::string, std::string> & myMap, std::string const & content) {
 	std::map<std::string, std::string>::iterator	it;

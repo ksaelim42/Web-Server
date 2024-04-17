@@ -28,6 +28,7 @@ std::string	numToStr(ssize_t);
 std::string	toProtoEnv(std::string);
 std::string	toProperCase(std::string &);
 std::string	strCutTo(std::string &, std::string );
+std::string	strClearFrontSpace(std::string &);
 std::string	findHeaderValue(std::map<std::string, std::string> &, std::string const &);
 short int	strToShortInt(std::string str);
 // config utils

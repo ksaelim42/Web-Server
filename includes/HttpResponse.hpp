@@ -17,6 +17,8 @@
 class HttpResponse
 {
 	private:
+		short int							_statCode;
+		std::string							_statText;
 		std::map<std::string, std::string>	_headers;
 
 		// Header Field

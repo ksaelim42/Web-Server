@@ -1,6 +1,6 @@
 #include "HttpResponse.hpp"
 
-HttpResponse::HttpResponse() : type(ERROR_RES)
+HttpResponse::HttpResponse() : _statCode(0), type(ERROR_RES)
 , isBody(0), body(""), bodySize(0), bodySent(0) {}
 
 std::string	HttpResponse::deleteResource(short int & status, parsedReq & req) {
@@ -64,6 +64,8 @@ std::string	HttpResponse::errorPage(short int & status, parsedReq & req) {
 
 void	HttpResponse::clear(void) {
 	_headers.clear();
+	_statCode = 0;
+	_statText = "";
 	type = ERROR_RES;
 	isBody = false;
 	body.clear();
@@ -140,8 +142,20 @@ std::string	HttpResponse::_getDate(void) {
 
 std::string	HttpResponse::_getStatusLine(short int & statusCode) {
 	std::string	httpVer = HTTP_VERS;
-	std::string	httpStatCode = numToStr(statusCode);
-	std::string httpStatText = getStatusText(statusCode);
+	std::string	httpStatCode;
+	std::string httpStatText;
+
+	if (_statCode) {
+		httpStatCode = numToStr(_statCode);
+		if (_statText.length())
+			httpStatText = _statText;
+		else
+			httpStatText = getStatusText(_statCode);
+	}
+	else {
+		httpStatCode = numToStr(statusCode);
+		httpStatText = getStatusText(statusCode);
+	}
 	return httpVer + " " + httpStatCode + " " + httpStatText + CRLF;
 }
 
@@ -285,7 +299,24 @@ short int	HttpResponse::_inspectCgiHeaders(std::string & cgiHeadMsg) {
 		std::string	key(strCutTo(header, ":"));
 		if (key.find(" ") != std::string::npos)
 			return 502;
-		_headers[toProperCase(key)] = header;
+		if (toProperCase(key) == "Status") {
+			header = strClearFrontSpace(header);
+			std::string	code = strCutTo(header, " ");
+			for (size_t i = 0; code[i]; i++) {
+				if (!std::isdigit(code[i]))
+					return 502;
+			}
+			_statCode = strToNum(code);
+			if (_statCode < 200 || _statCode > 999)
+				return 502;
+			size_t	i = 0;
+			while (std::isspace(header[i])) i++;
+			header = header.substr(i);
+			_statText = strCutTo(header, " ");
+		}
+		else {
+			_headers[toProperCase(key)] = header;
+		}
 		found = cgiHeadMsg.find_first_of("\n");
 	}
 	Logger::isLog(WARNING) && Logger::log(MAG, "----- Inspect CGI heasers success -----");
