@@ -40,8 +40,6 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		{
 			if (*it == "GET")
 				SET_METHOD(obj.allowMethod, METHOD_GET);
-			else if (*it == "HEAD")
-				SET_METHOD(obj.allowMethod, METHOD_HEAD);
 			else if (*it == "POST")
 				SET_METHOD(obj.allowMethod, METHOD_POST);
 			else if (*it == "DELETE")
@@ -77,9 +75,6 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		short int	errStatus;
 		size_t		valuePos = valueVec.size() - 1;
 
-		// std::map<short int, std::string>::iterator it = obj.errPage.begin();
-		// if (!obj.errPage.empty()) // in case of incorrect buffer
-		// 	obj.errPage.erase(it, obj.errPage.end());
 		for (size_t i = 0; i < valuePos; i++)
 		{
 			errStatus = strToShortInt(valueVec[i]);
@@ -133,8 +128,6 @@ bool storeLocation(Location &locStruct, std::string key, std::string value, std:
 		{
 			if (*it == "GET")
 				SET_METHOD(locStruct.allowMethod, METHOD_GET);
-			else if (*it == "HEAD")
-				SET_METHOD(locStruct.allowMethod, METHOD_HEAD);
 			else if (*it == "POST")
 				SET_METHOD(locStruct.allowMethod, METHOD_POST);
 			else if (*it == "DELETE")

@@ -4,7 +4,6 @@
 #define BODYBUFSIZE 1000000	// defautl
 
 #define	METHOD_GET	0x1
-#define	METHOD_HEAD	0x2
 #define	METHOD_POST 0x4
 #define	METHOD_DEL	0x8
 
