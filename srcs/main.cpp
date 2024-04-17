@@ -100,7 +100,7 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 			return 0;
 		if (!setValue(obj, locStruct, key, value, 0))
 			return 0;
-		if (key == "server" || configFile.eof())
+		if (key == "server" || configFile.peek() == EOF)
 		{
 			servers.push_back(obj);
 			clearServer(obj);
