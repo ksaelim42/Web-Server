@@ -289,12 +289,12 @@ bool	Client::_checkRequest(void) {
 bool	Client::_checkMethod(std::string method) {
 	if (method == "GET")
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_GET);
-	else if (method == "HEAD")
-		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_HEAD);
 	else if (method == "POST")
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_POST);
 	else if (method == "DELETE")
 		return IS_METHOD_SET(_req.serv.allowMethod, METHOD_DEL);
+	// else if (method == "HEAD")
+	// 	return IS_METHOD_SET(_req.serv.allowMethod, METHOD_HEAD);
 	return false;
 }
 
