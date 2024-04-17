@@ -12,6 +12,10 @@ class Server;
 struct return_t;
 struct Location;
 
+// MAC
+// typedef unsigned long long int uint64_t;
+
+// Linux
 typedef unsigned long int uint64_t;
 
 bool		isHexChar(char &);
