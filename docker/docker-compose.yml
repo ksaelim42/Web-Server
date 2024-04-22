@@ -1,0 +1,21 @@
+version: '3'
+services:
+  nginx:
+    image: webserv-img
+    container_name: webserv-con
+    build:
+      context: src
+      dockerfile: Dockerfile
+      # args:
+      #   DB_NAME: ${DB_NAME}
+      #   DB_USER: ${DB_USER}
+      #   DB_PASSWORD: ${DB_PASSWORD}
+    # env_file:
+    #   - .env
+    ports:
+      - 1400:1400
+      - 1410:1410
+      - 1420:1420
+    volumes:
+      - './../docs/myPage:/var/www/html/myPage'
+      - './src/conf/nginx.conf:/etc/nginx/nginx.conf'

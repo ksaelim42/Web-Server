@@ -1,0 +1,11 @@
+*.vscode
+objs
+*.o
+a.out
+webserv
+test.cpp
+try.c
+settings.json
+mytest
+docs/myPage/upload/*
+!docs/myPage/upload/.placeholder

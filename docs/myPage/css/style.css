@@ -1,0 +1,111 @@
+body {
+	background-color: #1a1a1a;
+	color: whitesmoke;
+}
+
+h3 {
+	margin: 5px;
+}
+
+.body {
+	margin: 10px 5% 10px 5%;
+	font-size: 1.2rem;
+}
+
+.navbar a:link {
+	color:aliceblue;
+	text-decoration: none;
+}
+
+.navbar a:visited {
+	color:aliceblue;
+}
+
+.navbar a:hover {
+	color:aliceblue;
+}
+
+li.nav-box:hover {
+	background-color: #303030;
+}
+
+.navbar > .one {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	width: 100%;
+}
+
+.navbar > .two {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+.first {
+	display: flex;
+	justify-content: start;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+.second {
+	display: flex;
+	justify-content: end;
+	gap: 10px;
+	background-color: #3a3a3a;
+}
+
+ul {
+	background-color: #3a3a3a;
+	padding: 5px;
+	margin: 0;
+}
+
+.navbar {
+	display: flex;
+	flex-direction: column;
+	background-color: #404040;
+	font-size: 1.5rem;
+}
+
+li.nav-box {
+	color: #b3b3b3;
+	padding: 10px;
+	list-style: none;
+	border-radius: 7px;
+}
+
+.body-box {
+	background-color: #404040;
+	padding: 15px 15px 15px 15px;
+	border-radius: 7px;
+	margin: 10px 0px 10px 0px;
+}
+
+.fill-box {
+	background-color: #3a3a3a;
+	padding: 2%;
+	margin-bottom: 2%;
+}
+
+.button {
+	background-color: #303030;
+	color: whitesmoke;
+	font-size: 0.9rem;
+	font-weight:bolder;
+	padding: 10px;
+	border-radius: 5px;
+	border: 0px white solid;
+}
+
+.button:hover {
+	background-color: #8899A6;
+}
+
+#separate {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+}
