@@ -26,7 +26,8 @@ COPY	./tools/.vimrc /root
 COPY	./tools/start_server.sh /root
 
 CMD		[ "bash", "/root/start_server.sh" ]
+#ENTRYPOINT	["bash", "/root/start_server.sh"]
 
-# CMD [ "sleep", "infinity" ]
+#CMD [ "sleep", "infinity" ]
 
 EXPOSE	1400 1410 1420

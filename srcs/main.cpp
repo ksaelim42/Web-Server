@@ -119,7 +119,7 @@ int	main(int argc, char** argv)
 	if (!parsingConfig(argc, argv, servs))
 		return 1;
 	try {
-		Logger::setLevel(INFO);
+		Logger::setLevel(DEBUG);
 		WebServer	webserv;
 
 		webserv.initServer(servs);
