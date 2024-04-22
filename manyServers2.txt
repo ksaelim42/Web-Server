@@ -1,0 +1,9 @@
+server {
+	client_max_body_size    2000;
+	listen            1400;
+	server_name        testwebserv1;
+	root            /var/www/html;
+	index            index.html second_index.htm;
+	limit_except    GET HEAD POST DELETE;
+	error_page        400 403 404 405 page/40x.html;
+}
