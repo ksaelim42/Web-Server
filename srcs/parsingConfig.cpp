@@ -97,6 +97,7 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 		}
 	}
 	else {
+		// std::cout << "key value: " << key << std::endl;
 		if (key.empty() || key == "}" || key == "server")
 			return true;
 		std::cout << "Invalid Directive :(" << std::endl;
@@ -287,6 +288,8 @@ std::string	getKey(std::string key, std::string line, int &i)
 	{
 		if (!isspace(line[i]))
 		{
+			if (line[i] == '#')
+				break;
 			while (line[i] && !isspace(line[i]))
 				key += line[i++];
 			break;
