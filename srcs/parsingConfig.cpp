@@ -116,7 +116,6 @@ bool storeLocation(Location &locStruct, std::string key, std::string value, std:
 		}
 		value.erase(value.begin() + num);
 		locStruct.path = value;
-
 	}
 	else if (key == "root")
 		locStruct.root = value;
@@ -203,10 +202,26 @@ bool setValue(Server &obj, Location &locStruct, std::string key, std::string val
 		for (size_t i = 0; i < value.length(); i++)
 		{
 			std::string tmp;
-			while (!isspace(value[i]) && i < value.length())
-				tmp += value[i++];
-			if (!tmp.empty())
-				valueVec.push_back(tmp);
+
+			// for return with option "" and ''
+			if (value[i] == '\"' || value[i] == '\'') {
+				
+				i++;
+				while (i < value.length()) {
+					if (value[i] == '\"' || value[i] == '\'')
+						break;
+					tmp += value[i++];
+				}
+				if (!tmp.empty())
+					valueVec.push_back(tmp);
+			}
+			else {
+				//for return wiht option is not space
+				while (!isspace(value[i]) && i < value.length())
+					tmp += value[i++];
+				if (!tmp.empty())
+					valueVec.push_back(tmp);
+			}
 		}
 	}
 	if (isLocation)
