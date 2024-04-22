@@ -108,7 +108,7 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 	}
 	if (!scanPorts(servers))
 		return 0;
-	printServers(servers);
+	// printServers(servers);
 	return true;
 }
 

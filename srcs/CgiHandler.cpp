@@ -63,19 +63,20 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 	ssize_t		bytes = 0;
 	parsedReq&	req = client.getRequest();
 
-	if (client.bufSize) {
-		bytes = write(fd, client.buffer, client.bufSize);
+	if (client.reqBody.length()) {
+		bytes = write(fd, client.reqBody.c_str(), client.reqBody.length());
 		if (bytes < 0) {
 			client.status = 502;
 			client.setResType(ERROR_RES);
 			Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error writing");
 			return false;
 		}
-		req.bodySent += client.bufSize;
+		client.reqBody.erase(0, bytes);
+		req.bodySent += bytes;
 		req.package++;
 	}
 	if (req.type == CHUNK) {
-		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", client.bufSize, " Bytes");
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - chunk[", req.package, "] sent ", bytes, " Bytes");
 	}
 	else {
 		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - pakage[", req.package, "] sent ", req.bodySent, " out of ", req.bodySize);
@@ -94,9 +95,9 @@ ssize_t	CgiHandler::receiveResponse(Client & client, int fd, char* buffer) {
 	ssize_t			bytes;
 	HttpResponse&	res = client.getResponse();
 
-	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Receive Response");
+	Logger::isLog(ERROR) && Logger::log(YEL, "[CGI] - Receive Response");
 	status = waitpid(client.pid, &WaitStat, WNOHANG);
-	Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
+	Logger::isLog(ERROR) && Logger::log(YEL, "[CGI] - Pid Status: ", WaitStat);
 	if (WaitStat != 0) {
 		client.status = 502;
 		client.delPipeFd(fd, PIPE_OUT);

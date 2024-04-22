@@ -43,6 +43,7 @@ class Client
 		pid_t				pid;
 		char				buffer[BUFFERSIZE];
 		size_t				bufSize;
+		std::string			reqBody;
 		std::string			resMsg;
 		std::string			IPaddr;
 		Server *			serv;

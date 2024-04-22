@@ -2,7 +2,6 @@
 
 import cgi, os, sys, time
 
-time.sleep(0.1) # on Chunk request body be sent slower before read filename
 form = cgi.FieldStorage()
 
 if 'filename' in form:

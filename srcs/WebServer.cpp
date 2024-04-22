@@ -181,8 +181,10 @@ int	WebServer::_parsingRequest(Client & client) {
 		}
 	}
 	if (client.getReqType() == BODY || client.getReqType() == CHUNK) {
-		if (client.bufSize)
+		if (client.bufSize) {
+			client.reqBody.assign(client.buffer, client.bufSize);
 			_fdSet(client.getPipeIn(), _writeFds);
+		}
 		else
 			_fdSet(client.sockFd, _readFds);
 		return 1;
@@ -303,6 +305,8 @@ void	WebServer::_writeContent(int fd, Client * client) {
 			_fdSet(client->sockFd, _writeFds);
 		}
 	}
+	else if (client->reqBody.length())
+		return ;
 	else
 		_fdSet(client->sockFd, _readFds);
 	_fdClear(fd, _writeFds);
