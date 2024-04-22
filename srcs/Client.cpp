@@ -27,12 +27,12 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	_req.uri = reqHeader.srcPath;
 	_req.version = reqHeader.version;
 	_req.headers = reqHeader.headers;
-	if (!_checkRequest())
-		return false;
 	_parsePath(_req.uri);
 	if (!_urlEncoding(_req.path))
 		return false;
 	_matchLocation(serv->location);
+	if (!_checkRequest())
+		return false;
 	if (_redirect()) {
 		setResType(REDIRECT_RES);
 		return true;
