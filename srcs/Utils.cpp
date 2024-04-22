@@ -185,23 +185,6 @@ void	clearServer(Server &obj)
 	obj.location.clear();
 	obj.initMineTypeDefault();
 	obj.initErrPage();
-	
-
-	// obj.name.clear();
-	// obj.port.clear();
-	// obj.ipAddr.clear();
-	// obj.root.clear();
-	// obj.autoIndex = false;
-	// obj.cgiPass = false;
-	// obj.allowMethod = 0;
-	// obj.cliBodySize = 0;
-	// obj.retur.have = 0;
-	// obj.retur.code = 0;
-	// obj.retur.text.clear();
-	// obj.location.clear();
-	// obj.errPage.clear();
-	// obj.index.clear();
-	// obj.initMineTypeDefault();
 }
 
 Location	clearLocation(Server const & server)
@@ -218,19 +201,6 @@ Location	clearLocation(Server const & server)
 	loc.retur = server.retur; // get server
 	return loc;
 }
-
-// void	clearLocation(Location &locStruct)
-// {
-// 	locStruct.path.clear();
-// 	locStruct.root.clear();
-// 	locStruct.index.clear();
-// 	locStruct.allowMethod = 0;
-// 	locStruct.autoIndex = false;
-// 	locStruct.cliBodySize = 0;
-// 	locStruct.retur.have = 0;
-// 	locStruct.retur.code = 0;
-// 	locStruct.retur.text.clear();
-// }
 
 bool	scanPorts(std::vector<Server> servers)
 {
