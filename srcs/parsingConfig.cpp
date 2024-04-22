@@ -205,10 +205,10 @@ bool setValue(Server &obj, Location &locStruct, std::string key, std::string val
 
 			// for return with option "" and ''
 			if (value[i] == '\"' || value[i] == '\'') {
-				
+				char c = value[i];	
 				i++;
 				while (i < value.length()) {
-					if (value[i] == '\"' || value[i] == '\'')
+					if (value[i] == c || value[i] == c)
 						break;
 					tmp += value[i++];
 				}
