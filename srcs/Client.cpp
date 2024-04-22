@@ -39,12 +39,12 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	}
 	if (!_findBodySize() || !_findFile() || !_findType())
 		return false;
-	if (status == 301)
-		setResType(REDIRECT_RES);
-	else if (_req.serv.cgiPass)
+	if (_req.serv.cgiPass)
 		_req.type = CGI_REQ;
 	else if (_req.method == "DELETE")
 		setResType(DELETE_RES);
+	else if (status == 301)
+		setResType(REDIRECT_RES);
 	else if (_req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
 		setResType(AUTOINDEX_RES);
 	else
