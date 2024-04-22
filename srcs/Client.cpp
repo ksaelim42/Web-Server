@@ -33,7 +33,8 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	_matchLocation(serv->location);
 	if (!_checkRequest())
 		return false;
-	if (_redirect()) {
+	if (!_req.serv.cgiPass && _redirect()) {
+		std::cout << _req.serv.retur.text << std::endl;
 		setResType(REDIRECT_RES);
 		return true;
 	}
@@ -43,7 +44,7 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 		_req.type = CGI_REQ;
 	else if (_req.method == "DELETE")
 		setResType(DELETE_RES);
-	else if (status == 301)
+	else if (status > 300 && status <= 308)
 		setResType(REDIRECT_RES);
 	else if (_req.serv.autoIndex == 1 && S_ISDIR(_req.fileInfo.st_mode))
 		setResType(AUTOINDEX_RES);
@@ -323,8 +324,6 @@ bool	Client::_redirect(void) {
 		this->status = _req.serv.retur.code;
 		return true;
 	}
-	else if (this->status >= 300 && this->status < 400)
-		return true;
 	return false;
 }
 

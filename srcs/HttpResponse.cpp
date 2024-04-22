@@ -207,6 +207,8 @@ std::string	HttpResponse::_getLocation(parsedReq & req) {
 	it = req.headers.find("Host");
 	if (it == req.headers.end())
 		return "";
+	if (req.serv.retur.have)
+		return req.serv.retur.text;
 	return location + it->second + req.path + "/";
 }
 
