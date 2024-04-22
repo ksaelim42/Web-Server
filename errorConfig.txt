@@ -53,7 +53,7 @@ server {
 
 	location /redir {
 		root    /var/www/html/myPage/blog/subdir;
-		return    99 findme.html;
+		return    999 findme.html;
 	}
 
 	location /image {
