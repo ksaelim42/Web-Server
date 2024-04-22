@@ -313,7 +313,7 @@ void	WebServer::_writeContent(int fd, Client * client) {
 // ************************************************************************** //
 
 void	WebServer::signal_handler(int signum) {
-	if (signum == SIGQUIT || signum == SIGTERM) {
+	if (signum == SIGQUIT || signum == SIGINT) {
 		Logger::isLog(INFO) && Logger::log(MAG, "\rTerminate Server");
 		g_state = 0; // OFF
 	}
@@ -322,7 +322,7 @@ void	WebServer::signal_handler(int signum) {
 bool	WebServer::_setPollFd(void) {
 	g_state = 1; // ON
 	signal(SIGQUIT, signal_handler);
-	signal(SIGTERM, signal_handler);
+	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, SIG_IGN); // Protect terminate process when write on the shutdown socket
 	_fdMax = 0;
 	FD_ZERO(&_readFds);
