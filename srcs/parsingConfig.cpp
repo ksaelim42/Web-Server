@@ -16,6 +16,10 @@ bool storeDirectives(Server &obj, std::string key, std::string value, std::vecto
 			obj.ipAddr = strCutTo(value, ":");
 		}
 
+		if (!obj.port.empty()) {
+			if (obj.port == value)
+				return (std::cout << "Server must not has the same port" << std::endl, false);
+		}
 		obj.port = value;
 		int	portNumber = strToNum(obj.port);
 		if (portNumber < 1 || portNumber > 65535) {
