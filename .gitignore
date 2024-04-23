@@ -9,3 +9,4 @@ settings.json
 mytest
 docs/myPage/upload/*
 !docs/myPage/upload/.placeholder
+en.subject.pdf
