@@ -76,11 +76,11 @@ bool parsingConfig(int ac, char **av, std::vector<Server> & servers)
 
 	if (ac != 2)
 		return (std::cout << "must have 2 arguments" << std::endl, 0);
-	if (!check_extension(av[1]))
-		return (std::cout << "Filename wrong extension :(" << std::endl, 0);
 	configFile.open(av[1]);
 	if (!configFile.is_open())
 		return (std::cout << "cannot open config file" << std::endl, 0);
+	if (!check_extension(av[1]))
+		return (std::cout << "Filename wrong extension :(" << std::endl, 0);
 	while (std::getline(configFile, tmp))
 	{
 		int i = 0;
