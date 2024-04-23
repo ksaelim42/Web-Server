@@ -28,10 +28,6 @@ bool	CgiHandler::createRequest(Client & client) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for create Pipe");
 		return client.status = 500, false;
 	}
-	if (!_setNonBlocking()) {
-		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for setting Non-blocking I/O");
-		return _closeAllPipe(), client.status = 500, false;
-	}
 	_pid = fork();
 	if (_pid == -1) {
 		Logger::isLog(DEBUG) && Logger::log(RED, "[CGI] - Error for fork child");
@@ -65,6 +61,7 @@ bool	CgiHandler::sendBody(Client & client, int fd) {
 
 	if (client.reqBody.length()) {
 		bytes = write(fd, client.reqBody.c_str(), client.reqBody.length());
+		Logger::isLog(WARNING) && Logger::log(YEL, "[CGI] - sent data", bytes, " Bytes");
 		if (bytes < 0) {
 			client.status = 502;
 			client.setResType(ERROR_RES);
@@ -198,20 +195,6 @@ bool	CgiHandler::_createPipe(void) {
 			close(_pipeOutFd[1]);
 			return false;
 		}
-	}
-	return true;
-}
-
-bool	CgiHandler::_setNonBlocking(void) {
-	if (fcntl(_pipeOutFd[0], F_SETFL, O_NONBLOCK) < 0)
-		return false;
-	if (fcntl(_pipeOutFd[1], F_SETFL, O_NONBLOCK) < 0)
-		return false;
-	if (_isPost) {
-		if (fcntl(_pipeInFd[0], F_SETFL, O_NONBLOCK) < 0)
-			return false;
-		if (fcntl(_pipeInFd[1], F_SETFL, O_NONBLOCK) < 0)
-			return false;
 	}
 	return true;
 }

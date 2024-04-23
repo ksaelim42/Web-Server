@@ -52,7 +52,6 @@ bool	WebServer::runServer(void) {
 		// _prtFristSet(tmpReadFds);
 		// select will make system motoring three set, block until some fd ready
 		status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, &timeOut);
-		// status = select(_fdMax + 1, &tmpReadFds, &tmpWriteFds, NULL, NULL);
 		// Logger::isLog(DEBUG) && _displayCurrentTime();
 		if (status == 0) {
 			Logger::isLog(ERROR) && Logger::log(MAG, "[Server] - Time out");
@@ -76,7 +75,6 @@ bool	WebServer::runServer(void) {
 				}
 				else if (Client::pipeFds.count(fd)) { // match File or CGI pipeOut => read File
 					_readContent(fd, Client::pipeFds[fd]);
-					// if file read file if cgi pipe read cgi pipe
 				}
 				continue;
 			}

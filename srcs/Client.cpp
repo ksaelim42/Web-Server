@@ -34,7 +34,6 @@ bool	Client::parseHeader(char *buffer, size_t & bufSize) {
 	if (!_checkRequest())
 		return false;
 	if (!_req.serv.cgiPass && _redirect()) {
-		std::cout << _req.serv.retur.text << std::endl;
 		setResType(REDIRECT_RES);
 		return true;
 	}
@@ -376,7 +375,6 @@ bool	Client::_findBodySize(void) {
 			Logger::isLog(DEBUG) && Logger::log(RED, "[Request] - Not support Transfer-Encoding Type");
 			return this->status = 501, false;
 		}
-		std::cout << MAG << "Chunk Request" << RESET << std::endl;
 		_req.bodyType = CHUNKED_ENCODE;
 		return true;
 	}
