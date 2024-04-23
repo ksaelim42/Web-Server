@@ -318,6 +318,23 @@ std::string	getKey(std::string key, std::string line, int &i)
 	return key;
 }
 
+bool	check_extension(char *s)
+{
+	int i = 0;
+	std::string tmp;
+
+	while (s[i])
+		i++;
+	i -= 1;
+	for (size_t j = 0; j < 5; j++)
+	{
+		tmp += s[i];
+		i--;
+	}
+	if (tmp != "fnoc.")
+		return false;
+	return true;
+}
 // int main(int ac, char **av)
 // {
 // 	std::ifstream configFile;
