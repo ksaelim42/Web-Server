@@ -37,7 +37,12 @@ $ ./webserv configs/multiServ.conf
 ```
 
 The program will display domain and port that are listening
-![](images/execute_program.png)
-You can access web pages on browser via URIs
-localhost:8010
-localhost:8020
+<img src="images/execute_program.png" width="400">
+
+You can access web pages on browser via URIs<br>
+- localhost:8010
+- localhost:8020
+
+---
+## ✒️Diagram
+![](images/work_flow.png)
