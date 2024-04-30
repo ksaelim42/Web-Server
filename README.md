@@ -36,7 +36,7 @@ The program takes 1 argument (config file) to execute:
 $ ./webserv configs/multiServ.conf
 ```
 
-The program will display domain and port that are listening
+The program will display domain and port that are listening<br>
 <img src="images/execute_program.png" width="400">
 
 You can access web pages on browser via URIs<br>
